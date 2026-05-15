@@ -1,0 +1,14 @@
+name: Welcome Bot
+env:
+  PIP_BREAK_SYSTEM_PACKAGES: 1
+on:
+  pull_request:
+    types: [opened]
+  issues:
+    types: [opened]
+
+jobs:
+  welcome:
+    uses: RokctAI/shared-workflows/.github/workflows/universal-welcome.yml@main
+    permissions: write-all
+    secrets: inherit

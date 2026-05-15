@@ -1,0 +1,69 @@
+
+# RokctAI: Control Hub (Master VPS)
+# Manages SSL, Routing, and Shared Trial Pool
+
+services:
+  db:
+    # Shared Database for Trial Tenants & Control Logic
+    image: ghcr.io/rokctai/monorepo/rpanel-db:latest
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-admin}
+      - POSTGRES_USER=postgres
+    volumes:
+      - control-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - control-redis-data:/data
+
+  app:
+    # The Orchestrator (Full Stage: Nginx + Exim + Bench)
+    image: ghcr.io/rokctai/monorepo/rpanel-control:latest
+    environment:
+      - MODE=full
+      - SITE_NAME=${SITE_NAME:-platform.rokct.ai}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_ROOT_PASSWORD=${DB_PASSWORD:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - REDIS_CACHE=redis://redis:6379/0
+      - REDIS_QUEUE=redis://redis:6379/1
+      - REDIS_SOCKETIO=redis://redis:6379/2
+    volumes:
+      - control-sites:/home/frappe/frappe-bench/sites
+      - control-logs:/home/frappe/frappe-bench/logs
+      - control-exim4-config:/etc/exim4
+      - control-exim4-spool:/var/spool/exim4
+      - control-exim4-logs:/var/log/exim4
+      - control-opendkim:/etc/opendkim
+      - control-nginx-config:/etc/nginx
+      - control-nginx-logs:/var/log/nginx
+      - control-cron:/etc/cron.d
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8000:8000"
+
+volumes:
+  control-db-data:
+  control-redis-data:
+  control-sites:
+  control-logs:
+  control-exim4-config:
+  control-exim4-spool:
+  control-exim4-logs:
+  control-opendkim:
+  control-nginx-config:
+  control-nginx-logs:
+  control-cron:

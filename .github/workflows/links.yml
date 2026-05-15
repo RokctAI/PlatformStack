@@ -1,0 +1,12 @@
+name: Link Checker
+env:
+  PIP_BREAK_SYSTEM_PACKAGES: 1
+on:
+  schedule:
+    - cron: '30 2 * * 0' # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  links:
+    uses: RokctAI/shared-workflows/.github/workflows/universal-links.yml@main
+    secrets: inherit

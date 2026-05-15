@@ -1,0 +1,54 @@
+
+# RokctAI: IoT/Edge Spoke
+# Optimized for low-RAM devices (Drones/Sensors)
+
+services:
+  db:
+    image: ghcr.io/rokctai/monorepo/rpanel-db:latest
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-admin}
+      - POSTGRES_USER=postgres
+    volumes:
+      - iot-db-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    volumes:
+      - iot-redis-data:/data
+
+  app:
+    image: ghcr.io/rokctai/monorepo/rpanel-iot:latest
+    environment:
+      - MODE=iot
+      - SITE_NAME=${SITE_NAME:-drone.local}
+      - DB_ROOT_PASSWORD=${DB_PASSWORD:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+    volumes:
+      - iot-sites:/home/frappe/frappe-bench/sites
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 1G # Reserve for AI processing but skip web overhead
+
+volumes:
+  iot-db-data:
+  iot-redis-data:
+  iot-sites:

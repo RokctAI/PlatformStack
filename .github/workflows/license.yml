@@ -1,0 +1,10 @@
+name: License Eye
+env:
+  PIP_BREAK_SYSTEM_PACKAGES: 1
+on:
+  pull_request:
+
+jobs:
+  license:
+    uses: RokctAI/shared-workflows/.github/workflows/universal-license.yml@main
+    secrets: inherit

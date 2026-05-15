@@ -1,0 +1,16 @@
+name: Auto Merge
+
+env:
+  PIP_BREAK_SYSTEM_PACKAGES: 1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  merge:
+    uses: RokctAI/shared-workflows/.github/workflows/universal-merge.yml@main
+    permissions: write-all
+    with:
+      allowed_users: 'RendaniSinyage, RendaniSinyage, rokctbot, rokctbot[bot]'
+    secrets: inherit

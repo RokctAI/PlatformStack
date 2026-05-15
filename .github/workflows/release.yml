@@ -1,0 +1,70 @@
+name: Auto Release (Weekly)
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PIP_BREAK_SYSTEM_PACKAGES: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-release
+  cancel-in-progress: true
+
+on:
+  schedule:
+    - cron: '0 23 * * 5'
+  workflow_dispatch:
+    inputs:
+      backfill_ai_notes_cutoff_version:
+        type: string
+        default: ""
+        description: "Regenerate AI release notes starting from this version (use 'all' for full history)"
+
+      node-version:
+        type: string
+        default: '24'
+      python-version:
+        type: string
+        default: '3.14'
+      mariadb-version:
+        type: string
+        default: '10.6'
+      postgres-version:
+        type: string
+        default: '16'
+      db-type:
+        type: string
+        default: 'postgres'
+      version_format:
+        type: string
+        default: '##.##.##'
+        description: "Format for version bumping (e.g. ##.##.## or ##.##.#)"
+
+jobs:
+  release:
+    permissions: write-all
+    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@main
+    with:
+      backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
+      project_type: 'frappe'
+      install-payments: true
+      # Dogfooding: Use the new Weekly Strategy
+      release_strategy: 'weekly'
+
+      # RC Cleanup: Delete RC releases/tags after promotion to stable
+      cleanup_rc_releases: true
+      
+      # One-time cleanup: Set a cutoff date (YYYY-MM-DD) to run cleanup once if past this date
+      # After cleanup runs once, a marker file is created and cleanup won't run again
+      # Example: one_time_cleanup_cutoff_date: '2026-02-01'
+      one_time_cleanup_cutoff_date: '2026-01-30'
+      
+      # Brain Endpoint 
+      brain_endpoint: https://platform.rokct.ai/api/method/brain.api.generate_release_notes
+      # Environment configuration
+      node-version: ${{ inputs.node-version || '24' }}
+      python-version: ${{ inputs.python-version || '3.14' }}
+      mariadb-version: ${{ inputs.mariadb-version || '10.6' }}
+      postgres-version: ${{ inputs.postgres-version || '16' }}
+      db-type: 'postgres'
+      version_format: ${{ inputs.version_format || '##.##.##' }}
+      bootstrap: true
+    secrets: inherit

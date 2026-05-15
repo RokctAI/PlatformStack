@@ -1,0 +1,28 @@
+name: Code Quality
+
+env:
+  PIP_BREAK_SYSTEM_PACKAGES: 1
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+on:
+  workflow_dispatch:
+    inputs:
+      backfill_ai_notes_cutoff_version:
+        type: string
+        default: ""
+        description: "Regenerate AI release notes starting from this version (use 'all' for full history)"
+
+  schedule:
+    - cron: "0 0 * * *"
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    permissions: write-all
+    uses: RokctAI/shared-workflows/.github/workflows/universal-linter.yml@main
+    with:
+      copyright-text: "Rokct Intelligence (pty) Ltd."
+    secrets: inherit
+
+
