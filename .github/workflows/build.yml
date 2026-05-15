@@ -43,6 +43,9 @@ on:
       postgres-version:
         type: string
         default: '16'
+      install-rpanel:
+        type: boolean
+        default: false
       db-type:
         type: string
         default: 'postgres'
@@ -89,6 +92,7 @@ jobs:
     with:
       backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
       project_type: ${{ needs.detect.outputs.is_flutter == 'true' && 'flutter' || (needs.detect.outputs.is_node == 'true' && 'node' || 'frappe') }}
+      install-rpanel: true
       install-erpnext: true
       install-payments: true
       # Quality Gate Toggles
@@ -102,6 +106,7 @@ jobs:
       python-version: ${{ inputs.python-version || '3.14.2' }}
       mariadb-version: ${{ inputs.mariadb-version || '10.6' }}
       postgres-version: ${{ inputs.postgres-version || '16' }}
+      install-rpanel: ${{ inputs.install-rpanel }}
       db-type: 'postgres'
       version_format: ${{ inputs.version_format || '##.##.##' }}
       bootstrap: true
