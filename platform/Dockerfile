@@ -45,8 +45,8 @@ ARG DB_HOST=127.0.0.1
 # Inject Context & Run Golden Build
 COPY --chown=frappe:frappe monorepo_overrides /home/frappe/monorepo_overrides
 COPY --chown=frappe:frappe current_repo /home/frappe/current_repo
-RUN wget -qO /tmp/build_ecosystem.sh https://raw.githubusercontent.com/RokctAI/shared-workflows/main/scripts/build_ecosystem.sh && \
-    chmod +x /tmp/build_ecosystem.sh && \
+COPY --chown=frappe:frappe platform/scripts/build_ecosystem.sh /tmp/build_ecosystem.sh
+RUN chmod +x /tmp/build_ecosystem.sh && \
     export BOOTSTRAP=true && export DB_TYPE=postgres && export DB_PW=admin && \
     export GITHUB_TOKEN=${GITHUB_TOKEN} && \
     export GITHUB_WORKSPACE=/home/frappe/current_repo && \
