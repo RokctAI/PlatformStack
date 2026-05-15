@@ -357,8 +357,8 @@ if [ "$BOOTSTRAP" = "false" ]; then
   fi
 else
   # Bootstrap path (install.sh)
-  REPO_PATH=${GITHUB_REPOSITORY:-"RokctAI/PlatformStack"}
-  REF_PATH=${GITHUB_REF_NAME:-"main"}
+  REPO_PATH="RokctAI/rpanel"
+  REF_PATH="main"
   _log "RokctAI: Ensuring clean install.sh from GitHub (${REPO_PATH}/${REF_PATH})..."
   run_step "Downloading install.sh" \
     bash -c "rm -f install.sh && wget -q https://raw.githubusercontent.com/${REPO_PATH}/${REF_PATH}/install.sh"
