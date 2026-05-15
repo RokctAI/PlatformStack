@@ -173,10 +173,16 @@ jobs:
       - name: Extract Version
         id: meta
         run: |
-          if [ -f "docker-context/rpanel/versions.json" ]; then
+          if [ -f "docker-context/version.json" ]; then
+            VERSION=$(grep -E '"(platform|rpanel)"' docker-context/version.json | head -n 1 | cut -d'"' -f4)
+          elif [ -f "docker-context/rpanel/versions.json" ]; then
             VERSION=$(grep '"rpanel"' docker-context/rpanel/versions.json | cut -d'"' -f4)
           else
             VERSION=$(grep "__version__" docker-context/rpanel/__init__.py | cut -d'"' -f2)
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version!"
+            exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Extract version: $VERSION"
@@ -189,7 +195,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: docker-context
-          file: docker-context/Dockerfile
+          file: docker-context/platform/Dockerfile
           target: full
           network: host
           push: true
@@ -205,7 +211,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: docker-context
-          file: docker-context/Dockerfile
+          file: docker-context/platform/Dockerfile
           target: tenant
           network: host
           push: true
@@ -221,7 +227,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: docker-context
-          file: docker-context/Dockerfile
+          file: docker-context/platform/Dockerfile
           target: iot
           network: host
           push: true
@@ -237,7 +243,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: docker-context
-          file: docker-context/postgres.Dockerfile
+          file: docker-context/platform/postgres.Dockerfile
           push: true
           tags: |
             ghcr.io/rokctai/monorepo/rpanel-db:latest
