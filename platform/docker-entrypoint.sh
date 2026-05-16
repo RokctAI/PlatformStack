@@ -113,21 +113,21 @@ setup_site() {
     if [ "$MODE" = "api" ]; then DETERMINED_ROLE="tenant"; fi
 
     echo "⚙️ Finalizing configuration (Role: $DETERMINED_ROLE)..."
-    bench --site "$SITE_NAME" set-config app_role "${APP_ROLE:-$DETERMINED_ROLE}"
+    bench --site "$SITE_NAME" set-config app_role "'${APP_ROLE:-$DETERMINED_ROLE}'"
   else
     echo "✅ Site '$SITE_NAME' already exists in volume."
     # Ensure any updated ENV variables are applied to the existing site
-    if [ -n "$DB_HOST" ]; then bench --site "$SITE_NAME" set-config db_host "$DB_HOST"; fi
+    if [ -n "$DB_HOST" ]; then bench --site "$SITE_NAME" set-config db_host "'$DB_HOST'"; fi
   fi
 
   # Ensure the default site is set for this container session
   bench use "$SITE_NAME"
 
   # --- Global Config Injection (Moved from top to ensure common_site_config.json exists) ---
-  if [ -n "$DB_HOST" ]; then bench set-config -g db_host "$DB_HOST"; fi
-  if [ -n "$REDIS_CACHE" ]; then bench set-config -g redis_cache "$REDIS_CACHE"; fi
-  if [ -n "$REDIS_QUEUE" ]; then bench set-config -g redis_queue "$REDIS_QUEUE"; fi
-  if [ -n "$REDIS_SOCKETIO" ]; then bench set-config -g redis_socketio "$REDIS_SOCKETIO"; fi
+  if [ -n "$DB_HOST" ]; then bench config set-common-config --config db_host "'$DB_HOST'"; fi
+  if [ -n "$REDIS_CACHE" ]; then bench config set-common-config --config redis_cache "'$REDIS_CACHE'"; fi
+  if [ -n "$REDIS_QUEUE" ]; then bench config set-common-config --config redis_queue "'$REDIS_QUEUE'"; fi
+  if [ -n "$REDIS_SOCKETIO" ]; then bench config set-common-config --config redis_socketio "'$REDIS_SOCKETIO'"; fi
 
   # --- ROK persistence ---
   mkdir -p "sites/$SITE_NAME/private/rok"
