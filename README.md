@@ -1,4 +1,4 @@
-# 🚀 RokctAI PlatformStack (v2.4.1)
+# 🚀 RokctAI PlatformStack
 
 **PlatformStack** is the authoritative infrastructure, orchestration, and containerization layer for the RokctAI ecosystem. It defines the "Golden State" of the Frappe-based multi-tenant environment and the specialized edge-intelligence spokes.
 
