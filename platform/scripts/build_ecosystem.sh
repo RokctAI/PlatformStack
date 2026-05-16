@@ -58,7 +58,7 @@ bench_step() {
   # sed -i '/psycopg2/d' "$step_log" # DO NOT DELETE PSYCOPG2 ERRORS
   sed -i '/DuplicateEntryError/d' "$step_log"
   local errors
-  errors=$(grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null | grep -v "psycopg2" || grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|psycopg2|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null || true)
+  errors=$(grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|psycopg2|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null || true)
   if [ $exit_code -eq 0 ] && [ -z "$errors" ]; then
     echo -e "\033[0;32m✓ DONE\033[0m"
     cat "$step_log" >>"$BUILD_LOG"
@@ -359,8 +359,8 @@ if [ "$BOOTSTRAP" = "false" ]; then
         exit 1
       fi
       cd /home/frappe/frappe-bench || exit 1
-      "$BENCH_BIN" config set-common-config --config db_host "${DB_HOST}"
-      echo "  - Bench DB configuration ($DB_HOST)... ✓ DONE"
+      \"\$BENCH_BIN\" config set-common-config --config db_host \"${DB_HOST}\"
+      echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
     "
   fi
 else
@@ -432,8 +432,8 @@ else
       exit 1
     fi
     cd /home/frappe/frappe-bench || exit 1
-    "$BENCH_BIN" config set-common-config --config db_host "${DB_HOST}"
-    echo "  - Bench DB configuration ($DB_HOST)... ✓ DONE"
+    \"\$BENCH_BIN\" config set-common-config --config db_host \"${DB_HOST}\"
+    echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
     exit 0
   "
 
