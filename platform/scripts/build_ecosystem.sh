@@ -55,10 +55,10 @@ bench_step() {
   sed -i '/Use `bench restart` to retry/d' "$step_log"
   sed -i '/Cleanup Error:/d' "$step_log"
   sed -i '/UniqueViolation/d' "$step_log"
-  sed -i '/psycopg2/d' "$step_log"
+  # sed -i '/psycopg2/d' "$step_log" # DO NOT DELETE PSYCOPG2 ERRORS
   sed -i '/DuplicateEntryError/d' "$step_log"
   local errors
-  errors=$(grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|psycopg2|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null || true)
+  errors=$(grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null | grep -v "psycopg2" || grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|psycopg2|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null || true)
   if [ $exit_code -eq 0 ] && [ -z "$errors" ]; then
     echo -e "\033[0;32m✓ DONE\033[0m"
     cat "$step_log" >>"$BUILD_LOG"
@@ -359,17 +359,23 @@ if [ "$BOOTSTRAP" = "false" ]; then
         exit 1
       fi
       cd /home/frappe/frappe-bench || exit 1
-      \"\$BENCH_BIN\" config set-common-config --config db_host \"'${DB_HOST}'\"
-      echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
+      "$BENCH_BIN" config set-common-config --config db_host "${DB_HOST}"
+      echo "  - Bench DB configuration ($DB_HOST)... ✓ DONE"
     "
   fi
 else
   # Bootstrap path (install.sh)
   REPO_PATH="RokctAI/rpanel"
   REF_PATH="main"
-  _log "RokctAI: Ensuring clean install.sh from GitHub (${REPO_PATH}/${REF_PATH})..."
-  run_step "Downloading install.sh" \
-    bash -c "rm -f install.sh && wget -q https://raw.githubusercontent.com/${REPO_PATH}/${REF_PATH}/install.sh"
+  _log "RokctAI: Ensuring clean install.sh..."
+  if [ -f "$GITHUB_WORKSPACE/install.sh" ]; then
+    _log "    Using local install.sh from $GITHUB_WORKSPACE"
+    cp "$GITHUB_WORKSPACE/install.sh" .
+  else
+    _log "    Downloading install.sh from GitHub (${REPO_PATH}/${REF_PATH})..."
+    run_step "Downloading install.sh" \
+      bash -c "rm -f install.sh && wget -q https://raw.githubusercontent.com/${REPO_PATH}/${REF_PATH}/install.sh"
+  fi
 
   if [ ! -f "install.sh" ]; then
     echo "    Critical Error: Failed to download install.sh from ${REPO_PATH}/${REF_PATH}"
@@ -389,9 +395,9 @@ else
   # PATCH: Enable strict mode in install.sh
   run_step "Enabling strict mode in install.sh" sed -i '1a set -euo pipefail' install.sh
 
-  # PATCH: Configure yarn for the frappe user specifically
+  # PATCH: Configure yarn and fix DB host logic in install.sh
   run_step "Patching install.sh" \
-    bash -c "sed -i 's/run_quiet \"Initializing frappe-bench\"/run_quiet \"Configuring Frappe User Yarn\" sudo -u frappe -i bash -c \"yarn config set ignore-engines true; yarn config set network-timeout 300000\"\\n\\n  echo -e \"\\\\033[0;34m  - Initializing frappe-bench (Verbose)... \\\\033[0;0m\"/g' install.sh && sed -i 's/set-config db_host \$DB_HOST/set-config db_host \"\\x27\"\$DB_HOST\"\\x27\"/g' install.sh && chmod +x install.sh"
+    bash -c "sed -i 's/run_quiet \"Initializing frappe-bench\"/run_quiet \"Configuring Frappe User Yarn\" sudo -u frappe -i bash -c \"yarn config set ignore-engines true; yarn config set network-timeout 300000\"\\n\\n  echo -e \"\\\\033[0;34m  - Initializing frappe-bench (Verbose)... \\\\033[0;0m\"/g' install.sh && sed -i 's/set-config db_host \$DB_HOST/set-config db_host \$DB_HOST/g' install.sh && chmod +x install.sh"
 
   _log "Executing: sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN DB_HOST=\"${DB_HOST:-127.0.0.1}\" DB_ROOT_PASS=\"${DB_PW:-admin}\" bash ./install.sh"
   # Softer check for install.sh: mark success if frappe-bench exists even if error patterns appeared in log.
@@ -426,8 +432,8 @@ else
       exit 1
     fi
     cd /home/frappe/frappe-bench || exit 1
-    \"\$BENCH_BIN\" config set-common-config --config db_host \"'${DB_HOST}'\"
-    echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
+    "$BENCH_BIN" config set-common-config --config db_host "${DB_HOST}"
+    echo "  - Bench DB configuration ($DB_HOST)... ✓ DONE"
     exit 0
   "
 
