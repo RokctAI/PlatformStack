@@ -352,8 +352,14 @@ if [ "$BOOTSTRAP" = "false" ]; then
     echo "  - Bench structure validation... ✓ DONE"
 
     # Configure Bench to use the resolved DB_HOST
-    run_step "Configuring Bench DB Host ($DB_HOST)" \
-      /home/frappe/frappe-bench/env/bin/bench set-config -g db_host "$DB_HOST"
+    run_step "Configuring Bench DB Host ($DB_HOST)" bash -c "
+      BENCH_BIN=\$(command -v bench)
+      if [ -z \"\$BENCH_BIN\" ]; then
+        echo \"FATAL: bench executable not found\"
+        exit 1
+      fi
+      \"\$BENCH_BIN\" set-config -g db_host \"$DB_HOST\"
+    "
   fi
 else
   # Bootstrap path (install.sh)
@@ -390,7 +396,7 @@ else
   bench_step "Executing install.sh" bash -c "
     sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN DB_HOST=\"${DB_HOST:-127.0.0.1}\" DB_ROOT_PASS=\"${DB_PW:-admin}\" bash ./install.sh
     exit_code=\$?
-    if [ $exit_code -ne 0 ] && [ ! -d '/home/frappe/frappe-bench' ]; then
+    if [ \$exit_code -ne 0 ] && [ ! -d '/home/frappe/frappe-bench' ]; then
       echo 'FATAL: install.sh failed and frappe-bench is missing'
       echo '---- INSTALL LOG START ----'
       cat /tmp/rpanel_install.log || true
@@ -412,7 +418,12 @@ else
 
     # Configure Bench to use the resolved DB_HOST
     # We pass the outer $DB_HOST into the inner sudo bash
-    /home/frappe/frappe-bench/env/bin/bench set-config -g db_host \"$DB_HOST\"
+    BENCH_BIN=\$(command -v bench)
+    if [ -z \"\$BENCH_BIN\" ]; then
+      echo \"FATAL: bench executable not found\"
+      exit 1
+    fi
+    \"\$BENCH_BIN\" set-config -g db_host \"$DB_HOST\"
     echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
     exit 0
   "
