@@ -154,6 +154,16 @@ else
 fi
 SITE_NAME="${SITE_NAME:-$WORKING_SITE}"
 
+# LATE DETECTION: If we are already in a bench, prioritize what actually exists
+if [ -d "/home/frappe/frappe-bench/sites" ]; then
+  for s in "rpanel.local" "platform.rokct.ai"; do
+    if [ -d "/home/frappe/frappe-bench/sites/$s" ]; then
+      SITE_NAME="$s"
+      break
+    fi
+  done
+fi
+
 # Silence tqdm progress bars (e.g. "Updating DocTypes [===] 40%") in non-TTY environments.
 # Without a TTY, tqdm can't use \r to overwrite lines so it prints every % update as a new line.
 # TQDM_DISABLE=1 suppresses all tqdm output entirely.
@@ -476,9 +486,16 @@ cd "$BENCH_DIR" || {
 export PATH="$BENCH_DIR/env/bin:$PATH"
 if [ -f "env/bin/activate" ]; then source env/bin/activate; fi
 
-# Fix Issue 2: Restore log structure after bench is created
-ensure_site_logs "/home/frappe/frappe-bench/sites/$SITE_NAME"
-ensure_site_logs "/home/frappe/frappe-bench/$SITE_NAME"
+# Fix Issue 2: Restore log structure after bench is created. 
+# We ensure logs for BOTH potential site names and locations (standard vs flat)
+# to prevent FileNotFoundError from scripts that might omit the 'sites/' prefix.
+for site in "$SITE_NAME" "rpanel.local" "platform.rokct.ai"; do
+  if [ -d "sites/$site" ]; then
+    ensure_site_logs "sites/$site"
+    # Create a symlink to the root to satisfy legacy or misconfigured site-path lookups
+    ln -sf "sites/$site" "./$site" 2>/dev/null || true
+  fi
+done
 
 # --- 4A. Patch: Suppress Frappe Progress Bars (Non-TTY) ---
 # Suppress Frappe's built-in progress bar in non-TTY environments
