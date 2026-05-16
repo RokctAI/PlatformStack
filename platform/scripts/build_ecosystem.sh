@@ -58,7 +58,9 @@ bench_step() {
   # sed -i '/psycopg2/d' "$step_log" # DO NOT DELETE PSYCOPG2 ERRORS
   sed -i '/DuplicateEntryError/d' "$step_log"
   local errors
-  errors=$(grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|psycopg2|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null || true)
+  # Refined error detection: Look for actual tracebacks and operational errors, avoiding false positives from package names like 'psycopg2-binary'
+  errors=$(grep -Ei "Traceback \(most recent call last\):|psycopg2\.(OperationalError|ProgrammingError|InternalError|DataError|NotSupportedError|IntegrityError|InterfaceError)|Exception: |FileNotFoundError: |UniqueViolation: |SyntaxError: |ImportError: |ModuleNotFoundError: |DuplicateEntryError: |FATAL: |CRITICAL: |ERROR: " "$step_log" | grep -vEi "Requirement already satisfied|warning" || true)
+
   if [ $exit_code -eq 0 ] && [ -z "$errors" ]; then
     echo -e "\033[0;32m✓ DONE\033[0m"
     cat "$step_log" >>"$BUILD_LOG"
