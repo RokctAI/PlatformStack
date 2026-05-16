@@ -359,7 +359,7 @@ if [ "$BOOTSTRAP" = "false" ]; then
         exit 1
       fi
       cd /home/frappe/frappe-bench || exit 1
-      \"\$BENCH_BIN\" config set-common-config --config db_host \"${DB_HOST}\"
+      \"\$BENCH_BIN\" config set-common-config --config db_host \"'${DB_HOST}'\"
       echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
     "
   fi
@@ -432,7 +432,7 @@ else
       exit 1
     fi
     cd /home/frappe/frappe-bench || exit 1
-    \"\$BENCH_BIN\" config set-common-config --config db_host \"${DB_HOST}\"
+    \"\$BENCH_BIN\" config set-common-config --config db_host \"'${DB_HOST}'\"
     echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
     exit 0
   "
