@@ -358,7 +358,9 @@ if [ "$BOOTSTRAP" = "false" ]; then
         echo \"FATAL: bench executable not found\"
         exit 1
       fi
-      \"\$BENCH_BIN\" set-config -g db_host \"$DB_HOST\"
+      cd /home/frappe/frappe-bench || exit 1
+      \"\$BENCH_BIN\" config set-common-config -c db_host \"$DB_HOST\"
+      echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
     "
   fi
 else
@@ -423,7 +425,8 @@ else
       echo \"FATAL: bench executable not found\"
       exit 1
     fi
-    \"\$BENCH_BIN\" set-config -g db_host \"$DB_HOST\"
+    cd /home/frappe/frappe-bench || exit 1
+    \"\$BENCH_BIN\" config set-common-config -c db_host \"$DB_HOST\"
     echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
     exit 0
   "
