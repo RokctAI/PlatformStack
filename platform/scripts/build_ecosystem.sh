@@ -385,10 +385,10 @@ else
   run_step "Patching install.sh" \
     bash -c "sed -i 's/run_quiet \"Initializing frappe-bench\"/run_quiet \"Configuring Frappe User Yarn\" sudo -u frappe -i bash -c \"yarn config set ignore-engines true; yarn config set network-timeout 300000\"\\n\\n  echo -e \"\\\\033[0;34m  - Initializing frappe-bench (Verbose)... \\\\033[0;0m\"/g' install.sh && chmod +x install.sh"
 
-  _log "Executing: sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN bash ./install.sh"
+  _log "Executing: sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN DB_HOST=\"${DB_HOST:-127.0.0.1}\" DB_ROOT_PASS=\"${DB_PW:-admin}\" bash ./install.sh"
   # Softer check for install.sh: mark success if frappe-bench exists even if error patterns appeared in log.
   bench_step "Executing install.sh" bash -c "
-    sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN bash ./install.sh
+    sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN DB_HOST=\"${DB_HOST:-127.0.0.1}\" DB_ROOT_PASS=\"${DB_PW:-admin}\" bash ./install.sh
     exit_code=\$?
     if [ $exit_code -ne 0 ] && [ ! -d '/home/frappe/frappe-bench' ]; then
       echo 'FATAL: install.sh failed and frappe-bench is missing'
