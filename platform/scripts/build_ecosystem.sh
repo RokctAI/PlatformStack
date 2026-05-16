@@ -57,6 +57,11 @@ bench_step() {
   sed -i '/UniqueViolation/d' "$step_log"
   # sed -i '/psycopg2/d' "$step_log" # DO NOT DELETE PSYCOPG2 ERRORS
   sed -i '/DuplicateEntryError/d' "$step_log"
+  # Ignore systemd errors in Docker
+  sed -i '/Failed to connect to system scope bus/d' "$step_log"
+  sed -i '/System has not been booted with systemd/d' "$step_log"
+  sed -i '/Could not restart Nginx/d' "$step_log"
+  sed -i '/Please run manually: sudo systemctl restart nginx/d' "$step_log"
   local errors
   # Refined error detection: Look for actual tracebacks and operational errors, avoiding false positives from package names like 'psycopg2-binary'
   errors=$(grep -Ei "Traceback \(most recent call last\):|psycopg2\.(OperationalError|ProgrammingError|InternalError|DataError|NotSupportedError|IntegrityError|InterfaceError)|Exception: |FileNotFoundError: |UniqueViolation: |SyntaxError: |ImportError: |ModuleNotFoundError: |DuplicateEntryError: |FATAL: |CRITICAL: |ERROR: " "$step_log" | grep -vEi "Requirement already satisfied|warning" || true)
