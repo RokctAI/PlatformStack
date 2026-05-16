@@ -1,218 +1,97 @@
-# RokctAI PlatformStack
+# 🚀 RokctAI PlatformStack
 
-PlatformStack is the infrastructure and orchestration layer for the RokctAI platform — a Frappe-based, multi-tenant application platform. It defines how the platform is built, deployed, and operated. Current version: **2.4.1**.
+**PlatformStack** is the authoritative infrastructure, orchestration, and containerization layer for the RokctAI ecosystem. It defines the "Golden State" of the Frappe-based multi-tenant environment and the specialized edge-intelligence spokes.
 
----
-
-## Architecture
-
-PlatformStack uses a hub-and-spoke model. The **Control Hub** is the central orchestrator that manages SSL, routing, and the shared trial tenant pool. **Tenant Spokes** run isolated instances for each customer, and **IoT/Edge Spokes** are trimmed-down instances optimized for low-RAM devices such as drones and sensors.
-
-```
-┌──────────────────────────────────────────────┐
-│             Control Hub                       │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐      │
-│  │  Nginx  │  │  Exim4  │  │  Bench  │      │
-│  └─────────┘  └─────────┘  └─────────┘      │
-│       │              │              │         │
-│  ┌────▼────┐  ┌─────▼─────┐ ┌─────▼─────┐   │
-│  │  Redis  │  │PostgreSQL │ │  rpanel   │   │
-│  └─────────┘  └───────────┘ └───────────┘   │
-└──────────────────────────────────────────────┘
-              │                    │
-        ┌─────▼─────┐       ┌──────▼──────┐
-        │Tenant Spoke│      │ IoT Edge    │
-        │ (isolated) │      │ Spoke       │
-        └────────────┘      └─────────────┘
-```
-
-All services run as Docker containers with persistent named volumes for databases, sites, logs, mail configuration, and nginx data.
+> [!CAUTION]
+> **Proprietary & Protected Architecture**
+> This repository is not a standalone product. Successful builds and deployments require access to private RokctAI Monorepo overrides, protected application blueprints, and authorized GitHub secrets. Unauthorized use will result in failure during the "Golden Build" orchestration phase.
 
 ---
 
-## Components
+## 🏛️ System Architecture
 
-### Control Hub
+PlatformStack operates on a **Unified Hub & Spoke** model, designed for high-availability cloud operations and low-latency edge intelligence.
 
-The master VPS deployment. Manages SSL termination, reverse proxy routing, outgoing mail, cron jobs, and the shared trial tenant pool.
+### 1. Control Hub (Orchestrator)
+The central nervous system of the platform. Manages identity, global routing, SSL termination, and the lifecycle of all spokes.
+- **Stack**: Nginx (Reverse Proxy), Exim4 + OpenDKIM (Production Mail), Frappe Bench, Redis Cluster.
+- **Database**: PostgreSQL 16 with `pgvector`, `cube`, and `earthdistance`.
+- **Target**: Cloud VPS / Dedicated Infrastructure.
 
-- **Services:** Nginx, Exim4, OpenDKIM, Frappe Bench, PostgreSQL, Redis
-- **Ports:** 80 (HTTP), 443 (HTTPS), 8000 (API)
-- **Image:** `ghcr.io/rokctai/monorepo/rpanel-control`
-- **Apps:** `rpanel`, `control`, `paas`, `rcore`, `brain`
+### 2. Tenant Spokes (Cloud Business)
+Isolated, high-performance Frappe instances managed by the Control Hub.
+- **Memory Profile**: 2GB Optimized.
+- **Capability**: Headless API, background workers, and persistent business logic.
 
-### Tenant Spoke
-
-An isolated spoke used by the Control Hub to spin up individual tenant instances. Headless — serves only the API via Gunicorn plus workers and scheduler.
-
-- **Memory limit:** 2 GB
-- **Image:** `ghcr.io/rokctai/monorepo/rpanel-tenant`
-- **Apps:** `rcore`, `brain`
-
-### IoT/Edge Spoke
-
-A minimal spoke optimized for low-RAM edge devices. No web overhead, workers and scheduler only.
-
-- **Memory limit:** 1 GB
-- **Image:** `ghcr.io/rokctai/monorepo/rpanel-iot`
-- **Apps:** none of `erpnext`, `payments`, `paas`, or `rok`
-
-### Database
-
-PostgreSQL 16 with the `pgvector`, `cube`, and `earthdistance` extensions pre-installed and auto-enabled on every new database.
-
-- **Image:** `ghcr.io/rokctai/monorepo/rpanel-db`
+### 3. IoT/Edge Spokes (Dual-Layer)
+Specialized for hardware-integration and edge-computing (e.g., Drones, Sensors).
+- **The Mission Brain (Frappe Spoke)**: The primary controller running the `brain` app. Acts as the Source of Truth for missions. (Python/Postgres).
+- **The Reflexes (Edge Intelligence)**: Ultra-lean, Go-based service for high-speed sensor fusion, vision processing, and local AI inference (Go/PocketBase/Ollama).
 
 ---
 
-## Repository Structure
+## 🛠️ The Golden Build Engine
 
-```
+At the heart of PlatformStack is `build_ecosystem.sh` — a sophisticated build orchestrator that ensures every deployment is consistent, stabilized, and hardened.
+
+- **Python 3.14+**: Universal environment management via `uv`.
+- **Monorepo Overrides**: Seamlessly applies private blueprints and module overrides from the central monorepo.
+- **ROK AI Tooling**: Deep integration of the `rok` CLI agent framework for autonomous orchestration.
+- **Ecosystem Hacks**: Automated patching for PostgreSQL stability, API deprecations, and non-TTY CI environments.
+
+---
+
+## 📂 Repository Structure
+
+```text
 rokctPlatformStack/
-├── version.json
 ├── platform/
-│   ├── Dockerfile
-│   ├── postgres.Dockerfile
-│   ├── docker-entrypoint.sh
-│   ├── docker-compose.yml
+│   ├── Dockerfile              # The multi-stage Golden Build
+│   ├── postgres.Dockerfile     # Vector-optimized PostgreSQL
+│   ├── docker-entrypoint.sh    # Intelligent volume seeding
+│   ├── docker-compose.yml      # Control Hub stack
 │   ├── docker-compose.tenant.yml
-│   ├── docker-compose.iot.yml
+│   ├── docker-compose.iot.yml  # Official Drone Brain
 │   └── scripts/
-│       ├── build_ecosystem.sh
-│       └── exim4_bootstrap.sh
+│       ├── build_ecosystem.sh  # Build Orchestrator
+│       └── exim4_bootstrap.sh  # Production Mail Setup
+└── version.json                # Platform versioning (v2.4.1)
 ```
 
 ---
 
-## Fresh VPS Install
+## 🚀 Quick Deployment
 
-PlatformStack includes a full VPS installer for bare-metal or fresh VPS provisioning. It handles OS detection, system package installation, database setup, mail configuration, and the Frappe bench — all in one script.
-
+### Cloud Control Hub
 ```bash
-# Full VPS install
-DEPLOY_MODE=fresh DB_TYPE=postgres ./install.sh
-
-# Bench-only (no system deps)
-DEPLOY_MODE=bench ./install.sh
-```
-
-The installer handles: OS detection (Debian/Ubuntu), Redis, PostgreSQL 16 (+pgvector), MariaDB (optional), Exim4, OpenDKIM, Nginx, wkhtmltopdf, Node.js 22, Python 3.14 via `uv`, swap setup on low-RAM systems, database hardening, automatic security updates, `frappe-bench` initialization, rpanel app fetch+install, and Let's Encrypt SSL.
-
----
-
-## Docker Images
-
-| Image | Purpose |
-|---|---|
-| `rpanel-control` | Control Hub with Nginx + Exim + Bench |
-| `rpanel-tenant` | Headless tenant API spoke |
-| `rpanel-iot` | Minimal IoT/edge spoke |
-| `rpanel-db` | PostgreSQL 16 + pgvector |
-
----
-
-## CI Pipeline
-
-On every push to `main` or `develop`, the pipeline runs through these stages:
-
-### 1. Change Detection
-
-Compares the current commit against the base. If only whitespace changed, the rest of the pipeline is skipped and a `trivial` label is applied to the PR.
-
-### 2. PR Resurrection
-
-If a PR has new commits pushed after becoming stale, it is automatically re-opened so review work is not lost.
-
-### 3. Security
-
-Dependency and secret scanning. A failure here blocks lint and CI.
-
-### 4. Lint
-
-Code quality checks. On `main` and `develop`, auto-fix mode is enabled — violations are corrected and committed back automatically. On other branches, lint failures block the pipeline.
-
-### 5. CI / Build
-
-A project-agnostic job. It discovers the app by inspecting `pyproject.toml` or `setup.py`, syncs workspace code into the bench at `apps/<detected-name>/`, appends the app name to `apps.txt`, creates a test site, runs `migrate`, `install-app`, and then `run-tests --app <name>`. It boots a database service and three Redis instances first so the test site has everything it needs. In bootstrap mode, `install.sh` is downloaded and run to build the entire bench workspace from scratch before syncing code on top.
-
-### 6. Upgrade Test
-
-Validates a live Blue/Green upgrade path after a successful release. Deploys the previous stable version, waits for site health, triggers a self-upgrade, confirms the upgraded app boots cleanly, then provisions a real tenant through the Control Hub to verify the spoke-spawning pipeline end-to-end.
-
-### 7. Release
-
-Handles versioning, tagging, changelog generation, and artefact packaging. Two strategies:
-
-- **Immediate** — the default. Every qualifying commit on `main` produces a stable release.
-- **Weekly** — pushes to `main` produce a release candidate (`-rc` suffix). A scheduled run promotes accumulated RCs to stable via a version-bump PR.
-
-### Release features
-
-- LTS branch and tag creation on major version bumps
-- One-time RC release cleanup after promotion
-- AI-generated changelogs — tries Brain API first, falls back to Groq Llama 3.3 70B, then plain git log
-- Delta ZIP generation against the previous stable release
-- Contributor extraction with `Co-authored-by` trailers from PR metadata
-
----
-
-## Golden Build
-
-The `build_ecosystem.sh` script is the authoritative build orchestrator. It bootstraps Python 3.14, starts Redis, waits for PostgreSQL, initialises the bench, fetches and patches apps, applies monorepo overrides and blueprints, installs the `rok` tooling, runs post-fetch ecosystem hacks, migrates the site, installs stack dependencies, bakes platform assets, generates a golden DB seed, and runs a strict compliance verification. The Docker multi-stage build bakes a pre-initialised site into the image and seeds it to the named volume on first boot.
-
----
-
-## Mail
-
-The Exim4 bootstrap script configures a production-ready mail stack on the Control Hub: SMTP on ports 25 and 587, TLS via Let's Encrypt, DKIM signing on all outbound mail, SMTP AUTH over TLS, and catch-all forwarding.
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `MODE` | — | `full` / `api` / `iot` — runtime mode |
-| `SITE_NAME` | `platform.rokct.ai` / `rpanel.local` | Frappe site name |
-| `DB_HOST` | `db` | PostgreSQL host |
-| `DB_PASSWORD` | `admin` | Database password |
-| `ADMIN_PASSWORD` | `admin` | Frappe admin password |
-| `DB_ROOT_PASSWORD` | `admin` | PostgreSQL root password |
-| `REDIS_CACHE` | `redis://redis:6379/0` | Redis cache URL |
-| `REDIS_QUEUE` | `redis://redis:6379/1` | Redis queue URL |
-| `REDIS_SOCKETIO` | `redis://redis:6379/2` | Redis Socket.IO URL |
-| `INSTALL_APPS` | — | Extra apps for new tenant sites |
-| `GITHUB_TOKEN` | — | GitHub token for fetching private repos during build |
-
----
-
-## Quick Start
-
-```bash
-# Control Hub
 cd platform && docker compose up -d
+```
 
-# Tenant Spoke
-cd platform && SITE_NAME=tenant1.example.com docker compose -f docker-compose.tenant.yml up -d
+### Drone Mission Brain (IoT)
+```bash
+cd platform && docker compose -f docker-compose.iot.yml up -d
+```
 
-# IoT Spoke
-cd platform && SITE_NAME=drone-local docker compose -f docker-compose.iot.yml up -d
+### Edge Intelligence Reflexes (Go)
+*Located in `Monorepo/IoT`*
+```bash
+cd ../Monorepo/IoT && docker compose up -d
 ```
 
 ---
 
-## ROK AI Tooling
+## 🧪 CI/CD & Compliance
 
-PlatformStack installs the `rok` CLI — the RokctAI agent framework. It is installed as an editable Python package inside the Frappe bench and used as the orchestration agent during builds and container sessions.
+Our pipeline ensures absolute stability before any image is promoted:
+1.  **Security Scan**: Dependency and secret auditing.
+2.  **The Golden Build**: Workspace synthesis and `build_ecosystem.sh` verification.
+3.  **Compliance Test**: Site health checks and app-installation validation.
+4.  **Blue/Green Upgrade Test**: Verifies zero-downtime migration paths.
+5.  **AI-Generated Releases**: Release notes and changelogs compiled by the ROK Brain.
 
 ---
 
-## Dependabot
+## ⚖️ License & Copyright
 
-Configured to open monthly pull requests for `pip` (Frappe/Python) and `npm` (Node.js) dependencies. PRs are created but never auto-merged.
-
----
-
-## License
-
-(c) 2024 Rokct Intelligence (pty) Ltd. All rights reserved.
+(c) 2024-2026 Rokct Intelligence (pty) Ltd. All rights reserved.
+**Confidential - Internal Use Only**
