@@ -444,6 +444,8 @@ else
   sudo chown -R frappe:frappe /home/frappe/frappe-bench
   sudo find /home/frappe/frappe-bench -type d -exec chmod 755 {} +
   sudo find /home/frappe/frappe-bench -type f -exec chmod 644 {} +
+  # RESTORE EXECUTE BITS: Mass 644 above kills the virtualenv binaries. Restore them.
+  sudo find /home/frappe/frappe-bench/env/bin -type f -exec chmod +x {} +
 
   # Pre-create the directory that causes permission issues during plaid-python install
   S_PATH="/home/frappe/frappe-bench/env/lib/python3.14/site-packages"
