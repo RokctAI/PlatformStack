@@ -370,14 +370,15 @@ if [ "$BOOTSTRAP" = "false" ]; then
 
     # Configure Bench to use the resolved DB_HOST
     run_step "Configuring Bench DB Host ($DB_HOST)" bash -c "
-      BENCH_BIN=\$(command -v bench)
-      if [ -z \"\$BENCH_BIN\" ]; then
-        echo \"FATAL: bench executable not found\"
-        exit 1
-      fi
       cd /home/frappe/frappe-bench || exit 1
-      \"\$BENCH_BIN\" config set-common-config --config db_host \"'${DB_HOST}'\"
-      echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
+      python3 -c \"
+import json
+p = 'sites/common_site_config.json'
+with open(p) as f: cfg = json.load(f)
+cfg['db_host'] = '${DB_HOST}'
+with open(p, 'w') as f: json.dump(cfg, f, indent=2)
+print('  - Bench DB configuration (${DB_HOST})... DONE')
+\"
     "
   fi
 else
@@ -442,14 +443,15 @@ else
 
     # Configure Bench to use the resolved DB_HOST
     # We pass the outer $DB_HOST into the inner sudo bash
-    BENCH_BIN=\$(command -v bench)
-    if [ -z \"\$BENCH_BIN\" ]; then
-      echo \"FATAL: bench executable not found\"
-      exit 1
-    fi
     cd /home/frappe/frappe-bench || exit 1
-    \"\$BENCH_BIN\" config set-common-config --config db_host \"'${DB_HOST}'\"
-    echo \"  - Bench DB configuration ($DB_HOST)... ✓ DONE\"
+    python3 -c \"
+import json
+p = 'sites/common_site_config.json'
+with open(p) as f: cfg = json.load(f)
+cfg['db_host'] = '${DB_HOST}'
+with open(p, 'w') as f: json.dump(cfg, f, indent=2)
+print('  - Bench DB configuration (${DB_HOST})... DONE')
+\"
     exit 0
   "
 
