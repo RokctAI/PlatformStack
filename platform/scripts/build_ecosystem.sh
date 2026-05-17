@@ -866,13 +866,26 @@ PY
 import pathlib, re
 p = pathlib.Path('$LOAN_CTRL')
 text = p.read_text()
-# Guard all erpnext imports
-text = re.sub(r'^from erpnext([^\n]*)$',
-  r'try:\n    from erpnext\1\nexcept ImportError:\n    pass',
-  text, flags=re.MULTILINE)
-# Add AccountsController fallback after imports if not already present
-if 'AccountsController = ' not in text:
-    text = text + '\ntry:\n    AccountsController\nexcept NameError:\n    from frappe.model.document import Document as AccountsController\n'
+
+# Replace all erpnext imports with guarded versions
+text = re.sub(
+    r'^from erpnext([^\n]*)$',
+    r'try:\n    from erpnext\1\nexcept ImportError:\n    pass',
+    text, flags=re.MULTILINE
+)
+
+# Inject AccountsController fallback right before the class definition
+fallback = '''try:
+    AccountsController
+except NameError:
+    from frappe.model.document import Document as AccountsController
+'''
+text = re.sub(
+    r'^(class LoanController\(AccountsController\):)',
+    fallback + r'\1',
+    text, flags=re.MULTILINE
+)
+
 p.write_text(text)
 print('loan_controller.py patched')
 "
