@@ -847,9 +847,9 @@ for py_file in lending_path.rglob("*.py"):
     )
 
     # Fix AccountsController fallback before class definition
-    if 'class LoanController(AccountsController)' in text and 'AccountsController\nexcept NameError' not in text:
+    if '(AccountsController)' in text and 'AccountsController\nexcept NameError' not in text:
         text = re.sub(
-            r'^(class LoanController\(AccountsController\):)',
+            r'^(class \w+\(AccountsController\):)',
             'try:\n    AccountsController\nexcept NameError:\n    from frappe.model.document import Document as AccountsController\n\n\\1',
             text, flags=re.MULTILINE
         )
