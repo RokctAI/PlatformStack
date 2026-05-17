@@ -218,30 +218,39 @@ is_app_installed() {
 safe_install_app() {
   local app=$1
   if is_app_installed "$app"; then
-    echo "  - [$app] Already installed on $SITE_NAME...     DONE"
+    printf "  - \033[0;34mInstalling %s on %s\033[0m... \033[0;32m✓ DONE\033[0m (already installed)\n" "$app" "$SITE_NAME"
     return 0
   fi
 
-  echo "  - Installing $app on $SITE_NAME..."
+  printf "  - \033[0;34mInstalling %s on %s\033[0m... " "$app" "$SITE_NAME"
   set +e
-  env/bin/python -c "
+  OUTPUT=$(env/bin/python -c "
 import frappe
 frappe.init(site='$SITE_NAME', sites_path='sites')
 frappe.connect()
 from frappe.installer import install_app
 install_app('$app', force=True)
-" 2>&1
+" 2>&1)
   RET=$?
   set -e
-  if [ $RET -ne 0 ]; then
-    echo "  - Python install failed for $app, trying bench fallback..."
-    set +e
-    bench --site "$SITE_NAME" install-app "$app" --force 2>&1
-    BENCH_RET=$?
-    set -e
-    if [ $BENCH_RET -ne 0 ]; then
-      echo "  ⚠️  WARNING: Could not install $app — continuing anyway"
-    fi
+
+  if [ $RET -eq 0 ]; then
+    echo -e "\033[0;32m✓ DONE\033[0m"
+    echo "$OUTPUT" >>"$BUILD_LOG"
+    return 0
+  fi
+
+  set +e
+  OUTPUT2=$(bench --site "$SITE_NAME" install-app "$app" --force 2>&1)
+  BENCH_RET=$?
+  set -e
+
+  if [ $BENCH_RET -eq 0 ]; then
+    echo -e "\033[0;32m✓ DONE\033[0m"
+    echo "$OUTPUT2" >>"$BUILD_LOG"
+  else
+    echo -e "\033[1;33m⚠ SKIPPED\033[0m"
+    echo "$OUTPUT2" >>"$BUILD_LOG"
   fi
 }
 
@@ -810,7 +819,14 @@ for app_dir in apps/*; do
 
   # D. Namespace Package Fix
   if [ -d "apps/$this_app/$this_app" ]; then
-    run_step "[$this_app] Fixing namespace packages" bash -c "find \"apps/$this_app/$this_app\" -type d | while read dir; do if [ ! -f \"\$dir/__init__.py\" ]; then touch \"\$dir/__init__.py\"; fi; done"
+    run_step "[$this_app] Fixing namespace packages" bash -c "find \"apps/$this_app/$this_app\" -type d | while read dir; do \
+      case \"\$(basename \"\$dir\")\" in \
+        workspace_sidebar|desktop_icon|sidebar_item_group|notification_log) \
+          rm -f \"\$dir/__init__.py\" \
+          continue ;; \
+      esac; \
+      if [ ! -f \"\$dir/__init__.py\" ]; then touch \"\$dir/__init__.py\"; fi; \
+    done"
   fi
 
   # E. API Deprecation Patch
