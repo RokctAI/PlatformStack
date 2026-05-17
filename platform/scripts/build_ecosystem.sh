@@ -493,7 +493,7 @@ cd "$BENCH_DIR" || {
 export PATH="$BENCH_DIR/env/bin:$PATH"
 if [ -f "env/bin/activate" ]; then source env/bin/activate; fi
 
-# Fix Issue 2: Restore log structure after bench is created. 
+# Fix Issue 2: Restore log structure after bench is created.
 # We ensure logs for BOTH potential site names and locations (standard vs flat)
 # to prevent FileNotFoundError from scripts that might omit the 'sites/' prefix.
 for site in "$SITE_NAME" "rpanel.local" "platform.rokct.ai"; do
