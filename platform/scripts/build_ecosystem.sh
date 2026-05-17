@@ -996,8 +996,8 @@ if p.exists():
 \t\t\tif any(x in str(e).lower() for x in ["duplicate key", "unique constraint", "already exists", "violates unique"]):
 \t\t\t\tprint(f"Skipping duplicate fixture {fname}: {e}")
 \t\t\t\ttry:
-\t\t\t\t\timport frappe
-\t\t\t\t\tfrappe.db.rollback()
+\t\t\t\t\timport frappe as _frappe
+\t\t\t\t\t_frappe.db.rollback()
 \t\t\t\texcept Exception:
 \t\t\t\t\tpass
 \t\t\telse:
@@ -1013,8 +1013,8 @@ if p.exists():
 \t\t\tif any(x in str(e).lower() for x in ["duplicate key", "unique constraint", "already exists", "violates unique"]):
 \t\t\t\tprint(f"Skipping duplicate: {e}")
 \t\t\t\ttry:
-\t\t\t\t\timport frappe
-\t\t\t\t\tfrappe.db.rollback()
+\t\t\t\t\timport frappe as _frappe
+\t\t\t\t\t_frappe.db.rollback()
 \t\t\t\texcept Exception:
 \t\t\t\t\tpass
 \t\t\telse:
