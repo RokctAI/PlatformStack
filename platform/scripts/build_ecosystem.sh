@@ -250,6 +250,13 @@ install_app('$app', force=True)
     echo "$OUTPUT2" >>"$BUILD_LOG"
   else
     echo -e "\033[1;33m⚠ SKIPPED\033[0m"
+    echo "    ---- PYTHON INSTALL LOG START ----"
+    echo "$OUTPUT"
+    echo "    ---- PYTHON INSTALL LOG END ----"
+    echo "    ---- BENCH INSTALL LOG START ----"
+    echo "$OUTPUT2"
+    echo "    ---- BENCH INSTALL LOG END ----"
+    echo "$OUTPUT" >>"$BUILD_LOG"
     echo "$OUTPUT2" >>"$BUILD_LOG"
   fi
 }
