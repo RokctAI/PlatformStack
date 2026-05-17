@@ -64,6 +64,7 @@ USER root
 RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools && rm -rf /var/lib/apt/lists/*
 VOLUME ["/etc/exim4", "/var/spool/exim4", "/var/log/exim4", "/etc/opendkim", "/etc/nginx", "/var/log/nginx", "/etc/cron.d"]
 RUN chmod -R 777 /var/log/nginx /var/lib/nginx
+WORKDIR /home/frappe/frappe-bench
 COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER frappe

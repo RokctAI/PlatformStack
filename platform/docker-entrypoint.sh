@@ -2,11 +2,8 @@
 set -e
 set -x
 
-step() {
-  printf "  - %s... " "$1"
-}
-step_done() { echo "✓ DONE"; }
-step_fail() { echo "✗ FAILED: $1"; }
+# Navigate to bench directory so all bench commands and relative site paths resolve correctly
+cd /home/frappe/frappe-bench || exit 1
 
 step() {
   printf "  - %s... " "$1"
