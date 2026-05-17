@@ -17,8 +17,11 @@ step_fail() { echo "✗ FAILED: $1"; }
 setup_site() {
   echo "🚀 RPanel entrypoint starting (MODE=$MODE SITE=$SITE_NAME)..."
 
-  if [ "$EXIM_MODE" = "host" ] || [ -f /etc/exim4/update-exim4.conf.conf ] || [ -d /var/spool/exim4 ]; then
-    echo "Exim detected or EXIM_MODE=host -> Docker mail stack disabled"
+  # Improved Exim Detection:
+  # Only skip if EXIM_MODE is explicitly 'host' or if we are NOT in full mode.
+  # In 'full' mode, we WANT to bootstrap exim4 unless it's managed by the host.
+  if [ "$EXIM_MODE" = "host" ] || [ "$MODE" != "full" ]; then
+    echo "Exim managed by host or not in Full mode -> Docker mail stack disabled"
     export SKIP_EXIM=1
   fi
 
@@ -141,9 +144,12 @@ start_services() {
     echo "💻 Full Mode (Control Hub): Starting Web + Mail + Bench..."
     if [ "$(id -u)" = "0" ]; then
       if [ "$SKIP_EXIM" != "1" ]; then
+        echo "📧 Bootstrapping Exim4..."
+        # Run bootstrap, skipping its internal service restart as we do it here
+        SKIP_EXIM=1 sudo -E /usr/local/bin/exim4_bootstrap.sh || echo "⚠️ Exim bootstrap warned/failed, attempting start anyway"
         service exim4 start || true
       else
-        echo "Skipping Exim start (host-managed)"
+        echo "Skipping Exim bootstrap/start (host-managed)"
       fi
       nginx -g 'daemon off;' &
       mkdir -p /var/run/supervisor || true

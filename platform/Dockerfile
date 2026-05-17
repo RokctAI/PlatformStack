@@ -45,14 +45,14 @@ ARG DB_HOST=127.0.0.1
 # Inject Context & Run Golden Build
 COPY --chown=frappe:frappe monorepo_overrides /home/frappe/monorepo_overrides
 COPY --chown=frappe:frappe current_repo /home/frappe/current_repo
-COPY --chown=frappe:frappe platform/scripts/build_ecosystem.sh /tmp/build_ecosystem.sh
-RUN chmod +x /tmp/build_ecosystem.sh && \
+COPY --chown=frappe:frappe platform/scripts/build_ecosystem.sh /usr/local/bin/build_ecosystem.sh
+RUN chmod +x /usr/local/bin/build_ecosystem.sh && \
     export BOOTSTRAP=true && export DB_TYPE=postgres && export DB_PW=admin && \
     export GITHUB_TOKEN=${GITHUB_TOKEN} && \
     export GITHUB_WORKSPACE=/home/frappe/current_repo && \
     export DB_HOST=${DB_HOST} && \
     export APP_NAME=$(cat /home/frappe/current_repo/pyproject.toml 2>/dev/null | grep -m1 'name = "' | cut -d'"' -f2 || echo "rpanel") && \
-    /tmp/build_ecosystem.sh || (cat /tmp/build_ecosystem.log && exit 1)
+    /usr/local/bin/build_ecosystem.sh || (cat /tmp/build_ecosystem.log && exit 1)
 
 # Preserve the baked site so the entrypoint can seed an empty volume on first boot
 # (Named volume mounts shadow the image layers, so we keep a backup outside /sites)
@@ -61,12 +61,13 @@ RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
 # Stage 3: Control Hub (Full Image)
 FROM builder AS full
 USER root
-RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools openssl && rm -rf /var/lib/apt/lists/*
 VOLUME ["/etc/exim4", "/var/spool/exim4", "/var/log/exim4", "/etc/opendkim", "/etc/nginx", "/var/log/nginx", "/etc/cron.d"]
 RUN chmod -R 777 /var/log/nginx /var/lib/nginx
 WORKDIR /home/frappe/frappe-bench
 COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+COPY --chown=frappe:frappe platform/scripts/exim4_bootstrap.sh /usr/local/bin/exim4_bootstrap.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/exim4_bootstrap.sh
 USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bench", "start"]
