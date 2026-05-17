@@ -865,29 +865,7 @@ PY
       run_step "[$this_app] Stripping 'payments' requirement" sed -i "s/[\"']payments[\"']//g" "apps/$this_app/$this_app/hooks.py"
     fi
 
-    if [ "$this_app" = "control" ]; then
-      SEEDER_PATCH="apps/control/control/control/patches/seed_subscription_plans_v4.py"
-      if [ -f "$SEEDER_PATCH" ]; then
-        run_step "[$this_app] Guarding seeder in seed_subscription_plans_v4.py" env/bin/python <<'PY'
-import pathlib, re
-p = pathlib.Path("apps/control/control/control/patches/seed_subscription_plans_v4.py")
-if p.exists():
-    text = p.read_text()
-    pattern = r"(def _ensure_dependencies\(\):)(.*?)(\ndef |\Z)"
-    def repl(m):
-        header = m.group(1)
-        body = m.group(2)
-        tail = m.group(3)
-        indented_body = re.sub(r"^", "    ", body, flags=re.MULTILINE)
-        return f"{header}\n    try:{indented_body}\n    except Exception:\n        pass{tail}"
 
-    new_text = re.sub(pattern, repl, text, flags=re.DOTALL)
-    if new_text != text:
-        p.write_text(new_text)
-        print("seed_subscription_plans_v4.py patched")
-PY
-      fi
-    fi
   fi
   run_step "[$this_app] Guarding hooks" bash -c "find \"apps/$this_app\" -name \"*.py\" | xargs -r grep -lE \"^[[:space:]]+def (on_update|after_insert)\(self[^\)]*\):\" | while read -r hook_file; do \
     if grep -q \"# rokct-no-guard\" \"\$hook_file\"; then continue; fi; \
