@@ -1114,7 +1114,7 @@ fi
 # Verification
 bench_step "Post-build compliance verification" env/bin/python -c "
 import frappe, sys
-frappe.init(site='$SITE_NAME')
+frappe.init(site='$SITE_NAME', sites_path='sites')
 frappe.connect()
 installed_apps = frappe.get_installed_apps()
 all_doctypes = frappe.get_all('DocType', fields=['name', 'issingle'])
