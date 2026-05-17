@@ -774,6 +774,7 @@ for app_dir in apps/*; do
   [ -d "$app_dir" ] || continue
   this_app=$(basename "$app_dir")
   [ "$this_app" = "frappe" ] && continue
+  echo "  [DEBUG] Starting hacks for: $this_app"
   _log "Applying Hacks for: $this_app"
 
   # A. Nuclear Aliasing
