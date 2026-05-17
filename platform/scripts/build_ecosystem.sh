@@ -1112,8 +1112,10 @@ if [ -n "$STACK_INSTALLER" ]; then
 fi
 
 # Verification
-bench_step "Post-build compliance verification" bench --site "$SITE_NAME" execute "
+bench_step "Post-build compliance verification" env/bin/python -c "
 import frappe, sys
+frappe.init(site='$SITE_NAME')
+frappe.connect()
 installed_apps = frappe.get_installed_apps()
 all_doctypes = frappe.get_all('DocType', fields=['name', 'issingle'])
 missing_tables = []
