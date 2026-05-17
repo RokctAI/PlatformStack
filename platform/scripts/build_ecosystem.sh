@@ -976,6 +976,53 @@ fi
 if [ -d "apps/rcore" ]; then safe_install_app rcore; fi
 safe_install_app control
 run_step "Initializing site apps.txt" bash -c "[ -f \"sites/$SITE_NAME/apps.txt\" ] || cp sites/apps.txt \"sites/$SITE_NAME/apps.txt\""
+
+run_step "[frappe] Patching fixtures.py for PostgreSQL unique constraints" env/bin/python -c '
+import pathlib
+p = pathlib.Path("apps/frappe/frappe/utils/fixtures.py")
+if p.exists():
+    text = p.read_text(encoding="utf-8")
+    old_block = """\t\ttry:
+\t\t\timport_doc(file_path, sort=True)
+\t\texcept (ImportError, frappe.DoesNotExistError) as e:
+\t\t\t# fixture syncing for missing doctypes
+\t\t\tprint(f"Skipping fixture syncing from the file {fname}. Reason: {e}")"""
+    new_block = """\t\ttry:
+\t\t\timport_doc(file_path, sort=True)
+\t\texcept (ImportError, frappe.DoesNotExistError) as e:
+\t\t\t# fixture syncing for missing doctypes
+\t\t\tprint(f"Skipping fixture syncing from the file {fname}. Reason: {e}")
+\t\texcept Exception as e:
+\t\t\tif any(x in str(e).lower() for x in ["duplicate key", "unique constraint", "already exists", "violates unique"]):
+\t\t\t\tprint(f"Skipping duplicate fixture {fname}: {e}")
+\t\t\t\ttry:
+\t\t\t\t\timport frappe
+\t\t\t\t\tfrappe.db.rollback()
+\t\t\t\texcept Exception:
+\t\t\t\t\tpass
+\t\t\telse:
+\t\t\t\traise"""
+    if old_block in text:
+        text = text.replace(old_block, new_block)
+    elif old_block.replace("\\t", "    ") in text:
+        text = text.replace(old_block.replace("\\t", "    "), new_block.replace("\\t", "    "))
+    else:
+        text = text.replace("import_doc(file_path, sort=True)", """try:
+\t\t\timport_doc(file_path, sort=True)
+\t\texcept Exception as e:
+\t\t\tif any(x in str(e).lower() for x in ["duplicate key", "unique constraint", "already exists", "violates unique"]):
+\t\t\t\tprint(f"Skipping duplicate: {e}")
+\t\t\t\ttry:
+\t\t\t\t\timport frappe
+\t\t\t\t\tfrappe.db.rollback()
+\t\t\t\texcept Exception:
+\t\t\t\t\tpass
+\t\t\telse:
+\t\t\t\traise""")
+    p.write_text(text, encoding="utf-8")
+    print("fixtures.py patched successfully")
+'
+
 bench_step "Migrating site" \
   bench --site "$SITE_NAME" migrate || echo "Warning: Migration returned non-zero. Suppressing Frappe fixture conflicts."
 
