@@ -222,20 +222,20 @@ safe_install_app() {
     return 0
   fi
 
-  # Attempt internal install first
-  run_step "Installing $app on $SITE_NAME" \
-    env/bin/python -c "
+  echo "  - Installing $app on $SITE_NAME..."
+  set +e
+  env/bin/python -c "
 import frappe
 frappe.init(site='$SITE_NAME', sites_path='sites')
 frappe.connect()
 from frappe.installer import install_app
 install_app('$app', force=True)
-"
+" 2>&1
   RET=$?
+  set -e
   if [ $RET -ne 0 ]; then
-    # Fallback to bench install if internal fails
-    bench_step "Installing $app on $SITE_NAME (bench fallback)" \
-      bench --site "$SITE_NAME" install-app "$app" --force
+    echo "  - Python install failed for $app, trying bench fallback..."
+    bench --site "$SITE_NAME" install-app "$app" --force 2>&1
   fi
 }
 
