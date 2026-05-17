@@ -816,82 +816,44 @@ for app_dir in apps/*; do
     if [ "$this_app" = "lending" ]; then
       run_step "[$this_app] Stripping 'erpnext' requirement" sed -i "s/[\"']erpnext[\"']//g" "apps/$this_app/$this_app/hooks.py"
 
-      # Fix #2: Guard erpnext imports in loan.py to prevent ImportError during DocType sync.
-      LOAN_PY="apps/lending/lending/loan_management/doctype/loan/loan.py"
-      if [ -f "$LOAN_PY" ]; then
-        run_step "[$this_app] Guarding erpnext imports in loan.py" env/bin/python <<'PY'
-import re, pathlib, sys
-
-p_str = "apps/lending/lending/loan_management/doctype/loan/loan.py"
-path = pathlib.Path(p_str)
-if not path.exists():
-    print(f"Error: {p_str} not found")
-    sys.exit(0)
-
-text = path.read_text()
-
-# Replace all erpnext import blocks with a single guarded block
-text = re.sub(
-    r'try:\s*\n\s*import erpnext\s*\nexcept ImportError:.*?\n.*?\n',
-    '', text, flags=re.DOTALL
-)
-text = re.sub(r'^import erpnext\s*$', '', text, flags=re.MULTILINE)
-text = re.sub(r'^from erpnext.*import.*$', '', text, flags=re.MULTILINE)
-
-# Inject single clean guard
-guard = '''
-try:
-    import erpnext
-    from erpnext.accounts.doctype.journal_entry.journal_entry import get_payment_entry
-    from erpnext.controllers.accounts_controller import AccountsController
-except (ImportError, ModuleNotFoundError):
-    erpnext = None
-    get_payment_entry = None  # RokctAI: erpnext not installed
-    from frappe.model.document import Document
-    AccountsController = Document
-'''
-
-# Insert before first frappe import or at top if no frappe import
-if "import frappe" in text:
-    text = re.sub(r'(^import frappe)', guard + r'\1', text, count=1, flags=re.MULTILINE)
-else:
-    text = guard + "\n" + text
-
-path.write_text(text)
-print(f"    {p_str} patched successfully")
-PY
-      fi
-
-      LOAN_CTRL="apps/lending/lending/loan_management/controllers/loan_controller.py"
-      if [ -f "$LOAN_CTRL" ]; then
-        run_step "[$this_app] Guarding erpnext imports in loan_controller.py" env/bin/python -c "
+      run_step "[lending] Guarding all erpnext imports" env/bin/python <<'PY'
 import pathlib, re
-p = pathlib.Path('$LOAN_CTRL')
-text = p.read_text()
 
-# Replace all erpnext imports with guarded versions
-text = re.sub(
-    r'^from erpnext([^\n]*)$',
-    r'try:\n    from erpnext\1\nexcept ImportError:\n    pass',
-    text, flags=re.MULTILINE
-)
+lending_path = pathlib.Path("apps/lending/lending")
+patched = 0
 
-# Inject AccountsController fallback right before the class definition
-fallback = '''try:
-    AccountsController
-except NameError:
-    from frappe.model.document import Document as AccountsController
-'''
-text = re.sub(
-    r'^(class LoanController\(AccountsController\):)',
-    fallback + r'\1',
-    text, flags=re.MULTILINE
-)
+for py_file in lending_path.rglob("*.py"):
+    text = py_file.read_text(encoding="utf-8", errors="ignore")
+    original = text
 
-p.write_text(text)
-print('loan_controller.py patched')
-"
-      fi
+    # Guard bare: import erpnext
+    text = re.sub(
+        r'^(import erpnext\s*)$',
+        'try:\n    import erpnext\nexcept ImportError:\n    erpnext = None',
+        text, flags=re.MULTILINE
+    )
+
+    # Guard: from erpnext... import ...
+    text = re.sub(
+        r'^(from erpnext[^\n]+)$',
+        r'try:\n    \1\nexcept (ImportError, ModuleNotFoundError):\n    pass',
+        text, flags=re.MULTILINE
+    )
+
+    # Fix AccountsController fallback before class definition
+    if 'class LoanController(AccountsController)' in text and 'AccountsController\nexcept NameError' not in text:
+        text = re.sub(
+            r'^(class LoanController\(AccountsController\):)',
+            'try:\n    AccountsController\nexcept NameError:\n    from frappe.model.document import Document as AccountsController\n\n\\1',
+            text, flags=re.MULTILINE
+        )
+
+    if text != original:
+        py_file.write_text(text, encoding="utf-8")
+        patched += 1
+
+print(f"Patched {patched} files in lending app")
+PY
     fi
     if [ "$this_app" = "rcore" ]; then
       run_step "[$this_app] Stripping 'payments' requirement" sed -i "s/[\"']payments[\"']//g" "apps/$this_app/$this_app/hooks.py"
