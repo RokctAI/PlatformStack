@@ -235,7 +235,13 @@ install_app('$app', force=True)
   set -e
   if [ $RET -ne 0 ]; then
     echo "  - Python install failed for $app, trying bench fallback..."
+    set +e
     bench --site "$SITE_NAME" install-app "$app" --force 2>&1
+    BENCH_RET=$?
+    set -e
+    if [ $BENCH_RET -ne 0 ]; then
+      echo "  ⚠️  WARNING: Could not install $app — continuing anyway"
+    fi
   fi
 }
 
