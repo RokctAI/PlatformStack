@@ -23,18 +23,26 @@ run_step() {
   set -e
   local errors
   errors=$(grep -Ei "Traceback|Exception:|Error:|FAILED|FileNotFoundError|UniqueViolation|SyntaxError|ImportError|ModuleNotFoundError|psycopg2|OperationalError|DuplicateEntryError" "$step_log" 2>/dev/null || true)
-  if [ $exit_code -eq 0 ] && [ -z "$errors" ]; then
-    echo -e "\033[0;32m✓ DONE\033[0m"
-    cat "$step_log" >>"$BUILD_LOG"
-  else
-    echo -e "\033[0;31m❌ FAILED\033[0m"
-    [ -n "$errors" ] && echo "    (Silent errors detected - see log)"
+
+  if [ $exit_code -ne 0 ]; then
+    if grep -Ei "FATAL:|CRITICAL:" "$step_log" >/dev/null 2>&1; then
+      echo -e "\033[0;31m💀 FATAL\033[0m"
+    else
+      echo -e "\033[0;31m❌ FAILED\033[0m"
+    fi
     echo "    ---- LOG START ----"
     cat "$step_log"
     echo "    ---- LOG END ----"
     cat "$step_log" >>"$BUILD_LOG"
     rm -f "$step_log"
     return 1
+  elif [ -n "$errors" ]; then
+    echo -e "\033[1;33m⚠ WARN\033[0m"
+    echo "$errors" | sed 's/^/        /'
+    cat "$step_log" >>"$BUILD_LOG"
+  else
+    echo -e "\033[0;32m✓ DONE\033[0m"
+    cat "$step_log" >>"$BUILD_LOG"
   fi
   rm -f "$step_log"
 }
@@ -54,9 +62,6 @@ bench_step() {
   sed -i '/WARN: restarting supervisor group/d' "$step_log"
   sed -i '/Use `bench restart` to retry/d' "$step_log"
   sed -i '/Cleanup Error:/d' "$step_log"
-  sed -i '/UniqueViolation/d' "$step_log"
-  # sed -i '/psycopg2/d' "$step_log" # DO NOT DELETE PSYCOPG2 ERRORS
-  sed -i '/DuplicateEntryError/d' "$step_log"
   # Ignore systemd errors in Docker
   sed -i '/Failed to connect to system scope bus/d' "$step_log"
   sed -i '/System has not been booted with systemd/d' "$step_log"
@@ -66,18 +71,25 @@ bench_step() {
   # Refined error detection: Look for actual tracebacks and operational errors, avoiding false positives from package names like 'psycopg2-binary'
   errors=$(grep -Ei "Traceback \(most recent call last\):|psycopg2\.(OperationalError|ProgrammingError|InternalError|DataError|NotSupportedError|IntegrityError|InterfaceError)|Exception: |FileNotFoundError: |UniqueViolation: |SyntaxError: |ImportError: |ModuleNotFoundError: |DuplicateEntryError: |FATAL: |CRITICAL: |ERROR: " "$step_log" | grep -vEi "Requirement already satisfied|warning" || true)
 
-  if [ $exit_code -eq 0 ] && [ -z "$errors" ]; then
-    echo -e "\033[0;32m✓ DONE\033[0m"
-    cat "$step_log" >>"$BUILD_LOG"
-  else
-    echo -e "\033[0;31m❌ FAILED\033[0m"
-    [ -n "$errors" ] && echo "    (Silent errors detected - see log)"
+  if [ $exit_code -ne 0 ]; then
+    if grep -Ei "FATAL:|CRITICAL:" "$step_log" >/dev/null 2>&1; then
+      echo -e "\033[0;31m💀 FATAL\033[0m"
+    else
+      echo -e "\033[0;31m❌ FAILED\033[0m"
+    fi
     echo "    ---- LOG START ----"
     cat "$step_log"
     echo "    ---- LOG END ----"
     cat "$step_log" >>"$BUILD_LOG"
     rm -f "$step_log"
     return 1
+  elif [ -n "$errors" ]; then
+    echo -e "\033[1;33m⚠ WARN\033[0m"
+    echo "$errors" | sed 's/^/        /'
+    cat "$step_log" >>"$BUILD_LOG"
+  else
+    echo -e "\033[0;32m✓ DONE\033[0m"
+    cat "$step_log" >>"$BUILD_LOG"
   fi
   rm -f "$step_log"
 }
@@ -747,7 +759,7 @@ for app_name, config in blueprints.items():
             with open(hooks_py, 'a') as f:
                 f.write('\\n' + '\\n'.join(config['hooks']) + '\\n')
             print(f'  - Injected monorepo hooks into {app_name}/hooks.py')
-" || echo "Warning: Failed to apply monorepo blueprints."
+"
   fi
 else
   _log "No monorepo_overrides directory found - skipping."
@@ -1047,7 +1059,7 @@ if p.exists():
 '
 
 bench_step "Migrating site" \
-  bench --site "$SITE_NAME" migrate || echo "Warning: Migration returned non-zero. Suppressing Frappe fixture conflicts."
+  bench --site "$SITE_NAME" migrate
 
 if bench --site "$SITE_NAME" list-apps 2>/dev/null | grep -q "^erpnext$"; then
   run_step "Seeding ERPNext defaults" bench --site "$SITE_NAME" execute erpnext.setup.setup_wizard.operations.install_fixtures.install
@@ -1070,7 +1082,7 @@ if [ -n "$STACK_INSTALLER" ]; then
     python3 "$STACK_INSTALLER" "$SITE_NAME"
 
   bench_step "Post-stack migration" \
-    bench --site "$SITE_NAME" migrate || echo "Warning: Post-stack migration returned non-zero."
+    bench --site "$SITE_NAME" migrate
 fi
 
 if [ -d "apps/rcore" ]; then
