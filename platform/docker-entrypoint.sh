@@ -126,7 +126,7 @@ setup_site() {
   fi
 
   # Ensure the default site is set for this container session
-  echo "$SITE_NAME" > sites/currentsite.txt
+  echo "$SITE_NAME" >sites/currentsite.txt
 
   # --- Global Config Injection (Moved from top to ensure common_site_config.json exists) ---
   python3 -c "
