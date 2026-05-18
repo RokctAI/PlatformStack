@@ -72,63 +72,73 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/checkout@v4
       
-      - name: Check Upstream Updates (Cron Only)
+          - name: Check Upstream Updates (Cron Only)
         id: upstream_check
+        env:
+          GITHUB_TOKEN: ${{ secrets.MONOREPO_PAT || secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          
-          # Dynamically fetch the definitive ecosystem app list from the control repo
-          echo "Fetching major_versions.json from RokctAI/control..."
-          JSON_DATA=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT || secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3.raw" \
-            "https://api.github.com/repos/RokctAI/control/contents/control/control/major_versions.json")
-          
-          # Parse the JSON to get a list of "Owner/Repo:Branch" (e.g., Frappenize/hrms:rokct). If no branch, it leaves it empty.
-          if ! echo "$JSON_DATA" | jq -e . > /dev/null 2>&1; then
-            echo "Failed to fetch or parse major_versions.json! Falling back to safe build."
-            echo "should_build=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          
-          REPOS=$(echo "$JSON_DATA" | jq -r 'to_entries | map(.value.owner + "/" + .key + ":" + (.value.branch // "")) | join(" ")')
-          # Always include the orchestrator repo itself
-          REPOS="$REPOS RokctAI/PlatformStack:"
-          
-          SHOULD_BUILD="false"
-          
-          # Look back 7 days (the cron interval)
-          WEEK_AGO=$(date -d "7 days ago" -Iseconds | sed 's/+/%2B/g')
-          
-          for repo_info in $REPOS; do
-            repo="${repo_info%%:*}"
-            branch="${repo_info##*:}"
-            
-            # Explicitly exclude the ROK agent repository
-            if [[ "$repo" == *"ROK"* ]] || [[ "$repo" == *"rok"* && "$repo" != *"rokct"* ]]; then
-              continue
-            fi
-            
-            QUERY="since=$WEEK_AGO&per_page=1"
-            if [ -n "$branch" ]; then
-              QUERY="$QUERY&sha=$branch"
-              echo "Checking $repo (Branch: $branch) for commits since $WEEK_AGO..."
-            else
-              echo "Checking $repo (Default Branch) for commits since $WEEK_AGO..."
-            fi
-            
-            # Check the GitHub API
-            COMMITS=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT || secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/$repo/commits?$QUERY")
-            
-            if echo "$COMMITS" | jq -e '.[0].sha' > /dev/null 2>&1; then
-              echo "Updates found in $repo!"
-              SHOULD_BUILD="true"
-              break
-            fi
-          done
+          python3 -c "
+          import os, json, urllib.request, base64
+
+          token = os.environ.get('GITHUB_TOKEN')
+          headers = {'Accept': 'application/vnd.github.v3+json'}
+          if token: headers['Authorization'] = f'token {token}'
+
+          def fetch(url):
+              req = urllib.request.Request(url, headers=headers)
+              try:
+                  with urllib.request.urlopen(req) as resp:
+                      return json.loads(resp.read().decode())
+              except Exception as e:
+                  print(f'Error fetching {url}: {e}')
+                  return None
+
+          mv_data = fetch('https://api.github.com/repos/RokctAI/control/contents/control/control/major_versions.json')
+          if not mv_data:
+              print('Failed to fetch major_versions.json. Forcing build.')
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f: f.write('should_build=true\n')
+              exit(0)
+
+          mv_json = json.loads(base64.b64decode(mv_data['content']).decode())
+
+          local_state = {}
+          if os.path.exists('build_state.json'):
+              with open('build_state.json', 'r') as f:
+                  local_state = json.load(f)
+
+          should_build = False
+          if os.environ.get('GITHUB_EVENT_NAME') != 'schedule':
+              should_build = True
+
+          for app, config in mv_json.items():
+              repo = f\"{config.get('owner')}/{app}\"
+              if 'rok' in repo.lower() and 'rokct' not in repo.lower(): continue
+              
+              branch = config.get('branch')
+              current_val = None
+              
+              if branch:
+                  print(f'Checking latest commit on {repo}:{branch}...')
+                  res = fetch(f'https://api.github.com/repos/{repo}/commits/{branch}')
+                  if res and 'sha' in res: current_val = res['sha']
+              else:
+                  print(f'Checking latest tag on {repo}...')
+                  res = fetch(f'https://api.github.com/repos/{repo}/tags')
+                  if res and len(res) > 0 and 'name' in res[0]: current_val = res[0]['name']
+                      
+              if current_val and local_state.get(repo) != current_val:
+                  print(f'-> UPDATE DETECTED for {repo}! Local: {local_state.get(repo)} Remote: {current_val}')
+                  should_build = True
+
+          print('Checking PlatformStack...')
+          res = fetch('https://api.github.com/repos/RokctAI/PlatformStack/commits/main')
+          if res and 'sha' in res and local_state.get('RokctAI/PlatformStack') != res['sha']:
+              print('-> UPDATE DETECTED for PlatformStack!')
+              should_build = True
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f'should_build={str(should_build).lower()}\n')
+          "
           
           echo "should_build=$SHOULD_BUILD" >> "$GITHUB_OUTPUT"
           if [ "$SHOULD_BUILD" = "false" ]; then
@@ -377,10 +387,14 @@ jobs:
         with:
           token: ${{ secrets.MONOREPO_PAT || github.token }}
           
-      - name: Auto-Bump Version
+      - name: Auto-Bump Version & Save Build State
+        env:
+          GITHUB_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
         run: |
           python3 -c "
-          import json
+          import json, urllib.request, base64, os
+          
+          # 1. Bump Version
           with open('version.json', 'r') as f:
               data = json.load(f)
           v = data.get('platform')
@@ -391,10 +405,44 @@ jobs:
               with open('version.json', 'w') as f:
                   json.dump(data, f, indent=4)
                   f.write('\n')
+
+          # 2. Re-fetch and save new Build State
+          token = os.environ.get('GITHUB_TOKEN')
+          headers = {'Accept': 'application/vnd.github.v3+json'}
+          if token: headers['Authorization'] = f'token {token}'
+
+          def fetch(url):
+              req = urllib.request.Request(url, headers=headers)
+              try:
+                  with urllib.request.urlopen(req) as resp:
+                      return json.loads(resp.read().decode())
+              except: return None
+
+          new_state = {}
+          mv_data = fetch('https://api.github.com/repos/RokctAI/control/contents/control/control/major_versions.json')
+          if mv_data:
+              mv_json = json.loads(base64.b64decode(mv_data['content']).decode())
+              for app, config in mv_json.items():
+                  repo = f\"{config.get('owner')}/{app}\"
+                  if 'rok' in repo.lower() and 'rokct' not in repo.lower(): continue
+                  branch = config.get('branch')
+                  if branch:
+                      res = fetch(f'https://api.github.com/repos/{repo}/commits/{branch}')
+                      if res and 'sha' in res: new_state[repo] = res['sha']
+                  else:
+                      res = fetch(f'https://api.github.com/repos/{repo}/tags')
+                      if res and len(res) > 0 and 'name' in res[0]: new_state[repo] = res[0]['name']
+
+          res = fetch('https://api.github.com/repos/RokctAI/PlatformStack/commits/main')
+          if res and 'sha' in res: new_state['RokctAI/PlatformStack'] = res['sha']
+
+          with open('build_state.json', 'w') as f:
+              json.dump(new_state, f, indent=4)
+              f.write('\n')
           "
           
           git config --global user.name "rokctbot[bot]"
           git config --global user.email "rokctbot[bot]@users.noreply.github.com"
-          git add version.json
-          git commit -m "chore: auto-bump version [skip ci]" || echo "No changes to commit"
+          git add version.json build_state.json
+          git commit -m "chore: auto-bump version and update build state [skip ci]" || echo "No changes to commit"
           git push origin HEAD:${GITHUB_REF#refs/}
