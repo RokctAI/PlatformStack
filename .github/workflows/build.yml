@@ -304,3 +304,67 @@ jobs:
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
     secrets: inherit
+
+  rollback-images:
+    needs: [docker-release, upgrade-test]
+    # Only run if images were pushed successfully BUT the upgrade test failed
+    if: always() && needs.docker-release.result == 'success' && needs.upgrade-test.result == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Failed Images from GHCR
+        run: |
+          VERSION="${{ needs.docker-release.outputs.version }}"
+          echo "Rolling back failed version: $VERSION"
+          
+          # URL encoded package names
+          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge" "monorepo%2Frpanel-db")
+          
+          for PKG in "${PACKAGES[@]}"; do
+            echo "Looking up version ID for $PKG tag $VERSION..."
+            VERSION_ID=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/orgs/RokctAI/packages/container/$PKG/versions" \
+              | jq -r ".[] | select(.metadata.container.tags[]? == \"$VERSION\") | .id" | head -n 1)
+            
+            if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" != "null" ]; then
+              echo "Found ID $VERSION_ID. Issuing delete request..."
+              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/orgs/RokctAI/packages/container/$PKG/versions/$VERSION_ID")
+              echo "Delete response code: $RESPONSE"
+            else
+              echo "Could not find tag $VERSION for package $PKG. It may have already been deleted or not pushed."
+            fi
+          done
+
+  bump-version:
+    needs: [docker-release, upgrade-test]
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+          
+      - name: Auto-Bump Version
+        run: |
+          python3 -c "
+          import json
+          with open('version.json', 'r') as f:
+              data = json.load(f)
+          v = data.get('platform')
+          if v:
+              parts = v.split('.')
+              parts[-1] = str(int(parts[-1]) + 1)
+              data['platform'] = '.'.join(parts)
+              with open('version.json', 'w') as f:
+                  json.dump(data, f, indent=4)
+                  f.write('\n')
+          "
+          
+          git config --global user.name "rokctbot[bot]"
+          git config --global user.email "rokctbot[bot]@users.noreply.github.com"
+          git add version.json
+          git commit -m "chore: auto-bump version [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:${GITHUB_REF#refs/}
