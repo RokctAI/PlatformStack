@@ -239,6 +239,16 @@ jobs:
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
             DB_HOST=127.0.0.1
 
+      - name: Build and Push Drone Edge (Go)
+        uses: docker/build-push-action@v4
+        with:
+          context: docker-context/monorepo_overrides/IoT
+          file: docker-context/monorepo_overrides/IoT/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/rokctai/monorepo/drone-edge:latest
+            ghcr.io/rokctai/monorepo/drone-edge:${{ steps.meta.outputs.version }}
+
       - name: Build and Push Postgres (Custom)
         uses: docker/build-push-action@v4
         with:
