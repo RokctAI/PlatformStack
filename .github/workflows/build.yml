@@ -232,8 +232,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/monorepo/rpanel-iot:latest
-            ghcr.io/rokctai/monorepo/rpanel-iot:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/monorepo/drone-brain:latest
+            ghcr.io/rokctai/monorepo/drone-brain:${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
