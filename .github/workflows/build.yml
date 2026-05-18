@@ -80,18 +80,48 @@ jobs:
             exit 0
           fi
           
-          # Core ecosystem repos (explicitly excluding ROK)
-          REPOS="RokctAI/PlatformStack RokctAI/rpanel RokctAI/rcore RokctAI/control Frappenize/frappe Frappenize/erpnext Frappenize/lending"
+          # Dynamically fetch the definitive ecosystem app list from the control repo
+          echo "Fetching major_versions.json from RokctAI/control..."
+          JSON_DATA=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT || secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            "https://api.github.com/repos/RokctAI/control/contents/control/control/major_versions.json")
+          
+          # Parse the JSON to get a list of "Owner/Repo:Branch" (e.g., Frappenize/hrms:rokct). If no branch, it leaves it empty.
+          if ! echo "$JSON_DATA" | jq -e . > /dev/null 2>&1; then
+            echo "Failed to fetch or parse major_versions.json! Falling back to safe build."
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          REPOS=$(echo "$JSON_DATA" | jq -r 'to_entries | map(.value.owner + "/" + .key + ":" + (.value.branch // "")) | join(" ")')
+          # Always include the orchestrator repo itself
+          REPOS="$REPOS RokctAI/PlatformStack:"
+          
           SHOULD_BUILD="false"
           
           # Look back 7 days (the cron interval)
           WEEK_AGO=$(date -d "7 days ago" -Iseconds | sed 's/+/%2B/g')
           
-          for repo in $REPOS; do
-            echo "Checking $repo for commits since $WEEK_AGO..."
-            # Check the GitHub API. We use GITHUB_TOKEN if available to avoid rate limits, though public repos work without it.
-            COMMITS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/$repo/commits?since=$WEEK_AGO&per_page=1")
+          for repo_info in $REPOS; do
+            repo="${repo_info%%:*}"
+            branch="${repo_info##*:}"
+            
+            # Explicitly exclude the ROK agent repository
+            if [[ "$repo" == *"ROK"* ]] || [[ "$repo" == *"rok"* && "$repo" != *"rokct"* ]]; then
+              continue
+            fi
+            
+            QUERY="since=$WEEK_AGO&per_page=1"
+            if [ -n "$branch" ]; then
+              QUERY="$QUERY&sha=$branch"
+              echo "Checking $repo (Branch: $branch) for commits since $WEEK_AGO..."
+            else
+              echo "Checking $repo (Default Branch) for commits since $WEEK_AGO..."
+            fi
+            
+            # Check the GitHub API
+            COMMITS=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT || secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/$repo/commits?$QUERY")
             
             if echo "$COMMITS" | jq -e '.[0].sha' > /dev/null 2>&1; then
               echo "Updates found in $repo!"
