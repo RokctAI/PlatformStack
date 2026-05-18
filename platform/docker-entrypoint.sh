@@ -116,29 +116,21 @@ setup_site() {
     if [ "$MODE" = "api" ]; then DETERMINED_ROLE="tenant"; fi
 
     echo "⚙️ Finalizing configuration (Role: $DETERMINED_ROLE)..."
-    python3 -c "import json; p='sites/$SITE_NAME/site_config.json'; c=json.load(open(p)); c['app_role']='${APP_ROLE:-$DETERMINED_ROLE}'; json.dump(c, open(p, 'w'), indent=1)"
+    bench --site "$SITE_NAME" set-config app_role "${APP_ROLE:-$DETERMINED_ROLE}"
   else
     echo "✅ Site '$SITE_NAME' already exists in volume."
     # Ensure any updated ENV variables are applied to the existing site
-    if [ -n "$DB_HOST" ]; then
-      python3 -c "import json; p='sites/$SITE_NAME/site_config.json'; c=json.load(open(p)); c['db_host']='$DB_HOST'; json.dump(c, open(p, 'w'), indent=1)"
-    fi
+    if [ -n "$DB_HOST" ]; then bench --site "$SITE_NAME" set-config db_host "$DB_HOST"; fi
   fi
 
   # Ensure the default site is set for this container session
-  echo "$SITE_NAME" > sites/currentsite.txt
+  bench use "$SITE_NAME"
 
   # --- Global Config Injection (Moved from top to ensure common_site_config.json exists) ---
-  python3 -c "
-import json, os
-p = 'sites/common_site_config.json'
-c = json.load(open(p)) if os.path.exists(p) else {}
-if os.environ.get('DB_HOST'): c['db_host'] = os.environ['DB_HOST']
-if os.environ.get('REDIS_CACHE'): c['redis_cache'] = os.environ['REDIS_CACHE']
-if os.environ.get('REDIS_QUEUE'): c['redis_queue'] = os.environ['REDIS_QUEUE']
-if os.environ.get('REDIS_SOCKETIO'): c['redis_socketio'] = os.environ['REDIS_SOCKETIO']
-json.dump(c, open(p, 'w'), indent=1)
-"
+  if [ -n "$DB_HOST" ]; then bench config set-common-config db_host "$DB_HOST"; fi
+  if [ -n "$REDIS_CACHE" ]; then bench config set-common-config redis_cache "$REDIS_CACHE"; fi
+  if [ -n "$REDIS_QUEUE" ]; then bench config set-common-config redis_queue "$REDIS_QUEUE"; fi
+  if [ -n "$REDIS_SOCKETIO" ]; then bench config set-common-config redis_socketio "$REDIS_SOCKETIO"; fi
 
   # --- ROK persistence ---
   mkdir -p "sites/$SITE_NAME/private/rok"
