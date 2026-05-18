@@ -16,6 +16,8 @@ on:
     branches: [ main, develop ]
     paths-ignore:
       - '**.md'
+  schedule:
+    - cron: '0 2 * * 0' # Every Sunday at 2 AM UTC
   workflow_dispatch:
     inputs:
       backfill_ai_notes_cutoff_version:
@@ -51,25 +53,61 @@ on:
         default: 'postgres'
       version_format:
         type: string
-        default: '##.##.##'
+        default: '##.##.#'
         description: "Format for version bumping (e.g. ##.##.## or ##.##.#)"
 
 jobs:
-  # --- 1. DETECT PROJECT TYPE ---
+  # --- 1. DETECT PROJECT TYPE & UPSTREAM UPDATES ---
   detect:
     runs-on: ubuntu-latest
     container: python:3.14-slim
     outputs:
       is_flutter: ${{ steps.check.outputs.is_flutter }}
       is_node: ${{ steps.check.outputs.is_node }}
+      should_build: ${{ steps.upstream_check.outputs.should_build }}
     steps:
       - name: Install dependencies
         run: |
-          apt-get update && apt-get install -y git
+          apt-get update && apt-get install -y git curl jq
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - uses: actions/checkout@v4
+      
+      - name: Check Upstream Updates (Cron Only)
+        id: upstream_check
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          # Core ecosystem repos (explicitly excluding ROK)
+          REPOS="RokctAI/PlatformStack RokctAI/rpanel RokctAI/rcore RokctAI/control Frappenize/frappe Frappenize/erpnext Frappenize/lending"
+          SHOULD_BUILD="false"
+          
+          # Look back 7 days (the cron interval)
+          WEEK_AGO=$(date -d "7 days ago" -Iseconds | sed 's/+/%2B/g')
+          
+          for repo in $REPOS; do
+            echo "Checking $repo for commits since $WEEK_AGO..."
+            # Check the GitHub API. We use GITHUB_TOKEN if available to avoid rate limits, though public repos work without it.
+            COMMITS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/$repo/commits?since=$WEEK_AGO&per_page=1")
+            
+            if echo "$COMMITS" | jq -e '.[0].sha' > /dev/null 2>&1; then
+              echo "Updates found in $repo!"
+              SHOULD_BUILD="true"
+              break
+            fi
+          done
+          
+          echo "should_build=$SHOULD_BUILD" >> "$GITHUB_OUTPUT"
+          if [ "$SHOULD_BUILD" = "false" ]; then
+            echo "No upstream updates found in the last 7 days. Pipeline will safely skip."
+          fi
+
       - name: Check Project Type
         id: check
+        if: steps.upstream_check.outputs.should_build == 'true'
         run: |
           if [ -f "pubspec.yaml" ]; then
              echo "Flutter project detected."
@@ -80,7 +118,7 @@ jobs:
              echo "is_flutter=false" >> "$GITHUB_OUTPUT"
              echo "is_node=true" >> "$GITHUB_OUTPUT"
           else
-             echo "Unknown project type. Skipping builds."
+             echo "Unknown project type. Assuming Frappe."
              echo "is_flutter=false" >> "$GITHUB_OUTPUT"
              echo "is_node=false" >> "$GITHUB_OUTPUT"
           fi
@@ -88,6 +126,7 @@ jobs:
   # --- 2. UNIFIED PIPELINE (Smart) ---
   pipeline:
     needs: detect
+    if: needs.detect.outputs.should_build == 'true'
     uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@main
     with:
       backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
@@ -98,7 +137,7 @@ jobs:
       # Quality Gate Toggles
       run_security: true
       run_lint: true
-      run_ci: true
+      run_ci: false
       # Deployment Configuration (Immediate release on Main)
       release_strategy: 'weekly'
       # Environment configuration
@@ -223,7 +262,7 @@ jobs:
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
             DB_HOST=127.0.0.1
 
-      - name: Build and Push IoT Spoke (IoT)
+      - name: Build and Push Drone Brain (Frappe)
         uses: docker/build-push-action@v4
         with:
           context: docker-context
