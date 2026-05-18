@@ -63,7 +63,7 @@ setup_site() {
     else
       echo "✨ Initializing brand new site '$SITE_NAME'..."
       # 1. Database Connection Check (Retry logic for portable spokes)
-      if [ -n "$DB_HOST" ]; then
+      if [ -n "$DB_HOST" ] && [ "$DB_TYPE" != "sqlite" ]; then
         echo "⏳ Waiting for Database at $DB_HOST..."
         MAX_TRIES=60
         COUNT=0
@@ -91,6 +91,10 @@ setup_site() {
       for app in $FINAL_APPS; do
         INSTALL_APP_FLAGS+=(--install-app "$app")
       done
+
+      if [ "$DB_TYPE" = "sqlite" ]; then
+        INSTALL_APP_FLAGS+=(--db-type "sqlite")
+      fi
 
       if [ -f "apps/seed_data/seed.sql.gz" ]; then
         echo "✨ Restoring from Golden Seed (Apps: $FINAL_APPS)..."
