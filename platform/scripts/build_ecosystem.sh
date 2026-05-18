@@ -357,21 +357,22 @@ fi
 # --- 3. Bench Initialization & CLI Setup ---
 _log "RokctAI: Bench Initialization & CLI Setup..."
 
-# Force installation of the rokct bench fork to ensure consistency
-if command -v uv >/dev/null 2>&1; then
-  run_step "Installing frappe-bench CLI (uv)" \
-    uv pip install --system --break-system-packages --python "$PY_BIN" git+https://github.com/Frappenize/bench.git@rokct
-else
-  run_step "Installing frappe-bench CLI (pip)" \
-    bash -c "$PY_BIN -m pip install --break-system-packages git+https://github.com/Frappenize/bench.git@rokct || pip install --break-system-packages git+https://github.com/Frappenize/bench.git@rokct"
+# Ensure bench CLI is installed regardless of path
+if ! command -v bench >/dev/null; then
+  if command -v uv >/dev/null 2>&1; then
+    run_step "Installing frappe-bench CLI" \
+      uv pip install --system --break-system-packages --python "$PY_BIN" git+https://github.com/Frappenize/bench.git@rokct
+  else
+    run_step "Installing frappe-bench CLI" \
+      bash -c "$PY_BIN -m pip install --break-system-packages git+https://github.com/Frappenize/bench.git@rokct || pip install --break-system-packages git+https://github.com/Frappenize/bench.git@rokct"
+  fi
+  # Ensure bench is in the global path
+  bench_bin=$(which bench 2>/dev/null || find /root/.local/bin /github/home/.local/bin /usr/local/bin -name bench 2>/dev/null | head -n 1)
+  if [[ -n "$bench_bin" ]]; then
+    run_step "Linking bench CLI" bash -c "sudo ln -sf \"$bench_bin\" /usr/local/bin/bench || ln -sf \"$bench_bin\" /usr/local/bin/bench"
+  fi
+  export PATH="/usr/local/bin:$HOME/.local/bin:$PATH"
 fi
-# Ensure bench is in the global path
-bench_bin=$(which bench 2>/dev/null || find /home/frappe/.local/bin /root/.local/bin /github/home/.local/bin /usr/local/bin -name bench 2>/dev/null | head -n 1)
-if [[ -n "$bench_bin" ]]; then
-  run_step "Linking bench CLI" bash -c "sudo ln -sf \"$bench_bin\" /usr/local/bin/bench || ln -sf \"$bench_bin\" /usr/local/bin/bench"
-fi
-export PATH="/usr/local/bin:$HOME/.local/bin:$PATH"
-
 command -v bench >/dev/null || {
   echo "bench missing"
   exit 1
@@ -980,15 +981,7 @@ else
     fi
   fi
 
-  run_step "Configuring site" python3 -c "
-import json, os
-p = 'sites/$SITE_NAME/site_config.json'
-if os.path.exists(p):
-    c = json.load(open(p))
-    c['developer_mode'] = 1
-    c['allow_tests'] = True
-    json.dump(c, open(p, 'w'), indent=1)
-"
+  run_step "Configuring site" bash -c "bench --site \"$SITE_NAME\" set-config developer_mode 1 && bench --site \"$SITE_NAME\" set-config allow_tests true"
 fi
 
 mkdir -p "sites/$SITE_NAME/logs"
