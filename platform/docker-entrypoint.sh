@@ -2,6 +2,9 @@
 set -e
 set -x
 
+# Ensure /usr/local/bin is prioritized in PATH (where the rokct bench fork lives)
+export PATH="/usr/local/bin:$PATH"
+
 # Navigate to bench directory so all bench commands and relative site paths resolve correctly
 cd /home/frappe/frappe-bench || exit 1
 
@@ -27,9 +30,9 @@ setup_site() {
 
   # 0. First-Boot Volume Seeding
   # When a named volume is mounted over /sites, it shadows the baked site.
-  # If the volume is empty, seed it from the image-baked copy.
+  # If common_site_config.json is missing, seed it from the image-baked copy.
   IMAGE_BAKED_SITES="/home/frappe/frappe-bench-image-sites"
-  if [ -z "$(ls -A sites/ 2>/dev/null)" ] && [ -d "$IMAGE_BAKED_SITES" ]; then
+  if [ ! -f "sites/common_site_config.json" ] && [ -d "$IMAGE_BAKED_SITES" ]; then
     step "Seeding sites volume from Golden Build"
     cp -a "$IMAGE_BAKED_SITES/." sites/
     step_done
@@ -113,21 +116,21 @@ setup_site() {
     if [ "$MODE" = "api" ]; then DETERMINED_ROLE="tenant"; fi
 
     echo "⚙️ Finalizing configuration (Role: $DETERMINED_ROLE)..."
-    bench --site "$SITE_NAME" set-config app_role "'${APP_ROLE:-$DETERMINED_ROLE}'"
+    bench --site "$SITE_NAME" set-config app_role "${APP_ROLE:-$DETERMINED_ROLE}"
   else
     echo "✅ Site '$SITE_NAME' already exists in volume."
     # Ensure any updated ENV variables are applied to the existing site
-    if [ -n "$DB_HOST" ]; then bench --site "$SITE_NAME" set-config db_host "'$DB_HOST'"; fi
+    if [ -n "$DB_HOST" ]; then bench --site "$SITE_NAME" set-config db_host "$DB_HOST"; fi
   fi
 
   # Ensure the default site is set for this container session
   bench use "$SITE_NAME"
 
   # --- Global Config Injection (Moved from top to ensure common_site_config.json exists) ---
-  if [ -n "$DB_HOST" ]; then bench config set-common-config --config db_host "'$DB_HOST'"; fi
-  if [ -n "$REDIS_CACHE" ]; then bench config set-common-config --config redis_cache "'$REDIS_CACHE'"; fi
-  if [ -n "$REDIS_QUEUE" ]; then bench config set-common-config --config redis_queue "'$REDIS_QUEUE'"; fi
-  if [ -n "$REDIS_SOCKETIO" ]; then bench config set-common-config --config redis_socketio "'$REDIS_SOCKETIO'"; fi
+  if [ -n "$DB_HOST" ]; then bench config set-common-config db_host "$DB_HOST"; fi
+  if [ -n "$REDIS_CACHE" ]; then bench config set-common-config redis_cache "$REDIS_CACHE"; fi
+  if [ -n "$REDIS_QUEUE" ]; then bench config set-common-config redis_queue "$REDIS_QUEUE"; fi
+  if [ -n "$REDIS_SOCKETIO" ]; then bench config set-common-config redis_socketio "$REDIS_SOCKETIO"; fi
 
   # --- ROK persistence ---
   mkdir -p "sites/$SITE_NAME/private/rok"
