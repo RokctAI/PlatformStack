@@ -32,7 +32,8 @@ RUN useradd -ms /bin/bash frappe && \
 USER frappe
 WORKDIR /home/frappe
 ENV PATH="/home/frappe/.local/bin:${PATH}"
-RUN pip install --user frappe-bench
+# Install the rokct bench fork directly to ensure it is available in all stages
+RUN pip install --user git+https://github.com/Frappenize/bench.git@rokct
 
 # Stage 2: The Giant Builder (Clones everything)
 FROM base AS builder
