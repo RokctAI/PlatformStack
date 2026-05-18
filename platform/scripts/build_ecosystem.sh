@@ -900,7 +900,6 @@ PY
       run_step "[$this_app] Stripping 'payments' requirement" sed -i "s/[\"']payments[\"']//g" "apps/$this_app/$this_app/hooks.py"
     fi
 
-
   fi
   run_step "[$this_app] Guarding hooks" bash -c "find \"apps/$this_app\" -name \"*.py\" | xargs -r grep -lE \"^[[:space:]]+def (on_update|after_insert)\(self[^\)]*\):\" | while read -r hook_file; do \
     if grep -q \"# rokct-no-guard\" \"\$hook_file\"; then continue; fi; \
