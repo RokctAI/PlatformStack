@@ -2,8 +2,8 @@
 set -e
 set -x
 
-# Ensure /usr/local/bin is prioritized in PATH (where the rokct bench fork lives)
-export PATH="/usr/local/bin:$PATH"
+# Ensure bench CLI is prioritized in PATH
+export PATH="/usr/local/bin:/home/frappe/.local/bin:$PATH"
 
 # Navigate to bench directory so all bench commands and relative site paths resolve correctly
 cd /home/frappe/frappe-bench || exit 1
