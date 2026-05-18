@@ -72,11 +72,19 @@ USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bench", "start"]
 
+# --- Stage 4A: Tenant Stripper ---
+FROM builder AS tenant_stripper
+WORKDIR /home/frappe/frappe-bench
+RUN cd apps && \
+    ../env/bin/pip uninstall -y control rpanel || true && \
+    rm -rf control rpanel
+RUN echo "frappe" > sites/apps.txt && \
+    ls -1 apps | grep -v 'frappe' >> sites/apps.txt || true
+
 # Stage 4: Tenant (Trimmed Image)
 FROM base AS tenant
-COPY --from=builder --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
+COPY --from=tenant_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
 WORKDIR /home/frappe/frappe-bench
-RUN rm -rf apps/control apps/rpanel
 USER root
 COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
@@ -84,6 +92,28 @@ USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bench", "start"]
 
+# --- Stage 5A: IoT Stripper ---
+FROM tenant_stripper AS iot_stripper
+WORKDIR /home/frappe/frappe-bench
+ENV IOT_KEEP_APPS="frappe rcore brain"
+RUN cd apps && \
+    for app in *; do \
+        if [ -d "$app" ] && ! echo "$IOT_KEEP_APPS" | grep -qw "$app"; then \
+            echo "Uninstalling $app from IoT image..." && \
+            ../env/bin/pip uninstall -y "$app" || true; \
+            rm -rf "$app"; \
+        fi \
+    done && \
+    rm -rf ../tools/rok
+RUN printf "frappe\nrcore\nbrain\n" > sites/apps.txt
+
 # Stage 5: IoT (Minimal Image)
-FROM tenant AS iot
-RUN rm -rf apps/erpnext apps/payments apps/paas tools/rok # IoT doesn't need ERP, Payments, PAAS, or ROK
+FROM base AS iot
+COPY --from=iot_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
+WORKDIR /home/frappe/frappe-bench
+USER root
+COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER frappe
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["bench", "start"]
