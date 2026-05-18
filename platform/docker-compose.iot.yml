@@ -13,7 +13,7 @@ services:
       - iot-redis-data:/data
 
   app:
-    image: ghcr.io/rokctai/monorepo/rpanel-iot:latest
+    image: ghcr.io/rokctai/monorepo/drone-brain:latest
     environment:
       - MODE=iot
       - DB_TYPE=sqlite
