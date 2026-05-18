@@ -980,7 +980,15 @@ else
     fi
   fi
 
-  run_step "Configuring site" bash -c "bench --site \"$SITE_NAME\" set-config developer_mode 1 && bench --site \"$SITE_NAME\" set-config allow_tests true"
+  run_step "Configuring site" python3 -c "
+import json, os
+p = 'sites/$SITE_NAME/site_config.json'
+if os.path.exists(p):
+    c = json.load(open(p))
+    c['developer_mode'] = 1
+    c['allow_tests'] = True
+    json.dump(c, open(p, 'w'), indent=1)
+"
 fi
 
 mkdir -p "sites/$SITE_NAME/logs"
