@@ -367,7 +367,7 @@ jobs:
           echo "Rolling back failed version: $VERSION"
           
           # URL encoded package names
-          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge" "monorepo%2Frpanel-db")
+          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge")
           
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
