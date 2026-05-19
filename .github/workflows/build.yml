@@ -136,12 +136,15 @@ jobs:
               print('-> UPDATE DETECTED for PlatformStack!')
               should_build = True
 
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write(f'should_build={str(should_build).lower()}\n')
+          with open('build_result.txt', 'w') as f:
+              f.write(str(should_build).lower())
           "
           
-          echo "should_build=$SHOULD_BUILD" >> "$GITHUB_OUTPUT"
-          if [ "$SHOULD_BUILD" = "false" ]; then
+          # Read the python output file and pass it safely to GitHub Actions
+          RES=$(cat build_result.txt)
+          echo "should_build=$RES" >> "$GITHUB_OUTPUT"
+          
+          if [ "$RES" = "false" ]; then
             echo "No upstream updates found in the last 7 days. Pipeline will safely skip."
           fi
 
