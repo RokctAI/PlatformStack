@@ -136,6 +136,12 @@ jobs:
               print('-> UPDATE DETECTED for PlatformStack!')
               should_build = True
 
+          print('Checking Control Repo...')
+          res = fetch('https://api.github.com/repos/RokctAI/control/commits/main')
+          if res and 'sha' in res and local_state.get('RokctAI/control') != res['sha']:
+              print('-> UPDATE DETECTED for Control!')
+              should_build = True
+
           with open('build_result.txt', 'w') as f:
               f.write(str(should_build).lower())
           "
@@ -342,7 +348,6 @@ jobs:
             ghcr.io/rokctai/monorepo/rpanel-db:${{ steps.meta.outputs.version }}
 
   upgrade-test:
-    if: false # Temporarily disabled to bypass the broken legacy entrypoint image.
     needs: [pipeline, docker-release]
     uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@main
     with:
@@ -440,6 +445,9 @@ jobs:
 
           res = fetch('https://api.github.com/repos/RokctAI/PlatformStack/commits/main')
           if res and 'sha' in res: new_state['RokctAI/PlatformStack'] = res['sha']
+
+          res = fetch('https://api.github.com/repos/RokctAI/control/commits/main')
+          if res and 'sha' in res: new_state['RokctAI/control'] = res['sha']
 
           with open('build_state.json', 'w') as f:
               json.dump(new_state, f, indent=4)
