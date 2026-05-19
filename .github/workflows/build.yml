@@ -352,7 +352,7 @@ jobs:
     uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@main
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
-      min_legacy_version: '2.4.9'
+      min_legacy_version: '2.4.8'
     secrets: inherit
 
   rollback-images:
