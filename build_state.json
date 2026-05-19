@@ -1,0 +1,17 @@
+{
+    "Frappenize/frappe": "441a49ab164ca185576d9397dc59140ec3623324",
+    "Frappenize/erpnext": "9312781dcd1bb7b0cf35d96b7c816013addfa28a",
+    "Frappenize/payments": "66215cf01e4f3be96a3b6b5870ba374ac307209b",
+    "Frappenize/hrms": "74d81739875f3c6fec9368a77ff1ce50cf720067",
+    "Frappenize/crm": "cddd19007fd98553654387b80229a6b001875de1",
+    "Frappenize/lms": "7cfae5401e52a9834337ee829d6b7974f7a0d9d8",
+    "Frappenize/lending": "8227700775cd2c995be3975b4322d9f01348a7ea",
+    "Frappenize/raven": "74ec47f0c3563c942d6b7579d031df8f50457cf2",
+    "Frappenize/gameplan": "6e460704a09a0681423e623b30c5abb644f7ea17",
+    "Frappenize/helpdesk": "a1ae37cc99e9faad42098f09dc75d9483d8f8914",
+    "RokctAI/rcore": "v1.5.0",
+    "RokctAI/rpaas": "v1.4.3-rc",
+    "RokctAI/rpanel": "v1.2.1-rc2",
+    "RokctAI/brain": "v2.5.8",
+    "RokctAI/PlatformStack": "f0aacc200867824115151566345489350997f42e"
+}
