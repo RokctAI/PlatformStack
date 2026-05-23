@@ -643,24 +643,15 @@ PY
 fi
 
 # --- 4C. Tooling: Fetch StartupOS Callers (Immutable Layer) ---
-_log "RokctAI: Fetching StartupOS Callers and Core Engines..."
+_log "RokctAI: Fetching StartupOS Callers..."
 CALLERS_DIR="/home/frappe/startup_os_callers"
-sudo mkdir -p "$CALLERS_DIR/core"
+sudo mkdir -p "$CALLERS_DIR"
 
 GITHUB_RAW_BASE="https://raw.githubusercontent.com/RokctAI/The-Rokct-Protocol/main"
 # Fetch thin callers
 for script in compile.py provision.py log_milestone.py seed_cv_ledger.py; do
   run_step "Fetching StartupOS caller: $script" \
     sudo wget -q -O "$CALLERS_DIR/$script" "$GITHUB_RAW_BASE/core/skills/startup_os/scripts/$script"
-done
-
-# Pre-create __init__.py for core
-sudo touch "$CALLERS_DIR/core/__init__.py"
-
-# Pre-fetch core engines to prevent PermissionError at runtime in read-only container layer
-for core_file in compiler.py parser.py agent_bridge.py; do
-  run_step "Fetching StartupOS core engine: $core_file" \
-    sudo wget -q -O "$CALLERS_DIR/core/$core_file" "$GITHUB_RAW_BASE/core/skills/startup_os/scripts/core/$core_file"
 done
 
 # Ensure root ownership and read-only for others (including frappe user)
