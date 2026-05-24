@@ -624,6 +624,69 @@ with p.open("rb") as f:
 PY
   fi
 
+  # Patch ROK WhatsApp adapter to prevent runtime npm install / remote fetching
+  ROK_WHATSAPP_PLATFORM="$ROK_DIR/gateway/platforms/whatsapp.py"
+  if [ -f "$ROK_WHATSAPP_PLATFORM" ]; then
+    run_step "Patching ROK WhatsApp adapter to prevent remote fetching" env/bin/python <<'PY'
+import pathlib
+import sys
+
+p = pathlib.Path("tools/rok/gateway/platforms/whatsapp.py")
+if not p.exists():
+    raise SystemExit("ROK: missing tools/rok/gateway/platforms/whatsapp.py")
+
+text = p.read_text(encoding="utf-8")
+
+old_code = """        # Auto-install npm dependencies if node_modules doesn't exist
+        bridge_dir = bridge_path.parent
+        if not (bridge_dir / "node_modules").exists():
+            print(f"[{self.name}] Installing WhatsApp bridge dependencies...")
+            try:
+                install_result = subprocess.run(
+                    ["npm", "install", "--silent"],
+                    cwd=str(bridge_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+                if install_result.returncode != 0:
+                    print(f"[{self.name}] npm install failed: {install_result.stderr}")
+                    return False
+                print(f"[{self.name}] Dependencies installed")
+            except Exception as e:
+                print(f"[{self.name}] Failed to install dependencies: {e}")
+                return False"""
+
+new_code = """        # Check npm dependencies exist - no auto-install allowed to secure offline isolation
+        bridge_dir = bridge_path.parent
+        if not (bridge_dir / "node_modules").exists():
+            logger.error("[%s] WhatsApp bridge node_modules is missing! Remote fetching is disabled. Please ensure dependencies are pre-installed in the environment.", self.name)
+            return False"""
+
+if old_code in text:
+    new_text = text.replace(old_code, new_code)
+    p.write_text(new_text, encoding="utf-8")
+    print("  - WhatsApp adapter patched successfully")
+else:
+    # Fallback search
+    start_marker = '        # Auto-install npm dependencies if node_modules'
+    end_marker = '                return False'
+    
+    start_idx = text.find(start_marker)
+    if start_idx != -1:
+        end_idx = text.find(end_marker, start_idx)
+        if end_idx != -1:
+            end_line_idx = text.find('\n', end_idx)
+            if end_line_idx != -1:
+                target_block = text[start_idx:end_line_idx]
+                new_text = text.replace(target_block, new_code)
+                p.write_text(new_text, encoding="utf-8")
+                print("  - WhatsApp adapter patched successfully via fallback search")
+                sys.exit(0)
+    print("WARNING: WhatsApp adapter already patched or signature not found")
+PY
+  fi
+
   # Ensure the current user owns the ROK directory for the build process
   run_step "Setting ROK ownership" sudo chown -R $(id -u):$(id -g) "$ROK_DIR"
   run_step "Setting ROK permissions" chmod -R u+rwX,go+rX "$ROK_DIR"
