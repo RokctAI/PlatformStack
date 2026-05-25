@@ -367,7 +367,7 @@ jobs:
           echo "Rolling back failed version: $VERSION"
           
           # URL encoded package names
-          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge")
+          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge" "monorepo%2Frpanel-db")
           
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
@@ -384,6 +384,40 @@ jobs:
               echo "Delete response code: $RESPONSE"
             else
               echo "Could not find tag $VERSION for package $PKG. It may have already been deleted or not pushed."
+            fi
+          done
+
+      - name: Restore Previous Version as Latest
+        run: |
+          ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          
+          # URL encoded package names
+          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge" "monorepo%2Frpanel-db")
+          
+          for PKG in "${PACKAGES[@]}"; do
+            echo "Fetching versions for $PKG..."
+            
+            # 1. Find the most recent remaining version of each package using the GHCR versions API
+            # (First one returned in the versions list is the most recent remaining)
+            VERSION_ID=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/orgs/$ORG_NAME/packages/container/$PKG/versions" \
+              | jq -r ".[0].id")
+            
+            if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" != "null" ]; then
+              echo "Most recent remaining version ID for $PKG is: $VERSION_ID"
+              
+              # 2. Patch it to restore the latest tag by calling the GitHub API to update version's metadata
+              echo "Patching version metadata to restore latest tag..."
+              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH \
+                -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+                -H "Accept: application/vnd.github+json" \
+                "https://api.github.com/orgs/$ORG_NAME/packages/container/$PKG/versions/$VERSION_ID" \
+                -d '{"metadata":{"container":{"tags":["latest"]}}}')
+              
+              echo "Patch API response code: $RESPONSE"
+            else
+              echo "⚠️ Could not find any remaining versions for package $PKG."
             fi
           done
 
