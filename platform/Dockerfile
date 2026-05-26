@@ -78,6 +78,8 @@ WORKDIR /home/frappe/frappe-bench
 RUN cd apps && \
     ../env/bin/pip uninstall -y control rpanel || true && \
     rm -rf control rpanel
+RUN env/bin/pip uninstall -y rok-agent || true && \
+    rm -rf tools/rok
 RUN echo "frappe" > sites/apps.txt && \
     ls -1 apps | grep -v 'frappe' >> sites/apps.txt || true
 
