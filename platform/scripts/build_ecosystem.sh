@@ -156,7 +156,7 @@ APP_NAME=${APP_NAME:-""}
 PY_BIN=${PY_BIN:-python3}
 command -v "$PY_BIN" >/dev/null 2>&1 || PY_BIN=python3
 INSTALL_ROK=${INSTALL_ROK:-true}
-ROK_REF=${ROK_REF:-main}
+ROK_REF=${ROK_REF:-rokct}
 
 # Environment-aware variables for set -u compatibility
 DOCKER_BUILD=${DOCKER_BUILD:-false}
