@@ -164,3 +164,23 @@ Provide a comprehensive, professional audit report summarizing:
 3. Dockerfile build and stripping gate status.
 4. TypeScript compilation success details.
 ```
+
+---
+
+## 6. Network Routing & Communication Matrix (Local vs. Remote VPS)
+
+This matrix defines exactly how components communicate under both a **Single VPS (Local Loopback)** setup and a **Distributed multi-VPS (Remote HTTPS)** cluster topology:
+
+| Communication Flow | Target Service | Local VPS Routing (Single Server) | Remote VPS Routing (Distributed hosting) |
+| :--- | :--- | :--- | :--- |
+| **Tenant $\rightarrow$ Control Handshake** | Bootstrap API | `http://172.17.0.1:8000` (Docker default bridge IP) | `https://platform.rokct.ai` (Control's public secure domain) |
+| **Tenant $\rightarrow$ AI Completions** | ROK completions | `http://127.0.0.1:8642/v1/...` (Local ROK port) | `https://platform.rokct.ai/api/method/control...` (Control chat proxy endpoint) |
+| **Tenant $\rightarrow$ WhatsApp Bridge** | Central Baileys Bridge | `http://172.17.0.1:9000/api/...` (Local host port) | `https://platform.rokct.ai/api/whatsapp/...` (Proxy routed over Control Hub VPS) |
+| **Paperclip $\rightarrow$ ROK completions** | Managed Employee | `http://127.0.0.1:8642/v1/...` (Local Control Plane loop) | `http://127.0.0.1:8642/v1/...` (Always local on the Control Plane VPS where ROK resides) |
+
+### 🛠️ Configuration Directives:
+1.  **For Local Hosting (Same VPS)**: No environment variables are required. Everything falls back to high-speed local Docker gateway defaults.
+2.  **For Remote Hosting (Different VPS)**: Inside the Tenant Spoke container environment, you **must** configure:
+    *   `ROKCT_CONTROL_URL=https://platform.rokct.ai` (Directs bootstrap handshake over HTTPS).
+    *   `ROK_COMPLETIONS_URL=https://platform.rokct.ai/api/method/control.control.api.chat_with_rok` (Forwards completions to the central brain).
+    *   `whatsapp_bridge_url` (Set inside the Control Plane site config to `https://platform.rokct.ai/api/whatsapp` to propagate correct remote endpoint on boot).
