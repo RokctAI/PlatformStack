@@ -160,6 +160,20 @@ start_services() {
       fi
       nginx -g 'daemon off;' &
       mkdir -p /var/run/supervisor || true
+
+      # Launch Paperclip Host centrally in background
+      if [ -d "/home/frappe/paperclip" ]; then
+        echo "🔌 Starting Paperclip central host..."
+        sudo -u frappe bash -c "
+          cd /home/frappe/paperclip
+          if [ ! -f .env ]; then
+            echo 'AGENT_COMPLETIONS_URL=http://127.0.0.1:8642/v1/chat/completions' > .env
+            echo 'AGENT_SESSION_ID=rok-employee-session' >> .env
+          fi
+          npm run start &
+        "
+      fi
+
       exec sudo -u frappe bench start
     else
       exec bench start

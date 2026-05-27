@@ -60,6 +60,12 @@ RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-
     npm install && \
     npm run build
 
+# Clone Paperclip Host and link rok-paperclip-adapter
+RUN git clone --depth 1 https://github.com/NousResearch/paperclip.git /home/frappe/paperclip && \
+    cd /home/frappe/paperclip && \
+    npm install && \
+    npm install /home/frappe/rok-paperclip-adapter
+
 # Preserve the baked site so the entrypoint can seed an empty volume on first boot
 # (Named volume mounts shadow the image layers, so we keep a backup outside /sites)
 RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
@@ -85,7 +91,7 @@ RUN cd apps && \
     ../env/bin/pip uninstall -y control rpanel || true && \
     rm -rf control rpanel
 RUN env/bin/pip uninstall -y rok-agent || true && \
-    rm -rf tools/rok /home/frappe/rok-paperclip-adapter
+    rm -rf tools/rok /home/frappe/rok-paperclip-adapter /home/frappe/paperclip
 RUN echo "frappe" > sites/apps.txt && \
     ls -1 apps | grep -v 'frappe' >> sites/apps.txt || true
 
@@ -112,7 +118,7 @@ RUN cd apps && \
             rm -rf "$app"; \
         fi \
     done && \
-    rm -rf ../tools/rok /home/frappe/rok-paperclip-adapter
+    rm -rf ../tools/rok /home/frappe/rok-paperclip-adapter /home/frappe/paperclip
 RUN printf "frappe\nrcore\nbrain\n" > sites/apps.txt
 
 # Stage 5: IoT (Minimal Image)
