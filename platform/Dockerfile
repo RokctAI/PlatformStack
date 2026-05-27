@@ -61,7 +61,7 @@ RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-
     npm run build
 
 # Clone Paperclip Host and link rok-paperclip-adapter
-RUN git clone --depth 1 https://github.com/NousResearch/paperclip.git /home/frappe/paperclip && \
+RUN git clone --depth 1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip && \
     cd /home/frappe/paperclip && \
     npm install && \
     npm install /home/frappe/rok-paperclip-adapter
