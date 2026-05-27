@@ -4,7 +4,7 @@ This document serves as the absolute Source of Truth for all active repositories
 
 ---
 
-## 1. Core Platform Repositories
+## 1. Core Platform & Infrastructure Repositories
 
 ### 1.1 [PlatformStack](https://github.com/RokctAI/PlatformStack.git)
 *   **Active Branch**: `main`
@@ -17,7 +17,7 @@ This document serves as the absolute Source of Truth for all active repositories
 
 ### 1.3 [Tenant Spoke App (`rcore`)](https://github.com/RokctAI/rcore.git)
 *   **Active Branch**: `main`
-*   **Role**: The ERP core backend for tenant spoke instances (`*.tenants.rokct.ai`). Houses the dynamic `StartupOS` Strategic Onboarding compiler, comparative telemetry engines, and in-memory bootstrap secrets managers.
+*   **Role**: The ERP core backend for tenant spoke instances (`*.tenants.rokct.ai`). Houses the dynamic `StartupOS` Onboarding compiler, comparative telemetry engines, and in-memory bootstrap secrets managers.
 
 ### 1.4 [Next.js Web Frontend](https://github.com/RokctAI/RokctAI_frontend.git)
 *   **Active Branch**: `main`
@@ -33,24 +33,91 @@ This document serves as the absolute Source of Truth for all active repositories
 
 ---
 
-## 2. ROK Agent & Adapter Repositories
+## 2. Frappe Application Stack (Tracked in `major_versions.json`)
 
-### 2.1 [ROK Agent Core](https://github.com/RokctAI/ROK.git)
+These standard and customized Frappe applications are dynamically fetched and updated by `install_stack.py` and the Golden Build pipeline to form our backend system:
+
+### 2.1 Core Frameworks & ERP Standard Apps
+*   **`frappe`**: [Frappenize/frappe](https://github.com/Frappenize/frappe.git) (branch: `rokct`) - Custom-extended core Frappe framework.
+*   **`payments`**: [Frappenize/payments](https://github.com/Frappenize/payments.git) (branch: `rokct`) - Secure billing integrations layer.
+*   **`erpnext`**: [Frappenize/erpnext](https://github.com/Frappenize/erpnext.git) (branch: `rokct`) - Authoritative ERP resource platform.
+*   **`hrms`**: [Frappenize/hrms](https://github.com/Frappenize/hrms.git) (branch: `rokct`) - Human Resource management systems.
+
+### 2.2 Domain & Professional Apps
+*   **`crm`**: [Frappenize/crm](https://github.com/Frappenize/crm.git) (branch: `rokct`) - Customer relationship and funnel tracker.
+*   **`lms`**: [Frappenize/lms](https://github.com/Frappenize/lms.git) (branch: `rokct`) - Learning management systems for onboarding training.
+*   **`lending`**: [Frappenize/lending](https://github.com/Frappenize/lending.git) (branch: `rokct`) - Micro-credit and transactional loan manager.
+*   **`helpdesk`**: [Frappenize/helpdesk](https://github.com/Frappenize/helpdesk.git) (branch: `rokct`) - Support tickets and service level agreements (SLA).
+
+### 2.3 Productivity & Communication Apps
+*   **`raven`**: [Frappenize/raven](https://github.com/Frappenize/raven.git) (branch: `rokct`) - Internal team messaging services.
+*   **`gameplan`**: [Frappenize/gameplan](https://github.com/Frappenize/gameplan.git) (branch: `rokct`) - Team taskboards and visual roadmap orchestrator.
+
+### 2.4 ROKCT Platform Apps (Our Core Layer)
+*   **`rcore`**: [RokctAI/rcore](https://github.com/RokctAI/rcore.git) (branch: `main`) - Custom Tenant Hub module.
+*   **`rpaas` (PaaS)**: [RokctAI/paas](https://github.com/RokctAI/paas.git) (branch: `main`) - Custom SaaS business plane connector.
+*   **`rpanel`**: [RokctAI/rpanel](https://github.com/RokctAI/rpanel.git) (branch: `main`) - System-wide administration portal app.
+*   **`brain`**: [RokctAI/brain](https://github.com/RokctAI/brain.git) (branch: `main`) - Memory Engrams and pgvector semantic query databases.
+
+---
+
+## 3. ROK Agent & Paperclip Repositories
+
+### 3.1 [ROK Agent Core](https://github.com/RokctAI/ROK.git)
 *   **Active Branch**: `rokct` (Customized Fork)
-*   **Role**: The primary AI agentic coding and completions engine. Bundled with the host-level WhatsApp bridge and dynamic terminal executors. Kept in sync with upstream `NousResearch/hermes-agent`.
+*   **Role**: The primary AI agentic coding and completions engine. Bundled with the host-level WhatsApp bridge and dynamic terminal executors.
 
-### 2.2 [ROK Paperclip Adapter](https://github.com/RokctAI/rok-paperclip-adapter.git)
+### 3.2 [ROK Paperclip Adapter](https://github.com/RokctAI/rok-paperclip-adapter.git)
 *   **Active Branch**: `rokct` (Customized Fork)
-*   **Role**: A lightweight Node.js/TypeScript adapter implementing standard multi-agent interfaces. Allows the centralized ROK agent to act as a managed employee inside a Paperclip company.
-*   **Upstream Reference**: [NousResearch/hermes-paperclip-adapter](https://github.com/NousResearch/hermes-paperclip-adapter.git)
+*   **Role**: A lightweight Node.js/TypeScript adapter implementing standard multi-agent interfaces. Allows ROK Agent to act as a managed employee inside a Paperclip company.
 
-### 2.3 [Paperclip Core (Upstream Core)](https://github.com/NousResearch/paperclip.git)
-*   **Active Branch**: `main` (or target release)
+### 3.3 [Paperclip Core (Upstream Host Core)](https://github.com/NousResearch/paperclip.git)
+*   **Active Branch**: `main`
 *   **Role**: The central multi-agent chat interface and coordination server. **This is the actual Paperclip host application.** ROK-paperclip-adapter hooks ROK directly into this environment to let it receive tasks and execute tickets.
 
 ---
 
-## 3. Jules Ecosystem Verification Prompt
+## 4. Control Plane integration: How Control Fetches and Runs Paperclip
+
+Since `rok-paperclip-adapter` is a node package, **Control will host the Paperclip server centrally** and mount ROK directly as an employee.
+
+Here is the exact step-by-step setup procedure that gets baked inside the Control Hub container:
+
+### 1. Clone the Paperclip Host
+Inside the Control Plane's builder phase, clone the main Paperclip repository into `/home/frappe/paperclip`:
+```bash
+git clone --depth 1 https://github.com/NousResearch/paperclip.git /home/frappe/paperclip
+```
+
+### 2. Link the Rebranded `rok-paperclip-adapter`
+During the dependency installation phase, instead of fetching the upstream adapter from NPM, register your customized local adapter branch (`rokct`):
+```bash
+cd /home/frappe/paperclip
+npm install
+
+# Install the locally compiled ROK Paperclip Adapter directly into Paperclip
+npm install /home/frappe/rok-paperclip-adapter
+```
+
+### 3. Configure the Paperclip Environment (`/home/frappe/paperclip/.env`)
+Provide the server URL of the local ROK Agent completions server so Paperclip can securely proxy commands to ROK:
+```env
+# Point Paperclip to ROK Agent Completions Server running on the Control Plane
+AGENT_COMPLETIONS_URL=http://127.0.0.1:8642/v1/chat/completions
+AGENT_SESSION_ID=rok-employee-session
+```
+
+### 4. Running the Server
+On boot, the Control Plane container launches the Paperclip server in the background alongside the main Frappe Bench processes:
+```bash
+cd /home/frappe/paperclip
+npm run start
+```
+Now, Paperclip serves its beautiful multi-agent collaboration interface, with **ROK fully active as a high-fidelity, managed employee** executing tickets!
+
+---
+
+## 5. Jules Ecosystem Verification Prompt
 
 Copy and paste the entire prompt below and hand it to the **Jules** agent to verify your distributed environment:
 
@@ -60,7 +127,7 @@ You are Jules, a high-fidelity systems validation and QA agent. Your mission is 
 Execute the following checks in your workspace:
 
 ### 1. Clone & Branch Alignment Check
-Clone the following repositories into separate sibling directories, checking out their correct target branches:
+Clone the following core platform repositories, checking out their correct target branches:
 - PlatformStack: https://github.com/RokctAI/PlatformStack.git (branch: main)
 - Control App: https://github.com/RokctAI/control.git (branch: main)
 - Tenant App: https://github.com/RokctAI/rcore.git (branch: main)
@@ -70,6 +137,9 @@ Clone the following repositories into separate sibling directories, checking out
 - ROK Core: https://github.com/RokctAI/ROK.git (branch: rokct)
 - ROK Paperclip Adapter: https://github.com/RokctAI/rok-paperclip-adapter.git (branch: rokct)
 - Paperclip Host: https://github.com/NousResearch/paperclip.git (branch: main)
+
+Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
+- frappe (branch: rokct), erpnext (branch: rokct), payments (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), crm (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main), brain (branch: main).
 
 ### 2. Cross-VPS Decoupling Audit
 Audit rcore and control codebases to ensure absolute cross-VPS safety:
