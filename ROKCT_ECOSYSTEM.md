@@ -71,7 +71,7 @@ These standard and customized Frappe applications are dynamically fetched and up
 *   **Active Branch**: `rokct` (Customized Fork)
 *   **Role**: A lightweight Node.js/TypeScript adapter implementing standard multi-agent interfaces. Allows ROK Agent to act as a managed employee inside a Paperclip company.
 
-### 3.3 [Paperclip Core (Upstream Host Core)](https://github.com/NousResearch/paperclip.git)
+### 3.3 [Paperclip Core (Upstream Host Core)](https://github.com/paperclipai/paperclip.git)
 *   **Active Branch**: `main`
 *   **Role**: The central multi-agent chat interface and coordination server. **This is the actual Paperclip host application.** ROK-paperclip-adapter hooks ROK directly into this environment to let it receive tasks and execute tickets.
 
@@ -86,7 +86,7 @@ Here is the exact step-by-step setup procedure that gets baked inside the Contro
 ### 1. Clone the Paperclip Host
 Inside the Control Plane's builder phase, clone the main Paperclip repository into `/home/frappe/paperclip`:
 ```bash
-git clone --depth 1 https://github.com/NousResearch/paperclip.git /home/frappe/paperclip
+git clone --depth 1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip
 ```
 
 ### 2. Link the Rebranded `rok-paperclip-adapter`
@@ -136,7 +136,7 @@ Clone the following core platform repositories, checking out their correct targe
 - The-Rokct-Protocol: https://github.com/RokctAI/The-Rokct-Protocol.git (branch: main)
 - ROK Core: https://github.com/RokctAI/ROK.git (branch: rokct)
 - ROK Paperclip Adapter: https://github.com/RokctAI/rok-paperclip-adapter.git (branch: rokct)
-- Paperclip Host: https://github.com/NousResearch/paperclip.git (branch: main)
+- Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
 - frappe (branch: rokct), erpnext (branch: rokct), payments (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), crm (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main), brain (branch: main).
