@@ -54,6 +54,12 @@ RUN chmod +x /usr/local/bin/build_ecosystem.sh && \
     export APP_NAME=$(cat /home/frappe/current_repo/pyproject.toml 2>/dev/null | grep -m1 'name = "' | cut -d'"' -f2 || echo "rpanel") && \
     /usr/local/bin/build_ecosystem.sh || (cat /tmp/build_ecosystem.log && exit 1)
 
+# Clone and build rok-paperclip-adapter
+RUN git clone --depth 1 https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter && \
+    cd /home/frappe/rok-paperclip-adapter && \
+    npm install && \
+    npm run build
+
 # Preserve the baked site so the entrypoint can seed an empty volume on first boot
 # (Named volume mounts shadow the image layers, so we keep a backup outside /sites)
 RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
@@ -79,7 +85,7 @@ RUN cd apps && \
     ../env/bin/pip uninstall -y control rpanel || true && \
     rm -rf control rpanel
 RUN env/bin/pip uninstall -y rok-agent || true && \
-    rm -rf tools/rok
+    rm -rf tools/rok /home/frappe/rok-paperclip-adapter
 RUN echo "frappe" > sites/apps.txt && \
     ls -1 apps | grep -v 'frappe' >> sites/apps.txt || true
 
@@ -106,7 +112,7 @@ RUN cd apps && \
             rm -rf "$app"; \
         fi \
     done && \
-    rm -rf ../tools/rok
+    rm -rf ../tools/rok /home/frappe/rok-paperclip-adapter
 RUN printf "frappe\nrcore\nbrain\n" > sites/apps.txt
 
 # Stage 5: IoT (Minimal Image)
