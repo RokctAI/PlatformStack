@@ -55,7 +55,7 @@ RUN chmod +x /usr/local/bin/build_ecosystem.sh && \
     /usr/local/bin/build_ecosystem.sh || (cat /tmp/build_ecosystem.log && exit 1)
 
 # Clone and build rok-paperclip-adapter
-RUN git clone --depth 1 https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter && \
+RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter && \
     cd /home/frappe/rok-paperclip-adapter && \
     npm install && \
     npm run build
