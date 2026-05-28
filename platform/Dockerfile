@@ -23,6 +23,13 @@ RUN apt-get update -qq && apt-get install -yqq \
     >/dev/null 2>&1 \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Docker CLI and Docker Compose statically to allow container orchestration
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.0.7.tgz | tar -xz -C /tmp \
+    && mv /tmp/docker/docker /usr/local/bin/ \
+    && rm -rf /tmp/docker \
+    && curl -fsSL "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose
+
 RUN npm install -g yarn pnpm
 RUN useradd -ms /bin/bash frappe && \
     usermod -aG sudo frappe && \
