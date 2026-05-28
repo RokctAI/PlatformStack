@@ -295,6 +295,8 @@ jobs:
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
             DB_HOST=127.0.0.1
+
+      - name: Build and Push Tenant Spoke (Tenant)
         uses: docker/build-push-action@v4
         with:
           context: docker-context
