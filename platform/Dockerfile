@@ -3,6 +3,7 @@
 FROM python:3.14-slim AS base
 
 ARG GITHUB_TOKEN
+ARG MONOREPO_PAT
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
@@ -44,9 +45,13 @@ RUN pip install --user frappe-bench
 # Stage 2: The Giant Builder (Clones everything)
 FROM base AS builder
 USER root
-RUN if [ -n "${GITHUB_TOKEN}" ] && [ "${GITHUB_TOKEN}" != "***" ]; then \
-        git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:" && \
-        git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+# Resolve effective git token: MONOREPO_PAT preferred, GITHUB_TOKEN as fallback
+ARG MONOREPO_PAT
+ARG GITHUB_TOKEN
+RUN GIT_TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN}}"; \
+    if [ -n "${GIT_TOKEN}" ] && [ "${GIT_TOKEN}" != "***" ]; then \
+        git config --global url."https://x-access-token:${GIT_TOKEN}@github.com/".insteadOf "git@github.com:" && \
+        git config --global url."https://x-access-token:${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"; \
     fi
 USER frappe
 ARG DB_HOST=127.0.0.1
@@ -55,9 +60,10 @@ ARG DB_HOST=127.0.0.1
 COPY --chown=frappe:frappe monorepo_overrides /home/frappe/monorepo_overrides
 COPY --chown=frappe:frappe current_repo /home/frappe/current_repo
 COPY --chown=frappe:frappe platform/scripts/build_ecosystem.sh /usr/local/bin/build_ecosystem.sh
-RUN chmod +x /usr/local/bin/build_ecosystem.sh && \
+RUN GIT_TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN}}"; \
+    chmod +x /usr/local/bin/build_ecosystem.sh && \
     export BOOTSTRAP=true && export DB_TYPE=postgres && export DB_PW=admin && \
-    export GITHUB_TOKEN=${GITHUB_TOKEN} && \
+    export GITHUB_TOKEN="${GIT_TOKEN}" && \
     export GITHUB_WORKSPACE=/home/frappe/current_repo && \
     export DB_HOST=${DB_HOST} && \
     export APP_NAME=$(cat /home/frappe/current_repo/pyproject.toml 2>/dev/null | grep -m1 'name = "' | cut -d'"' -f2 || echo "rpanel") && \
