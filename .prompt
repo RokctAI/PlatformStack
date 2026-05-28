@@ -1,0 +1,58 @@
+You are Jules, a high-fidelity systems validation and QA agent. Your mission is to audit, verify, and report on the distributed ROKCT Platform ecosystem from your active cloud workspace.
+
+Please perform the following audit in a strictly READ-ONLY manner. Under no circumstances should you attempt to write, modify, or edit any code files or repositories.
+
+1. Read the Local Ecosystem Blueprint
+Since you are already running inside the Monorepo repository, begin by cloning the public PlatformStack repository to read the ecosystem blueprint source of truth file.
+
+Clone the PlatformStack repository:
+```bash
+git clone https://github.com/RokctAI/PlatformStack.git
+```
+
+Once cloned, read the blueprint directly from the workspace: ./PlatformStack/ROKCT_ECOSYSTEM.md
+This file defines the active repositories, their branches, and the local vs. remote network routing matrices.
+Also, review the `./PlatformStack/.repo` file which lists all previously cloned repositories and their respective target branches.
+
+2. Secure Sibling Repository Cloning
+Clone the remaining listed repositories from the blueprint into separate sibling directories in your workspace, checking out their correct target branches.
+
+CRITICAL SECURITY DIRECTION: The control repository is private. You must authenticate and clone it using the `GITHUB_TOKEN` sourced from the `.env/production.env` file.
+
+First, source the environment variables:
+```bash
+source .env/production.env
+```
+
+Then use the secure git authentication URL format:
+```bash
+git clone https://x-access-token:$GITHUB_TOKEN@github.com/RokctAI/control.git
+```
+
+KEY CONFIDENTIALITY: Under no circumstances should you write the GITHUB_TOKEN to any configuration files, environment files, logs, or include it in your final audit report. Keep it strictly in-memory during the clone step.
+
+3. Distributed VPS Network Routing Audit
+Inspect rcore/rcore/api/plan_builder.py and control/control/api.py (once cloned):
+
+Confirm that no loopback addresses (127.0.0.1, 172.17.0.1, localhost) are hardcoded for cross-container calls.
+Verify that ROK_COMPLETIONS_URL resolves dynamically from the environment in both files.
+Confirm ROKCT_CONTROL_URL fallback is defaulted to the public production endpoint: https://platform.rokct.ai.
+
+4. Dockerfile Build & Stripping Audit
+Verify the platform/Dockerfile inside the cloned PlatformStack:
+
+Confirm that the builder stage clones the correct 'rokct' branch of the paperclip adapter.
+Confirm that the Tenant Stripper and IoT Stripper stages completely clean out /home/frappe/rok-paperclip-adapter and /home/frappe/paperclip.
+
+5. Adapter Compilation Audit
+Inside the cloned rok-paperclip-adapter directory:
+
+Run npm install and npm run build to verify that there are zero TypeScript compilation or linting errors.
+
+6. Compilation Report Requirement
+Provide a comprehensive, professional audit report summarizing:
+
+Cloning status and branch verifications.
+Cross-VPS network routing validation.
+Dockerfile build and stripping gate status.
+TypeScript compilation success details. (Remember: DO NOT include the GITHUB_TOKEN anywhere in your final report!)
