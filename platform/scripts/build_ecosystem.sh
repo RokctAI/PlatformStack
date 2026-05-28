@@ -740,7 +740,7 @@ PY
 
   # Create a thin shim in the bench venv bin so `rok` is reachable on the standard PATH.
   ROK_SHIM="./env/bin/rok"
-  cat > "$ROK_SHIM" <<SHIM
+  cat >"$ROK_SHIM" <<SHIM
 #!/bin/sh
 exec "$PWD/$ROK_VENV/bin/rok" "\$@"
 SHIM
