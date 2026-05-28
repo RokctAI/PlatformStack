@@ -1061,6 +1061,29 @@ else
   fi
 
   run_step "Configuring site" bash -c "bench --site \"$SITE_NAME\" set-config developer_mode 1 && bench --site \"$SITE_NAME\" set-config allow_tests true"
+  
+  # Inject Monorepo overrides .env secrets into the site config
+  if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
+    _log "Injecting secrets from $OVERRIDES_DIR/.env/production.env..."
+    export SITE_NAME OVERRIDES_DIR
+    run_step "Injecting Monorepo secrets" python3 -c "
+import os, subprocess
+env_path = os.path.join(os.environ['OVERRIDES_DIR'], '.env', 'production.env')
+site_name = os.environ['SITE_NAME']
+if os.path.exists(env_path):
+    with open(env_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, val = line.split('=', 1)
+                key = key.strip().lower()
+                val = val.strip().strip(\"'\").strip('\"')
+                # Inject keys dynamically (e.g. ovh_* or other production credentials)
+                if any(k in key for k in ['ovh_', 'stripe_', 'paystack_', 'db_root_password']):
+                    subprocess.run(['bench', '--site', site_name, 'set-config', key, val], check=True)
+                    print(f'  - Injected configuration key: {key}')
+"
+  fi
 fi
 
 mkdir -p "sites/$SITE_NAME/logs"
