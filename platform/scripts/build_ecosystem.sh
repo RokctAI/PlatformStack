@@ -1104,7 +1104,7 @@ if os.path.exists(env_path):
                 key = key.strip().lower()
                 val = val.strip().strip(\"'\").strip('\"')
                 # Inject keys dynamically (e.g. ovh_* or other production credentials)
-                if any(k in key for k in ['ovh_', 'stripe_', 'paystack_', 'db_root_password']):
+                if any(k in key for k in ['ovh_', 'stripe_', 'paystack_', 'db_root_password', 'vps_provider']):
                     subprocess.run(['bench', '--site', site_name, 'set-config', key, val], check=True)
                     print(f'  - Injected configuration key: {key}')
 "
