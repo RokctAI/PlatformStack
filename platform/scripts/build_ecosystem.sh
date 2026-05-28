@@ -21,8 +21,8 @@ if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
       key=$(echo "$line" | cut -d'=' -f1 | xargs)
       val=$(echo "$line" | cut -d'=' -f2- | xargs | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
       export "$key"="$val"
-      # Special map: if we load DB_ROOT_PASSWORD, also set DB_PW
-      if [ "$key" = "DB_ROOT_PASSWORD" ]; then
+      # Special map: if we load DB_ROOT_PASSWORD, also set DB_PW (except during container bootstrap/build)
+      if [ "$key" = "DB_ROOT_PASSWORD" ] && [ "$BOOTSTRAP" != "true" ]; then
         export DB_PW="$val"
       fi
     fi
