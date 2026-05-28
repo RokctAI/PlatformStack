@@ -44,8 +44,10 @@ RUN pip install --user frappe-bench
 # Stage 2: The Giant Builder (Clones everything)
 FROM base AS builder
 USER root
-RUN git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:" && \
-    git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+RUN if [ -n "${GITHUB_TOKEN}" ] && [ "${GITHUB_TOKEN}" != "***" ]; then \
+        git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:" && \
+        git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    fi
 USER frappe
 ARG DB_HOST=127.0.0.1
 

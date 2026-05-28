@@ -30,9 +30,14 @@ if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
 fi
 
 # --- Dynamically Apply Git Credentials if GITHUB_TOKEN is loaded ---
-if [ -n "$GITHUB_TOKEN" ]; then
+if [ -n "$GITHUB_TOKEN" ] && [ "$GITHUB_TOKEN" != "***" ]; then
   git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:" 2>/dev/null || true
   git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/" 2>/dev/null || true
+else
+  # Clean up any broken/empty token rewrites from gitconfig to prevent clone corruption
+  git config --global --unset url."https://x-access-token:@github.com/".insteadOf 2>/dev/null || true
+  git config --global --unset url."https://x-access-token:***@github.com/".insteadOf 2>/dev/null || true
+  git config --global --unset url."https://x-access-token:x-access-token@github.com/".insteadOf 2>/dev/null || true
 fi
 
 export BUILD_LOG="/tmp/build_ecosystem.log"
