@@ -29,6 +29,12 @@ if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
   done <"$OVERRIDES_DIR/.env/production.env"
 fi
 
+# --- Dynamically Apply Git Credentials if GITHUB_TOKEN is loaded ---
+if [ -n "$GITHUB_TOKEN" ]; then
+  git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:" 2>/dev/null || true
+  git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/" 2>/dev/null || true
+fi
+
 export BUILD_LOG="/tmp/build_ecosystem.log"
 touch "$BUILD_LOG" 2>/dev/null || true
 >"$BUILD_LOG" 2>/dev/null || true
