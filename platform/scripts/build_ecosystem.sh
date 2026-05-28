@@ -4,6 +4,31 @@
 
 set -eo pipefail
 
+# --- Load Monorepo Secrets from env file if present ---
+OVERRIDES_DIR=""
+if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/monorepo_overrides" ]; then
+  OVERRIDES_DIR="$GITHUB_WORKSPACE/monorepo_overrides"
+elif [ -d "/home/frappe/monorepo_overrides" ]; then
+  OVERRIDES_DIR="/home/frappe/monorepo_overrides"
+fi
+
+if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
+  # Read .env file line by line, export non-empty/non-comment lines
+  while IFS= read -r line || [ -n "$line" ]; do
+    # Remove leading/trailing whitespaces and skip comments/empty lines
+    line=$(echo "$line" | xargs)
+    if [ -n "$line" ] && [[ ! "$line" =~ ^# ]] && [[ "$line" == *"="* ]]; then
+      key=$(echo "$line" | cut -d'=' -f1 | xargs)
+      val=$(echo "$line" | cut -d'=' -f2- | xargs | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
+      export "$key"="$val"
+      # Special map: if we load DB_ROOT_PASSWORD, also set DB_PW
+      if [ "$key" = "DB_ROOT_PASSWORD" ]; then
+        export DB_PW="$val"
+      fi
+    fi
+  done < "$OVERRIDES_DIR/.env/production.env"
+fi
+
 export BUILD_LOG="/tmp/build_ecosystem.log"
 touch "$BUILD_LOG" 2>/dev/null || true
 >"$BUILD_LOG" 2>/dev/null || true
