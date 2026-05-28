@@ -19,6 +19,8 @@ if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
     line=$(echo "$line" | xargs)
     if [ -n "$line" ] && [[ ! "$line" =~ ^# ]] && [[ "$line" == *"="* ]]; then
       key=$(echo "$line" | cut -d'=' -f1 | xargs)
+      # GITHUB_TOKEN must always come from the caller (Docker build-arg / CI), never from a file.
+      [ "$key" = "GITHUB_TOKEN" ] && continue
       val=$(echo "$line" | cut -d'=' -f2- | xargs | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
       export "$key"="$val"
       # Special map: if we load DB_ROOT_PASSWORD, also set DB_PW (except during container bootstrap/build)
