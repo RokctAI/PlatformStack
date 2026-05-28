@@ -729,9 +729,22 @@ PY
   run_step "Setting ROK ownership" sudo chown -R $(id -u):$(id -g) "$ROK_DIR"
   run_step "Setting ROK permissions" chmod -R u+rwX,go+rX "$ROK_DIR"
 
-  # Use the venv pip directly to avoid any bench-specific user-switching logic
+  # Install ROK into its own isolated venv to avoid dependency conflicts with Frappe.
+  # ROK pins exact versions (requests, jinja2, pydantic, httpx, etc.) that differ from
+  # Frappe's own pins — installing into the shared bench venv triggers pip resolver WARNs.
+  ROK_VENV="tools/rok-venv"
+  run_step "Creating ROK isolated venv" \
+    python3 -m venv "$ROK_VENV"
   run_step "Installing ROK tooling" \
-    ./env/bin/pip install -e "$ROK_DIR"
+    "$ROK_VENV/bin/pip" install --quiet -e "$ROK_DIR"
+
+  # Create a thin shim in the bench venv bin so `rok` is reachable on the standard PATH.
+  ROK_SHIM="./env/bin/rok"
+  cat > "$ROK_SHIM" <<SHIM
+#!/bin/sh
+exec "$PWD/$ROK_VENV/bin/rok" "\$@"
+SHIM
+  chmod +x "$ROK_SHIM"
 
   # Ensure the venv bin is in the PATH for the smoke check
   export PATH="$PWD/env/bin:$PATH"
