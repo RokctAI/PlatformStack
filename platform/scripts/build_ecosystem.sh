@@ -1061,7 +1061,7 @@ else
   fi
 
   run_step "Configuring site" bash -c "bench --site \"$SITE_NAME\" set-config developer_mode 1 && bench --site \"$SITE_NAME\" set-config allow_tests true"
-  
+
   # Inject Monorepo overrides .env secrets into the site config
   if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
     _log "Injecting secrets from $OVERRIDES_DIR/.env/production.env..."
