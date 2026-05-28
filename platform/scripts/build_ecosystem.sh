@@ -1224,13 +1224,23 @@ if [ -d "apps/rcore" ]; then
 fi
 
 # 8B. Persist Baked Assets (rcore)
-if [ -d "apps/rcore/rcore/platform" ] && [ -n "$GITHUB_TOKEN" ]; then
+PLATFORM_SRC=""
+PLATFORM_DEST=""
+if [ -d "apps/rcore/rcore/rcore/platform" ]; then
+  PLATFORM_SRC="apps/rcore/rcore/rcore/platform"
+  PLATFORM_DEST="rcore/rcore/rcore/platform"
+elif [ -d "apps/rcore/rcore/platform" ]; then
+  PLATFORM_SRC="apps/rcore/rcore/platform"
+  PLATFORM_DEST="rcore/rcore/platform"
+fi
+
+if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
   _log "RokctAI: Persisting baked rcore assets to Monorepo..."
   MONOREPO_TMP="/tmp/monorepo-bake-push"
   run_step "Cloning Monorepo for persistence" bash -c "rm -rf \"$MONOREPO_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/Monorepo.git\" \"$MONOREPO_TMP\" 2>&1 | grep -v \"^remote:\""
   RET=$?
   if [ $RET -eq 0 ]; then
-    run_step "Committing baked assets" bash -c "mkdir -p \"$MONOREPO_TMP/rcore/rcore/platform\" && cp -r apps/rcore/rcore/platform/. \"$MONOREPO_TMP/rcore/rcore/platform/\" && cd \"$MONOREPO_TMP\" && CHANGES=\$(git status --porcelain rcore/rcore/platform | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add rcore/rcore/platform && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD; fi"
+    run_step "Committing baked assets" bash -c "mkdir -p \"$MONOREPO_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$MONOREPO_TMP/$PLATFORM_DEST/\" && cd \"$MONOREPO_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD; fi"
     rm -rf "$MONOREPO_TMP"
   else
     _log "Warning: Asset persistence failed."
