@@ -208,7 +208,7 @@ jobs:
     permissions: write-all
     services:
       db:
-        image: ghcr.io/rokctai/monorepo/rpanel-db:2.4.8
+        image: ghcr.io/rokctai/monorepo/rpanel-db:latest
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.MONOREPO_PAT }}
@@ -385,17 +385,20 @@ jobs:
         run: |
           VERSION="${{ needs.docker-release.outputs.version }}"
           echo "Rolling back failed version: $VERSION"
-          
-          # URL encoded package names
-          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge" "monorepo%2Frpanel-db")
-          
+
+          # URL encoded package names.
+          # NOTE: rpanel-db is intentionally excluded — it is a shared infrastructure image
+          # (Postgres + extensions). It does not change with app code and should never be
+          # rolled back. Excluding it ensures rpanel-db:latest always stays valid.
+          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge")
+
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
             VERSION_ID=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/orgs/RokctAI/packages/container/$PKG/versions" \
               | jq -r ".[] | select(.metadata.container.tags[]? == \"$VERSION\") | .id" | head -n 1)
-            
+
             if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" != "null" ]; then
               echo "Found ID $VERSION_ID. Issuing delete request..."
               RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
@@ -409,35 +412,35 @@ jobs:
 
       - name: Restore Previous Version as Latest
         run: |
+          echo "${{ secrets.MONOREPO_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+          # Restore :latest for app images only by pulling the previous semver tag and
+          # re-pushing it as :latest. The GitHub API PATCH on container version metadata
+          # does not reliably update GHCR tags — docker pull+retag+push is the safe method.
+          #
+          # NOTE: rpanel-db is intentionally excluded (see Delete step above).
+          PACKAGES=("rpanel-control" "rpanel-tenant" "drone-brain" "drone-edge")
+          REGISTRY="ghcr.io/rokctai/monorepo"
           ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          
-          # URL encoded package names
-          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge" "monorepo%2Frpanel-db")
-          
+
           for PKG in "${PACKAGES[@]}"; do
-            echo "Fetching versions for $PKG..."
-            
-            # 1. Find the most recent remaining version of each package using the GHCR versions API
-            # (First one returned in the versions list is the most recent remaining)
-            VERSION_ID=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+            echo "Restoring :latest for $PKG..."
+
+            # Find the most recent remaining semver tag (excluding 'latest') via the API
+            PREV_TAG=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
               -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/orgs/$ORG_NAME/packages/container/$PKG/versions" \
-              | jq -r ".[0].id")
-            
-            if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" != "null" ]; then
-              echo "Most recent remaining version ID for $PKG is: $VERSION_ID"
-              
-              # 2. Patch it to restore the latest tag by calling the GitHub API to update version's metadata
-              echo "Patching version metadata to restore latest tag..."
-              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH \
-                -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
-                -H "Accept: application/vnd.github+json" \
-                "https://api.github.com/orgs/$ORG_NAME/packages/container/$PKG/versions/$VERSION_ID" \
-                -d '{"metadata":{"container":{"tags":["latest"]}}}')
-              
-              echo "Patch API response code: $RESPONSE"
+              "https://api.github.com/orgs/$ORG_NAME/packages/container/monorepo%2F$PKG/versions" \
+              | jq -r '[.[] | select(.metadata.container.tags[] | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].metadata.container.tags[] | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' \
+              | head -n 1)
+
+            if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "null" ]; then
+              echo "Re-tagging $REGISTRY/$PKG:$PREV_TAG as :latest..."
+              docker pull "$REGISTRY/$PKG:$PREV_TAG"
+              docker tag  "$REGISTRY/$PKG:$PREV_TAG" "$REGISTRY/$PKG:latest"
+              docker push "$REGISTRY/$PKG:latest"
+              echo "✅ $PKG:latest restored from $PREV_TAG"
             else
-              echo "⚠️ Could not find any remaining versions for package $PKG."
+              echo "⚠️ No semver tag found for $PKG — cannot restore :latest"
             fi
           done
 
