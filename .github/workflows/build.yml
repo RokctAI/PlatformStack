@@ -208,7 +208,7 @@ jobs:
     permissions: write-all
     services:
       db:
-        image: ghcr.io/rokctai/monorepo/rpanel-db:latest
+        image: ghcr.io/rokctai/monorepo/rpanel-db:2.4.8
         credentials:
           username: ${{ github.actor }}
           password: ${{ secrets.MONOREPO_PAT }}
