@@ -208,10 +208,11 @@ jobs:
     permissions: write-all
     services:
       db:
-        image: ghcr.io/rokctai/monorepo/rpanel-db:latest
-        credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.MONOREPO_PAT }}
+        # Use the official public pgvector image instead of our private rpanel-db.
+        # rpanel-db is simply postgres:16 + pgvector — pgvector/pgvector:pg16 provides
+        # exactly that from Docker Hub with no auth required, breaking the GHCR deadlock.
+        # cube + earthdistance are standard postgres built-ins always available.
+        image: pgvector/pgvector:pg16
         options: >-
           --health-cmd "pg_isready -U postgres"
           --health-interval 10s
