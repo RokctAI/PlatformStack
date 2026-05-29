@@ -56,12 +56,8 @@ services:
       - "8000:8000"
 
   gravity:
-    build:
-      context: ../../gravity
-      dockerfile: Dockerfile
+    image: ghcr.io/rokctai/monorepo/gravity:latest
     container_name: gravity-syncer
-    volumes:
-      - c:\Users\sinya\Desktop\RokctAI:/workspace
     environment:
       - ROKCT_ENV=production
     restart: always
