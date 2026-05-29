@@ -1,18 +1,17 @@
-# Emergency bootstrap for rpanel-db:latest
-# Run manually (workflow_dispatch) from GitHub Actions whenever rpanel-db:latest
-# is missing from GHCR. No service containers — pure build + push, no dependencies.
-# After this completes successfully, the main build pipeline will unblock.
+# Emergency re-tag of rpanel-db:latest
+# Run manually when rpanel-db:latest is missing from GHCR.
+# Pulls an existing versioned tag and re-pushes it as :latest — no build needed.
 
 name: Bootstrap rpanel-db
 
 on:
   workflow_dispatch:
     inputs:
-      also_tag_version:
+      source_tag:
         required: false
         type: string
-        default: ''
-        description: "Optional extra version tag (e.g. 2.5.4). Always pushes :latest."
+        default: '2.5.4'
+        description: "Existing versioned tag to re-tag as :latest (e.g. 2.5.4)"
 
 jobs:
   bootstrap-db:
@@ -21,9 +20,6 @@ jobs:
       packages: write
       contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -31,20 +27,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.MONOREPO_PAT || github.token }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and Push rpanel-db
-        uses: docker/build-push-action@v4
-        with:
-          context: platform
-          file: platform/postgres.Dockerfile
-          push: true
-          tags: |
-            ghcr.io/rokctai/monorepo/rpanel-db:latest
-            ${{ inputs.also_tag_version != '' && format('ghcr.io/rokctai/monorepo/rpanel-db:{0}', inputs.also_tag_version) || 'ghcr.io/rokctai/monorepo/rpanel-db:latest' }}
-
-      - name: Verify
+      - name: Retag existing version as :latest
         run: |
-          docker pull ghcr.io/rokctai/monorepo/rpanel-db:latest
+          SOURCE="ghcr.io/rokctai/monorepo/rpanel-db:${{ inputs.source_tag }}"
+          TARGET="ghcr.io/rokctai/monorepo/rpanel-db:latest"
+          echo "Pulling $SOURCE..."
+          docker pull "$SOURCE"
+          echo "Retagging as $TARGET..."
+          docker tag "$SOURCE" "$TARGET"
+          docker push "$TARGET"
           echo "✅ rpanel-db:latest is live — main pipeline is now unblocked"
