@@ -127,6 +127,50 @@ setup_site() {
     if [ -n "$DB_HOST" ]; then bench --site "$SITE_NAME" set-config db_host "$DB_HOST"; fi
   fi
 
+  # --- Database Auto-bootstrap & Healing logic ---
+  if [ -n "$DB_HOST" ] && [ -f "sites/$SITE_NAME/site_config.json" ]; then
+    echo "⏳ Checking database connection and status for '$SITE_NAME'..."
+    export PGPASSWORD="${DB_ROOT_PASSWORD:-admin}"
+    
+    # Wait for PostgreSQL to be ready
+    until pg_isready -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres >/dev/null 2>&1; do
+      echo "Waiting for PostgreSQL at $DB_HOST..."
+      sleep 2
+    done
+
+    DB_NAME=$(python3 -c "import json; print(json.load(open('sites/$SITE_NAME/site_config.json')).get('db_name', ''))" 2>/dev/null || echo "")
+    DB_PASS=$(python3 -c "import json; print(json.load(open('sites/$SITE_NAME/site_config.json')).get('db_password', ''))" 2>/dev/null || echo "")
+
+    if [ -n "$DB_NAME" ] && [ -n "$DB_PASS" ]; then
+      DB_EXISTS=$(psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null || echo "0")
+      if [ "$DB_EXISTS" != "1" ]; then
+        echo "⚠️ Database '$DB_NAME' for site '$SITE_NAME' does not exist. Auto-creating and restoring from seed..."
+        
+        # Create database user and database
+        psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres -c "CREATE USER \"$DB_NAME\" WITH PASSWORD '$DB_PASS';" || echo "User may already exist"
+        psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres -c "ALTER USER \"$DB_NAME\" CREATEDB;" || true
+        psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres -c "CREATE DATABASE \"$DB_NAME\" OWNER \"$DB_NAME\";" || echo "Database may already exist"
+        
+        # Initialize standard PostgreSQL extensions
+        for ext in vector cube earthdistance; do
+          psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres -d "$DB_NAME" -c "CREATE EXTENSION IF NOT EXISTS $ext;" || true
+        done
+        
+        # Restore seed database if present
+        if [ -f "apps/seed_data/seed.sql.gz" ]; then
+          echo "✨ Restoring database '$DB_NAME' from Golden Seed..."
+          gunzip -c apps/seed_data/seed.sql.gz | PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_NAME" -d "$DB_NAME" >/dev/null 2>&1
+          echo "✅ Database restored successfully."
+        else
+          echo "⚠️ No database seed found at apps/seed_data/seed.sql.gz. Skipping restoration."
+        fi
+      else
+        echo "✅ Database '$DB_NAME' already exists in PostgreSQL."
+      fi
+    fi
+    unset PGPASSWORD
+  fi
+
   # Ensure the default site is set for this container session
   bench use "$SITE_NAME"
 
