@@ -12,5 +12,6 @@
     "RokctAI/rcore": "v1.5.0",
     "RokctAI/rpaas": "v1.4.3-rc",
     "RokctAI/rpanel": "v1.2.1-rc2",
-    "RokctAI/PlatformStack": "f0aacc200867824115151566345489350997f42e"
+    "RokctAI/PlatformStack": "cee0ebb3327914856dcc3e1e1c3e0d82f2fe2528",
+    "RokctAI/control": "58e4a712f4371eda3d38298dbbfa7fac20547a74"
 }
