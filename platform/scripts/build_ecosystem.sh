@@ -990,7 +990,7 @@ for app_dir in apps/*; do
       run_step "[$this_app] Stripping 'erpnext' requirement" sed -i "s/[\"']erpnext[\"']//g" "apps/$this_app/$this_app/hooks.py"
 
       run_step "[lending] Guarding all erpnext imports" env/bin/python <<'PY'
-import pathlib, re
+import pathlib
 
 lending_path = pathlib.Path("apps/lending/lending")
 patched = 0
@@ -999,22 +999,64 @@ for py_file in lending_path.rglob("*.py"):
     text = py_file.read_text(encoding="utf-8", errors="ignore")
     original = text
 
-    # Guard bare: import erpnext
-    text = re.sub(
-        r'^(import erpnext\s*)$',
-        'try:\n    import erpnext\nexcept ImportError:\n    erpnext = None',
-        text, flags=re.MULTILINE
-    )
+    lines = text.splitlines()
+    out = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        if stripped.startswith("import erpnext") and not stripped.startswith("import erpnext_"):
+            # Skip if already guarded
+            if i > 0 and lines[i-1].strip() == "try:":
+                out.append(line)
+                i += 1
+                continue
+            indent = line[:len(line) - len(line.lstrip())]
+            out.append(f"{indent}try:")
+            out.append(f"{indent}    import erpnext")
+            out.append(f"{indent}except ImportError:")
+            out.append(f"{indent}    erpnext = None")
+            i += 1
+        elif stripped.startswith("from erpnext") and not stripped.startswith("from erpnext_"):
+            # Skip if already guarded
+            if i > 0 and lines[i-1].strip() == "try:":
+                out.append(line)
+                i += 1
+                continue
+            indent = line[:len(line) - len(line.lstrip())]
+            import_statement_lines = [line]
+            if "(" in line and ")" not in line:
+                i += 1
+                while i < len(lines):
+                    import_statement_lines.append(lines[i])
+                    if ")" in lines[i]:
+                        break
+                    i += 1
+            elif line.endswith("\\"):
+                i += 1
+                while i < len(lines):
+                    import_statement_lines.append(lines[i])
+                    if not lines[i].endswith("\\"):
+                        break
+                    i += 1
+            
+            out.append(f"{indent}try:")
+            for imp_line in import_statement_lines:
+                if imp_line.strip():
+                    out.append(f"{indent}    {imp_line[len(indent):]}")
+                else:
+                    out.append("")
+            out.append(f"{indent}except (ImportError, ModuleNotFoundError):")
+            out.append(f"{indent}    pass")
+            i += 1
+        else:
+            out.append(line)
+            i += 1
 
-    # Guard: from erpnext... import ...
-    text = re.sub(
-        r'^(from erpnext[^\n]+)$',
-        r'try:\n    \1\nexcept (ImportError, ModuleNotFoundError):\n    pass',
-        text, flags=re.MULTILINE
-    )
-
+    text = "\n".join(out)
     # Fix AccountsController fallback before class definition
     if '(AccountsController)' in text and 'AccountsController\nexcept NameError' not in text:
+        import re
         text = re.sub(
             r'^(class \w+\(AccountsController\):)',
             'try:\n    AccountsController\nexcept NameError:\n    from frappe.model.document import Document as AccountsController\n\n\\1',
