@@ -969,15 +969,16 @@ for app_dir in apps/*; do
 
   # D. Namespace Package Fix
   if [ -d "apps/$this_app/$this_app" ]; then
-    run_step "[$this_app] Fixing namespace packages" bash -c "find \"apps/$this_app/$this_app\" -type d | while read dir; do \
-      case \"\$(basename \"\$dir\")\" in \
-        workspace_sidebar|desktop_icon|sidebar_item_group|notification_log) \
-          rm -f \"\$dir/__init__.py\" \
-          continue ;; \
-      esac; \
-      if [ ! -f \"\$dir/__init__.py\" ]; then touch \"\$dir/__init__.py\"; fi; \
-    done"
+    run_step "[$this_app] Fixing namespace packages" bash -c 'find "apps/'"$this_app"'/'"$this_app"'" -type d | while read dir; do
+      case "$(basename "$dir")" in
+        workspace_sidebar|desktop_icon|sidebar_item_group|notification_log)
+          rm -f "$dir/__init__.py"
+          continue ;;
+      esac
+      if [ ! -f "$dir/__init__.py" ]; then touch "$dir/__init__.py"; fi
+    done'
   fi
+
 
   # E. API Deprecation Patch
   run_step "[$this_app] Patching API deprecations" bash -c "grep -r \"frappe.utils.update_site_config\" \"apps/$this_app\" | cut -d: -f1 | sort | uniq | xargs -r sed -i 's/frappe.utils.update_site_config/frappe.installer.update_site_config/g' || true"
