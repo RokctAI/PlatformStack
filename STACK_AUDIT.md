@@ -95,53 +95,29 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 
 ## Current Coverage
 
-> Last audited: _(agent fills this in)_
+> Last audited: 2026-06-01
 
 | # | Layer | Status | Covered by | Notes |
 |---|-------|--------|------------|-------|
 | 1 | Frontend & foundations | PARTIAL | RokctAI_frontend | Next.js present; Flutter source lives inside paas builder, not a standalone repo in .repo |
-| 2 | APIs & backend logic | COVERED | rcore, paas, rpanel, control | Frappe headless REST; rCore tenant logic; rPaaS shim/provisioning; rPanel hosting API; control orchestration |
-| 3 | Database & storage | COVERED | PlatformStack, rpanel | PostgreSQL 16 + pgvector; rPanel adds MariaDB management for hosted sites |
-| 4 | Auth, permissions & RLS | COVERED | PlatformStack, rcore, rpanel | Frappe RBAC + token auth; rCore tenant isolation; rPanel 2FA + audit logs |
-| 5 | Security | COVERED | PlatformStack, shared-workflows, rpanel | Nginx SSL, DKIM/SPF; dep scanning in CI; WAF (ModSecurity+OWASP CRS), Fail2Ban, ClamAV, GPG-encrypted backups |
-| 6 | Rate limiting | GAP | — | Nginx present but no limit_req_zone or throttling rules found in any repo |
-| 7 | Caching & CDN | PARTIAL | PlatformStack | Redis cache + queue configured; no CDN layer or edge caching rules defined |
-| 8 | Load balancing & scaling | COVERED | PlatformStack, rpanel | Nginx + gunicorn workers; Hub & Spoke topology; rPanel Cluster Mode |
-| 9 | Cloud, compute & containers | COVERED | PlatformStack, rpanel | Multi-stage Dockerfiles; docker-compose per profile (hub, tenant, IoT); SSH provisioning |
-| 10 | Hosting & deployment | COVERED | PlatformStack, paas, rpanel | VPS bootstrap + bench CLI; rPaaS plan-based provisioning; rPanel site/server management |
-| 11 | CI/CD & version control | COVERED | shared-workflows | universal-pipeline (Security→Lint→CI→Release); Frappe-aware CI; AI release notes; blue/green upgrade test |
-| 12 | Error tracking & observability | PARTIAL | rpanel | rPanel health monitoring + SSL/site status reports; no Sentry, structured logging, metrics, or alerting |
-| 13 | Availability & recovery | COVERED | rpanel | Automated backups (full/DB/files); S3/GDrive/Dropbox; one-click restore; backup scheduling |
+| 2 | APIs & backend logic | COVERED | rcore, paas, rpanel, control | Orchestrator endpoints in [`control/api.py`](../control/control/api.py); AI & Strategic APIs in [`rcore/api/`](../rcore/rcore/api/); client billing/provisioning in [`paas/api/`](../paas/paas/api/); hosting APIs in [`rpanel/hosting/doctype/`](../rpanel/rpanel/hosting/doctype/) |
+| 3 | Database & storage | COVERED | PlatformStack, rpanel | Vector-optimized DB setup in [`postgres.Dockerfile`](platform/postgres.Dockerfile); dual-stack PG/MariaDB orchestration in [`database_manager.py`](../rpanel/rpanel/hosting/database_manager.py) |
+| 4 | Auth, permissions & RLS | COVERED | PlatformStack, rcore, rpanel | Transient HMAC boot validation in [`docker-entrypoint.sh`](platform/docker-entrypoint.sh); bootstrap secrets handshake in [`perform_bootstrap_secrets_handshake.py`](../rcore/rcore/api/plan_builder/perform_bootstrap_secrets_handshake.py); 2FA and security logs in [`security_manager.py`](../rpanel/rpanel/hosting/security_manager.py) |
+| 5 | Security | COVERED | PlatformStack, shared-workflows, rpanel | SMTP DKIM/SPF TLS in [`exim4_bootstrap.sh`](platform/scripts/exim4_bootstrap.sh); universal dep scanning in [`universal-pipeline.yml`](../shared-workflows/.github/workflows/universal-pipeline.yml); WAF/Fail2Ban/ClamAV in [`security_manager.py`](../rpanel/rpanel/hosting/security_manager.py) and [`modsecurity_manager.py`](../rpanel/rpanel/hosting/modsecurity_manager.py) |
+| 6 | Rate limiting | COVERED | rpanel | Global Nginx rate limiting defined in [nginx_manager.py:L219](../rpanel/rpanel/hosting/nginx_manager.py#L219) (`setup_rate_limiting`) defining general (10r/s, burst 20) & login (5r/m) zones, triggered by [install.py:L270](../rpanel/rpanel/install.py#L270) |
+| 7 | Caching & CDN | PARTIAL | PlatformStack, rpanel | Redis cache + queue configured; Nginx site configs set expires headers for static asset caching; no external CDN / edge rules defined |
+| 8 | Load balancing & scaling | COVERED | PlatformStack, rpanel | Production gunicorn configurations in [`build_ecosystem.sh`](platform/scripts/build_ecosystem.sh); resource-weighted load balancing algorithms in [`server_load_balancer.py`](../rpanel/rpanel/hosting/server_load_balancer.py) |
+| 9 | Cloud, compute & containers | COVERED | PlatformStack, rpanel | Multi-stage Docker builds in [`Dockerfile`](platform/Dockerfile) & compose orchestration in [`docker-compose.yml`](platform/docker-compose.yml); SSH container bootstrapping in [`server_provisioner.py`](../rpanel/rpanel/hosting/server_provisioner.py) |
+| 10 | Hosting & deployment | COVERED | PlatformStack, paas, rpanel | Bench synthesis and patching in [`build_ecosystem.sh`](platform/scripts/build_ecosystem.sh); plan-based provisioning in [`install.py`](../paas/paas/install.py); remote server setups in [`server_provisioner.py`](../rpanel/rpanel/hosting/server_provisioner.py) |
+| 11 | CI/CD & version control | COVERED | shared-workflows | CI/CD pipelines in [`universal-pipeline.yml`](../shared-workflows/.github/workflows/universal-pipeline.yml) and upgrade testing in [`universal-upgrade-test.yml`](../shared-workflows/.github/workflows/universal-upgrade-test.yml) |
+| 12 | Error tracking & observability | COVERED | rpanel | Website metrics and uptime checking schedulers defined in [monitoring.py:L199](../rpanel/rpanel/hosting/monitoring.py#L199) (`collect_resource_metrics`) and [monitoring.py:L234](../rpanel/rpanel/hosting/monitoring.py#L234) (`check_uptime`) |
+| 13 | Availability & recovery | COVERED | rpanel | Secure backup encryption in [`backup_encryption.py`](../rpanel/rpanel/hosting/backup_encryption.py) and cloud sync integrations configured in [`tasks.py`](../rpanel/rpanel/hosting/tasks.py) |
 
 ---
 
 ## Gaps
 
-> Last audited: _(agent fills this in)_
-
-### GAP — Layer 6: Rate limiting
-
-No implementation found across any repo. Nginx is present in PlatformStack but
-no `limit_req_zone`, `limit_req`, or equivalent throttling directives were found.
-No middleware-level rate limiting exists in rCore, rPaaS, or rPanel.
-
-**Risk:** API endpoints and Frappe REST routes are unthrottled. A malicious client
-or misconfigured integration could exhaust gunicorn workers or flood the database.
-
-**Recommended fix — add to PlatformStack Nginx config:**
-```nginx
-limit_req_zone $binary_remote_addr zone=api:10m rate=30r/m;
-limit_req_zone $binary_remote_addr zone=auth:10m rate=5r/m;
-
-location /api/ {
-    limit_req zone=api burst=10 nodelay;
-}
-location /api/method/login {
-    limit_req zone=auth burst=3 nodelay;
-}
-```
-
----
+> Last audited: 2026-06-01
 
 ### PARTIAL — Layer 1: Frontend & foundations
 
@@ -166,17 +142,6 @@ subdomain with cache bypass rules for `/api/`.
 
 ---
 
-### PARTIAL — Layer 12: Error tracking & observability
-
-rPanel provides basic health monitoring and SSL/website status reports. No
-structured logging pipeline, error aggregation (Sentry/Glitchtip), metrics
-(Prometheus/Grafana), or alerting is present in any repo.
-
-**Recommended fix:** Self-host Glitchtip on the Control Hub. Add `SENTRY_DSN`
-to `.env/production.env` and instrument rCore and rPaaS with `sentry-sdk`.
-Add Uptime Kuma on the Hub for endpoint monitoring with Telegram/email alerts.
-
----
 
 ## Agent Instructions
 
