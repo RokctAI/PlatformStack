@@ -912,8 +912,12 @@ for extra_app in lending rcore; do
     else
       REPO_URL="https://github.com/RokctAI/${extra_app}.git"
       if [ -n "$GITHUB_TOKEN" ]; then REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/${extra_app}.git"; fi
-      BRANCH=$(git ls-remote --tags "$REPO_URL" | grep -vE 'rc|beta|alpha|dev|\^' | awk -F/ '{print $3}' | sort -V -r | head -n1)
-      if [ -z "$BRANCH" ]; then BRANCH="main"; fi
+      if [ "$extra_app" = "rcore" ]; then
+        BRANCH="main"
+      else
+        BRANCH=$(git ls-remote --tags "$REPO_URL" | grep -vE 'rc|beta|alpha|dev|\^' | awk -F/ '{print $3}' | sort -V -r | head -n1)
+        if [ -z "$BRANCH" ]; then BRANCH="main"; fi
+      fi
     fi
 
     bench_step "Fetching $extra_app" \
