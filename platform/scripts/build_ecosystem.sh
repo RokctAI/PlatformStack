@@ -1040,6 +1040,24 @@ for py_file in lending_path.rglob("*.py"):
                         break
                     i += 1
             
+            # Extract imported names for mocking in the except block
+            import_statement_text = " ".join([l.strip() for l in import_statement_lines])
+            names = []
+            if "import" in import_statement_text:
+                parts = import_statement_text.split("import", 1)
+                imported_part = parts[1].strip()
+                imported_part = imported_part.replace("(", "").replace(")", "")
+                imported_part = imported_part.replace("\\", " ")
+                for item in imported_part.split(","):
+                    item = item.strip()
+                    if not item:
+                        continue
+                    if " as " in item:
+                        alias = item.split(" as ")[-1].strip()
+                        names.append(alias)
+                    else:
+                        names.append(item)
+
             out.append(f"{indent}try:")
             for imp_line in import_statement_lines:
                 if imp_line.strip():
@@ -1047,7 +1065,20 @@ for py_file in lending_path.rglob("*.py"):
                 else:
                     out.append("")
             out.append(f"{indent}except (ImportError, ModuleNotFoundError):")
-            out.append(f"{indent}    pass")
+            if names:
+                out.append(f"{indent}    class ErpnextMock:")
+                out.append(f"{indent}        def __init__(self, *args, **kwargs): pass")
+                out.append(f"{indent}        def __call__(self, *args, **kwargs): return ErpnextMock()")
+                out.append(f"{indent}        def __getattr__(self, name): return ErpnextMock()")
+                out.append(f"{indent}        def __iter__(self): return iter([])")
+                out.append(f"{indent}        def __bool__(self): return False")
+                out.append(f"{indent}        def __str__(self): return ''")
+                out.append(f"{indent}        def __repr__(self): return ''")
+                for name in names:
+                    out.append(f"{indent}    if '{name}' not in locals() and '{name}' not in globals():")
+                    out.append(f"{indent}        {name} = ErpnextMock()")
+            else:
+                out.append(f"{indent}    pass")
             i += 1
         else:
             out.append(line)
