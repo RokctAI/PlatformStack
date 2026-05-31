@@ -979,7 +979,6 @@ for app_dir in apps/*; do
     done'
   fi
 
-
   # E. API Deprecation Patch
   run_step "[$this_app] Patching API deprecations" bash -c "grep -r \"frappe.utils.update_site_config\" \"apps/$this_app\" | cut -d: -f1 | sort | uniq | xargs -r sed -i 's/frappe.utils.update_site_config/frappe.installer.update_site_config/g' || true"
 
