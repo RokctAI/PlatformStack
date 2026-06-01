@@ -61,6 +61,8 @@ services:
     container_name: gravity-syncer
     environment:
       - ROKCT_ENV=production
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - MONOREPO_PAT=${MONOREPO_PAT}
     restart: always
     volumes:
       - ../..:/workspace
