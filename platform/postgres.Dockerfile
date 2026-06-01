@@ -1,11 +1,19 @@
-FROM postgres:16-bookworm
+FROM postgres:17-bookworm
 
-# Install pgvector directly into the image
+# Install older postgresql-16 binaries (required for pg_upgrade) and postgresql-17-pgvector
 RUN apt-get update && apt-get install -y \
-    postgresql-16-pgvector \
+    postgresql-16 \
+    postgresql-17-pgvector \
     && rm -rf /var/lib/apt/lists/*
 
-# Add initialization script to enable extension on all new databases
+# Add initialization script to enable extensions on all new databases
 RUN echo "CREATE EXTENSION IF NOT EXISTS vector;" > /docker-entrypoint-initdb.d/01_pgvector.sql
 RUN echo "CREATE EXTENSION IF NOT EXISTS cube;" >> /docker-entrypoint-initdb.d/01_pgvector.sql
 RUN echo "CREATE EXTENSION IF NOT EXISTS earthdistance;" >> /docker-entrypoint-initdb.d/01_pgvector.sql
+
+# Add our hands-free automated version upgrade entrypoint wrapper
+COPY scripts/db_upgrade_entrypoint.sh /usr/local/bin/db_upgrade_entrypoint.sh
+RUN chmod +x /usr/local/bin/db_upgrade_entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/db_upgrade_entrypoint.sh"]
+CMD ["postgres"]
