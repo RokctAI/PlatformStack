@@ -65,7 +65,7 @@ For every repo in `.repo`:
 
 ---
 
-## The 13 Layers
+## The 16 Layers
 
 Evaluate every repo against each layer. Assign one status per layer:
 
@@ -90,6 +90,9 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 | 11 | CI/CD & version control | GitHub Actions workflows, build/test/release pipelines, branch strategy, version tagging |
 | 12 | Error tracking & observability | Structured logging, error reporting, metrics, uptime monitoring, alerting |
 | 13 | Availability & recovery | Backup schedules, cloud backup destinations, restore procedures, failover, DR runbook |
+| 14 | Agentic & LLM Orchestration | Prompt management, context window budgets, vector engrams, model fallbacks, token quota gating |
+| 15 | Webhook & Integration Federation | Timeout/retry circuit breakers, secure webhook payload signature parsing, external API wrappers |
+| 16 | Multi-Tenant Boundaries & Quota Isolation | strict tenant_id context scoping in DB layers, trial billing limits, Redis key-scoped usage quota controls |
 
 ---
 
@@ -112,6 +115,9 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 | 11 | CI/CD & version control | COVERED | shared-workflows | CI/CD pipelines in [`universal-pipeline.yml`](../shared-workflows/.github/workflows/universal-pipeline.yml), upgrade testing in [`universal-upgrade-test.yml`](../shared-workflows/.github/workflows/universal-upgrade-test.yml), and Actionlint GHA linting |
 | 12 | Error tracking & observability | COVERED | rpanel, control, rcore | Website metrics in [monitoring.py](../rpanel/rpanel/hosting/monitoring.py); distributed trace ID propagation & JSON structured stderr logging for ROK completions proxy implemented in [control/api.py](../control/control/api.py) and [chat_with_rok.py](../rcore/rcore/api/plan_builder/chat_with_rok.py) |
 | 13 | Availability & recovery | COVERED | PlatformStack, shared-workflows, rpanel | Secure backup encryption in [`backup_encryption.py`](../rpanel/rpanel/hosting/backup_encryption.py) and cloud sync integrations configured in [`tasks.py`](../rpanel/rpanel/hosting/tasks.py); persistent container volume storage mapping actively audited and enforced in CI to protect database state integrity |
+| 14 | Agentic & LLM Orchestration | COVERED | rcore | Dynamic LLM context allocation, token counting and Engram models implemented in [`llm_service.py`](../rcore/rcore/services/llm_service.py) |
+| 15 | Webhook & Integration Federation | COVERED | control, rcore | WhatsApp session hosting in [`control/install.py`](../control/control/install.py) and secure webhook HMAC verification |
+| 16 | Multi-Tenant Boundaries & Quota Isolation | COVERED | rcore, control, shared-workflows | Strict `tenant_id` context validation, 5-msg free ROK usage limits via Redis key constraints, and Layer 16 compliance scanner gate actively auditing boundary filters in CI |
 
 ---
 
