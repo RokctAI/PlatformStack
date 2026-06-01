@@ -99,7 +99,7 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 
 | # | Layer | Status | Covered by | Notes |
 |---|-------|--------|------------|-------|
-| 1 | Frontend & foundations | PARTIAL | RokctAI_frontend | Next.js present; Flutter source lives inside paas builder, not a standalone repo in .repo |
+| 1 | Frontend & foundations | COVERED | RokctAI_frontend, paas_customer, paas_driver, paas_pos | Next.js frontend in `RokctAI_frontend`; Flutter mobile apps resolved dynamically via GitOps fallback and mapped to standalone repositories `paas_customer`, `paas_driver`, `paas_pos` in `.repo` |
 | 2 | APIs & backend logic | COVERED | rcore, paas, rpanel, control | Orchestrator endpoints in [`control/api.py`](../control/control/api.py); AI & Strategic APIs in [`rcore/api/`](../rcore/rcore/api/); client billing/provisioning in [`paas/api/`](../paas/paas/api/); hosting APIs in [`rpanel/hosting/doctype/`](../rpanel/rpanel/hosting/doctype/) |
 | 3 | Database & storage | COVERED | PlatformStack, rpanel | Vector-optimized DB setup in [`postgres.Dockerfile`](platform/postgres.Dockerfile); dual-stack PG/MariaDB orchestration in [`database_manager.py`](../rpanel/rpanel/hosting/database_manager.py) |
 | 4 | Auth, permissions & RLS | COVERED | PlatformStack, rcore, rpanel | Transient HMAC boot validation in [`docker-entrypoint.sh`](platform/docker-entrypoint.sh); bootstrap secrets handshake in [`perform_bootstrap_secrets_handshake.py`](../rcore/rcore/api/plan_builder/perform_bootstrap_secrets_handshake.py); 2FA and security logs in [`security_manager.py`](../rpanel/rpanel/hosting/security_manager.py) |
@@ -119,16 +119,7 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 
 > Last audited: 2026-06-01
 
-### PARTIAL — Layer 1: Frontend & foundations
 
-Next.js web frontend exists (`RokctAI_frontend`). Flutter source lives inside
-`paas/paas/builder/source_code/` but is not a standalone repo in `.repo`.
-
-**Recommended fix:** If Flutter apps are actively maintained, add their repos
-to `.repo` so future audits can verify they are consuming the Frappe API correctly
-and are covered by shared-workflows CI.
-
----
 
 ### PARTIAL — Layer 7: Caching & CDN
 
