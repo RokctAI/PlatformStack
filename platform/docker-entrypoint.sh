@@ -202,6 +202,39 @@ start_services() {
       else
         echo "Skipping Exim bootstrap/start (host-managed)"
       fi
+       # Inject ROK location block into active Nginx config dynamically
+       python3 -c '
+import os
+files = [
+    "/home/frappe/frappe-bench/config/nginx.conf",
+    "/etc/nginx/conf.d/frappe.conf",
+    "/etc/nginx/sites-enabled/default",
+    "/etc/nginx/sites-available/default",
+    "/etc/nginx/nginx.conf"
+]
+block = """
+\tlocation /rok/ {
+\t\tproxy_pass http://127.0.0.1:8642/;
+\t\tproxy_set_header Host $host;
+\t\tproxy_set_header X-Real-IP $remote_addr;
+\t\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+\t\tproxy_set_header X-Forwarded-Proto $scheme;
+\t}
+"""
+for f_path in files:
+    if os.path.exists(f_path):
+        with open(f_path, "r") as f:
+            content = f.read()
+        if "location /rok/" in content:
+            print(f"ROK location already present in {f_path}")
+            continue
+        if "server {" in content:
+            new_content = content.replace("server {", "server {" + block, 1)
+            with open(f_path, "w") as f:
+                f.write(new_content)
+            print(f"Successfully injected ROK location block into {f_path}")
+' || echo "⚠️ Nginx ROK proxy injection failed, skipping"
+
       nginx -g 'daemon off;' &
       mkdir -p /var/run/supervisor || true
 
