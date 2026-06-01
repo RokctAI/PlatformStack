@@ -65,7 +65,7 @@ For every repo in `.repo`:
 
 ---
 
-## The 16 Layers
+## The 20 Layers
 
 Evaluate every repo against each layer. Assign one status per layer:
 
@@ -93,12 +93,16 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 | 14 | Agentic & LLM Orchestration | Prompt management, context window budgets, vector engrams, model fallbacks, token quota gating |
 | 15 | Webhook & Integration Federation | Timeout/retry circuit breakers, secure webhook payload signature parsing, external API wrappers |
 | 16 | Multi-Tenant Boundaries & Quota Isolation | strict tenant_id context scoping in DB layers, trial billing limits, Redis key-scoped usage quota controls |
+| 17 | Edge IoT & Hardware Telemetry | Sensor heartbeat timing, protocol validation, and telemetry packet parsing within the `IoT/` module |
+| 18 | Zero-Trust Network Access (ZTNA) & mTLS | Strict container-to-container mutual TLS handshake configurations and zero-trust path isolation |
+| 19 | Event-Driven Architecture & Pub/Sub Federation | Central queue brokers, standard event schemas, and dead-letter queue (DLQ) failover fallbacks |
+| 20 | Poly-Security Profiles & Runtime Ingress Gates | Ingress traffic validation schema and dynamic security profiles (Medical, Financial, Military) driven by `entity_groups.json` |
 
 ---
 
 ## Current Coverage
 
-> Last audited: 2026-06-01
+> Last audited: 2026-06-02
 
 | # | Layer | Status | Covered by | Notes |
 |---|-------|--------|------------|-------|
@@ -118,6 +122,10 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 | 14 | Agentic & LLM Orchestration | COVERED | rcore | Dynamic LLM context allocation, token counting and Engram models implemented in [`llm_service.py`](../rcore/rcore/services/llm_service.py) |
 | 15 | Webhook & Integration Federation | COVERED | control, rcore | WhatsApp session hosting in [`control/install.py`](../control/control/install.py) and secure webhook HMAC verification |
 | 16 | Multi-Tenant Boundaries & Quota Isolation | COVERED | rcore, control, shared-workflows | Strict `tenant_id` context validation, 5-msg free ROK usage limits via Redis key constraints, and Layer 16 compliance scanner gate actively auditing boundary filters in CI |
+| 17 | Edge IoT & Hardware Telemetry | PARTIAL | IoT | Telemetry packet parsing schemas, heartbeat tracking and connection budgets defined in `IoT` repository |
+| 18 | Zero-Trust Network Access (ZTNA) & mTLS | PARTIAL | PlatformStack | Baseline mutual TLS (mTLS) handshake configurations and private secure spoke overlay specs defined |
+| 19 | Event-Driven Architecture & Pub/Sub Federation | PARTIAL | rcore | Event payload validation and background Redis queue integration configured |
+| 20 | Poly-Security Profiles & Runtime Ingress Gates | COVERED | rcore | Dynamic validation profiles (medical, financial, military) automated at runtime by mapping tool payloads to the configuration schema in `entity_groups.json` |
 
 ---
 
