@@ -348,7 +348,34 @@ jobs:
             ghcr.io/rokctai/monorepo/drone-edge:latest
             ghcr.io/rokctai/monorepo/drone-edge:${{ steps.meta.outputs.version }}
 
+      - name: Check Database Changes
+        id: db-check
+        run: |
+          DB_CHANGED="true"
+          echo "Checking if latest rpanel-db image has PostgreSQL 17 baked in..."
+          if docker pull ghcr.io/rokctai/monorepo/rpanel-db:latest >/dev/null 2>&1; then
+            ENV_VERSION=$(docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' ghcr.io/rokctai/monorepo/rpanel-db:latest | grep "PG_MAJOR=" | cut -d= -f2 || true)
+            if [ "$ENV_VERSION" = "17" ]; then
+              if [ "${{ github.event_name }}" = "push" ]; then
+                if ! git diff --name-only HEAD~1 HEAD | grep -qE "platform/postgres.Dockerfile|platform/scripts/db_upgrade_entrypoint.sh"; then
+                  DB_CHANGED="false"
+                fi
+              else
+                DB_CHANGED="false"
+              fi
+            fi
+          fi
+          echo "db_changed=$DB_CHANGED" >> "$GITHUB_OUTPUT"
+          echo "Will rebuild database image: $DB_CHANGED"
+
+      - name: Re-tag and Push existing Database Image
+        if: steps.db-check.outputs.db_changed == 'false'
+        run: |
+          docker tag ghcr.io/rokctai/monorepo/rpanel-db:latest ghcr.io/rokctai/monorepo/rpanel-db:${{ steps.meta.outputs.version }}
+          docker push ghcr.io/rokctai/monorepo/rpanel-db:${{ steps.meta.outputs.version }}
+
       - name: Build and Push Postgres (Custom)
+        if: steps.db-check.outputs.db_changed == 'true'
         uses: docker/build-push-action@v4
         with:
           context: docker-context
