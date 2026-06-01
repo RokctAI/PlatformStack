@@ -480,13 +480,45 @@ jobs:
     if: always() && needs.docker-release.result == 'success' && (needs.upgrade-test.result == 'success' || needs.upgrade-test.result == 'skipped') && github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Monorepo for Config Overrides
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: RokctAI/Monorepo
+          path: monorepo_overrides
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+
       - name: Configure SSH and Deploy to Master VPS
         env:
-          SSH_KEY: ${{ secrets.MASTER_VPS_SSH_KEY }}
-          SSH_HOST: ${{ secrets.MASTER_VPS_HOST }}
+          SECRET_SSH_KEY: ${{ secrets.MASTER_VPS_SSH_KEY }}
+          SECRET_SSH_HOST: ${{ secrets.MASTER_VPS_HOST }}
         run: |
+          SSH_KEY="$SECRET_SSH_KEY"
+          SSH_HOST="$SECRET_SSH_HOST"
+          
+          # Read from .env/production.env inside checked out monorepo_overrides if present
+          ENV_FILE="monorepo_overrides/.env/production.env"
+          if [ -f "$ENV_FILE" ]; then
+            echo "🔍 Scanning $ENV_FILE for Host and SSH Key credentials..."
+            
+            FILE_HOST=$(grep -E "^(MASTER_VPS_HOST|CONTROL_VPS_IP|VPS_HOST|VPS_IP)=" "$ENV_FILE" | cut -d'=' -f2- | tr -d "'\"")
+            if [ -n "$FILE_HOST" ]; then
+              SSH_HOST="$FILE_HOST"
+              echo "✅ Found Host IP in production.env"
+            fi
+            
+            FILE_KEY=$(grep -E "^(MASTER_VPS_SSH_KEY|CONTROL_VPS_SSH_KEY|VPS_SSH_KEY|SSH_KEY)=" "$ENV_FILE" | cut -d'=' -f2- | tr -d "'\"")
+            if [ -n "$FILE_KEY" ]; then
+              SSH_KEY="$FILE_KEY"
+              echo "✅ Found SSH Key in production.env"
+            fi
+          fi
+          
           if [ -z "$SSH_KEY" ] || [ -z "$SSH_HOST" ]; then
-            echo "⚠️ MASTER_VPS_SSH_KEY or MASTER_VPS_HOST secrets are not set. Skipping VPS CD deployment step."
+            echo "⚠️ SSH host or key not found in secrets or production.env config. Skipping VPS CD deployment step."
             exit 0
           fi
           
