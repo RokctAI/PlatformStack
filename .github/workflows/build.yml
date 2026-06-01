@@ -474,6 +474,35 @@ jobs:
             fi
           done
 
+  deploy-master:
+    name: "Deploy to Master VPS"
+    needs: [docker-release, upgrade-test]
+    if: always() && needs.docker-release.result == 'success' && (needs.upgrade-test.result == 'success' || needs.upgrade-test.result == 'skipped') && github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure SSH and Deploy to Master VPS
+        env:
+          SSH_KEY: ${{ secrets.MASTER_VPS_SSH_KEY }}
+          SSH_HOST: ${{ secrets.MASTER_VPS_HOST }}
+        run: |
+          if [ -z "$SSH_KEY" ] || [ -z "$SSH_HOST" ]; then
+            echo "⚠️ MASTER_VPS_SSH_KEY or MASTER_VPS_HOST secrets are not set. Skipping VPS CD deployment step."
+            exit 0
+          fi
+          
+          echo "🔐 Setting up SSH connection key..."
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          
+          echo "🚀 Deploying latest Control Plane container to Master VPS..."
+          ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" "
+            cd /home/frappe/PlatformStack/platform &&
+            docker compose pull &&
+            docker compose up -d
+          "
+          echo "✅ Control plane successfully deployed and restarted on Master VPS!"
+
   bump-version:
     needs: [docker-release, upgrade-test]
     if: always() && needs.docker-release.result == 'success' && (needs.upgrade-test.result == 'success' || needs.upgrade-test.result == 'skipped')
