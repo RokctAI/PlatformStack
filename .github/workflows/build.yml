@@ -367,6 +367,8 @@ jobs:
           tags: |
             ghcr.io/rokctai/monorepo/gravity:latest
             ghcr.io/rokctai/monorepo/gravity:${{ steps.meta.outputs.version }}
+          build-args: |
+            MONOREPO_PAT=${{ secrets.MONOREPO_PAT || secrets.GITHUB_TOKEN }}
 
   upgrade-test:
     needs: [pipeline, docker-release]
