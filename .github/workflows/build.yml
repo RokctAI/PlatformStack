@@ -479,6 +479,7 @@ jobs:
     needs: [docker-release, upgrade-test]
     if: always() && needs.docker-release.result == 'success' && (needs.upgrade-test.result == 'success' || needs.upgrade-test.result == 'skipped') && github.ref_name == 'main'
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout Target Repository
         uses: actions/checkout@v4
