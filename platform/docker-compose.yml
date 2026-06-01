@@ -64,6 +64,7 @@ services:
     restart: always
     volumes:
       - ../..:/workspace
+    working_dir: /workspace/Monorepo
     command: watch
 
 volumes:
