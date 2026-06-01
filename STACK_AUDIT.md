@@ -119,8 +119,6 @@ Never assume coverage. If you cannot find evidence, mark PARTIAL or GAP.
 
 > Last audited: 2026-06-01
 
-
-
 ### PARTIAL — Layer 7: Caching & CDN
 
 Redis is configured for cache and queues. Cloudflare is referenced for DNS in
@@ -132,7 +130,6 @@ configuration is defined in any repo.
 subdomain with cache bypass rules for `/api/`.
 
 ---
-
 
 ## Agent Instructions
 

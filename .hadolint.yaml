@@ -1,0 +1,12 @@
+ignored:
+  - DL3008 # Pin versions in apt-get install
+  - DL3009 # Delete the apt-get lists after installing something
+  - DL3015 # Avoid additional packages by specifying --no-install-recommends
+  - DL3003 # Use WORKDIR to switch to a directory
+  - DL3016 # Pin versions in npm
+  - DL3013 # Pin versions in pip
+  - DL3042 # Avoid use of cache directory with pip
+  - DL4006 # Set the SHELL option -o pipefail before RUN with a pipe in it
+  - SC2086 # Double quote to prevent globbing
+  - SC2010 # Don't use ls | grep
+  - SC2015 # Note that A && B || C is not if-then-else

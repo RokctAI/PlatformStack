@@ -149,3 +149,4 @@ The `exim4_bootstrap.sh` script configures a production-ready mail stack on the 
 
 (c) 2024-2026 Rokct Intelligence (pty) Ltd. All rights reserved.
 **Confidential - Internal Use Only**
+*Current Platform Version: 2.5.20*
