@@ -45,6 +45,7 @@ services:
       - control-nginx-config:/etc/nginx
       - control-nginx-logs:/var/log/nginx
       - control-cron:/etc/cron.d
+      - ../..:/workspace
     depends_on:
       db:
         condition: service_healthy
@@ -61,6 +62,9 @@ services:
     environment:
       - ROKCT_ENV=production
     restart: always
+    volumes:
+      - ../..:/workspace
+    command: watch
 
 volumes:
   control-db-data:
