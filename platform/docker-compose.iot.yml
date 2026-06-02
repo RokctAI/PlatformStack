@@ -19,6 +19,7 @@ services:
       - DB_TYPE=sqlite
       - SITE_NAME=${SITE_NAME:-drone.local}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - EMAIL_ENCRYPTION_KEY=${EMAIL_ENCRYPTION_KEY}
     volumes:
       - iot-sites:/home/frappe/frappe-bench/sites
     depends_on:

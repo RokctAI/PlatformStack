@@ -11,6 +11,10 @@ services:
       - POSTGRES_USER=postgres
     volumes:
       - control-db-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
@@ -19,6 +23,10 @@ services:
 
   redis:
     image: redis:7-alpine
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     volumes:
       - control-redis-data:/data
 
@@ -32,9 +40,14 @@ services:
       - DB_PORT=5432
       - DB_ROOT_PASSWORD=${DB_PASSWORD:-admin}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - EMAIL_ENCRYPTION_KEY=${EMAIL_ENCRYPTION_KEY}
       - REDIS_CACHE=redis://redis:6379/0
       - REDIS_QUEUE=redis://redis:6379/1
       - REDIS_SOCKETIO=redis://redis:6379/2
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     volumes:
       - control-sites:/home/frappe/frappe-bench/sites
       - control-logs:/home/frappe/frappe-bench/logs
@@ -63,6 +76,10 @@ services:
       - ROKCT_ENV=production
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - MONOREPO_PAT=${MONOREPO_PAT}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     restart: always
     volumes:
       - ../..:/workspace
