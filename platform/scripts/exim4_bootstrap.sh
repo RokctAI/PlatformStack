@@ -28,6 +28,7 @@ fail() {
 # =============================================================================
 
 PRIMARY_HOSTNAME="${PRIMARY_HOSTNAME:-mail.juvo.app}"
+FORCE_REGEN_DKIM="${FORCE_REGEN_DKIM:-0}"
 
 MAIL_DOMAINS="${MAIL_DOMAINS:-juvo.app rokct.ai}"
 
@@ -46,6 +47,10 @@ EXIM_USER="${EXIM_USER:-Debian-exim}"
 
 SKIP_EXIM="${SKIP_EXIM:-0}"
 
+# Logging setup
+LOG_FILE="/var/log/exim4_bootstrap.log"
+exec > >(tee -a "${LOG_FILE}") 2>&1 || true
+
 # =============================================================================
 # 1. LOCAL MACROS
 # =============================================================================
@@ -56,6 +61,7 @@ cat >/etc/exim4/conf.d/main/00_local_macros <<EOF
 primary_hostname = ${PRIMARY_HOSTNAME}
 daemon_smtp_ports = 25 : 587
 DKIM_SELECTOR = ${DKIM_SELECTOR}
+tls_require_ciphers = ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384
 EOF
 
 done_ok
@@ -74,6 +80,8 @@ else
   echo "127.0.1.1 ${PRIMARY_HOSTNAME}" >> /etc/hosts
 fi
 
+echo "${PRIMARY_HOSTNAME}" > /etc/mailname
+
 done_ok
 
 # =============================================================================
@@ -83,6 +91,14 @@ done_ok
 step "Configuring TLS"
 
 mkdir -p /etc/exim4/conf.d/main
+
+# Verify TLS cert files exist
+if [ ! -f "${TLS_CERT}" ]; then
+  echo -e "${YELLOW}  TLS cert not found at ${TLS_CERT} - run certbot first${NC}"
+  TLS_CERT_EXISTS=0
+else
+  TLS_CERT_EXISTS=1
+fi
 
 cat >/etc/exim4/conf.d/main/01_tls_paths <<EOF
 tls_certificate = ${TLS_CERT}
@@ -169,7 +185,23 @@ fi
 done_ok
 
 # =============================================================================
-# 8. DKIM KEYS
+# 8. RATE LIMITING FOR AUTH
+# =============================================================================
+
+step "Configuring rate limiting for auth"
+
+cat >/etc/exim4/conf.d/acl/50_exim4-config_rate_limit <<'EOF'
+# Rate limit authentication attempts
+acl_check_auth:
+  deny
+    ratelimit = 10 / 1h / strict / $sender_host_address
+    log_message = AUTH rate limit exceeded
+EOF
+
+done_ok
+
+# =============================================================================
+# 9. DKIM KEYS
 # =============================================================================
 
 step "Generating DKIM keys"
@@ -183,7 +215,7 @@ for domain in ${MAIL_DOMAINS}; do
   PRIVATE_KEY="${DOMAIN_DIR}/mail.private"
   PUBLIC_KEY="${DOMAIN_DIR}/mail.public"
 
-  if [ ! -f "${PRIVATE_KEY}" ]; then
+  if [ ! -f "${PRIVATE_KEY}" ] || [ "${FORCE_REGEN_DKIM}" = "1" ]; then
     openssl genrsa -out "${PRIVATE_KEY}" 2048 >/dev/null 2>&1
     openssl rsa -in "${PRIVATE_KEY}" -pubout -out "${PUBLIC_KEY}" >/dev/null 2>&1
   fi
@@ -202,7 +234,7 @@ done
 done_ok
 
 # =============================================================================
-# 9. DKIM LOOKUP FILE
+# 10. DKIM LOOKUP FILE
 # =============================================================================
 
 step "Writing DKIM lookup file"
@@ -218,7 +250,7 @@ chmod 640 /etc/exim4/dkim_keys
 done_ok
 
 # =============================================================================
-# 10. DKIM TRANSPORT
+# 11. DKIM TRANSPORT
 # =============================================================================
 
 step "Creating DKIM transport"
@@ -235,7 +267,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 11. ROUTER PATCH
+# 12. ROUTER PATCH
 # =============================================================================
 
 step "Patching primary router"
@@ -249,7 +281,7 @@ fi
 done_ok
 
 # =============================================================================
-# 12. CATCHALL FORWARD
+# 13. CATCHALL FORWARD
 # =============================================================================
 
 step "Configuring catchall forwarding"
@@ -268,7 +300,30 @@ EOF
 done_ok
 
 # =============================================================================
-# 13. UPDATE-EXIM4.CONF.CONF
+# 14. POSTMASTER/ABUSE ALIASES
+# =============================================================================
+
+step "Creating postmaster/abuse aliases"
+
+cat >/etc/exim4/conf.d/router/860_postmaster_abuse <<'EOF'
+postmaster_alias:
+  driver = redirect
+  local_parts = postmaster
+  domains = +local_domains
+  data = ${FORWARD_TO}
+  file_transport = address_file
+
+abuse_alias:
+  driver = redirect
+  local_parts = abuse
+  domains = +local_domains
+  data = ${FORWARD_TO}
+EOF
+
+done_ok
+
+# =============================================================================
+# 15. UPDATE-EXIM4.CONF.CONF
 # =============================================================================
 
 step "Updating update-exim4.conf.conf"
@@ -295,7 +350,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 14. REBUILD AND VALIDATE
+# 16. REBUILD AND VALIDATE
 # =============================================================================
 
 step "Rebuilding and validating Exim configuration"
@@ -309,24 +364,86 @@ exim -bP authenticators | grep -q "plain_server" || fail "authenticators validat
 done_ok
 
 # =============================================================================
-# 15. CHECK REVERSE DNS
+# 17. CHECK REVERSE DNS
 # =============================================================================
 
 step "Checking reverse DNS"
+
+# Check for required tools
+if ! command -v curl >/dev/null 2>&1; then
+  apt-get update && apt-get install -y curl
+fi
+if ! command -v dig >/dev/null 2>&1; then
+  apt-get update && apt-get install -y dnsutils
+fi
 
 PUBLIC_IP=$(curl -s https://api.ipify.org)
 PTR_RECORD=$(dig +short -x "${PUBLIC_IP}" 2>/dev/null | sed 's/\.$//' | tr -d '\n')
 
 if [ "${PTR_RECORD}" = "${PRIMARY_HOSTNAME}" ]; then
-  echo -e "${GREEN}✓ Reverse DNS OK: ${PTR_RECORD}${NC}"
+  echo -e "${GREEN}✓ PTR: ${PTR_RECORD}${NC}"
+  PTR_STATUS="${GREEN}✓ OK${NC}"
 else
-  echo -e "${YELLOW}⚠ Reverse DNS mismatch: expected ${PRIMARY_HOSTNAME}, got '${PTR_RECORD}'${NC}"
-  echo -e "${YELLOW}  Log into your VPS provider's control panel and set the reverse DNS (PTR) record${NC}"
-  echo -e "${YELLOW}  for your public IP ${PUBLIC_IP} to ${PRIMARY_HOSTNAME}${NC}"
+  echo -e "${YELLOW}⚠ PTR mismatch: expected ${PRIMARY_HOSTNAME}, got '${PTR_RECORD}'${NC}"
+  echo -e "${YELLOW}  Set PTR record in VPS provider control panel${NC}"
+  PTR_STATUS="${RED}✗ MISMATCH${NC}"
 fi
 
 # =============================================================================
-# 16. START EXIM
+# 18. CHECK PORT 25
+# =============================================================================
+
+step "Checking port 25 connectivity"
+
+if ! command -v nc >/dev/null 2>&1; then
+  apt-get update && apt-get install -y netcat-openbsd
+fi
+
+if timeout 5 bash -c "echo '' | nc -w 3 8.8.8.8 25" >/dev/null 2>&1; then
+  echo -e "${GREEN}✓ Port 25 reachable${NC}"
+  PORT25_STATUS="${GREEN}✓ OK${NC}"
+else
+  echo -e "${YELLOW}⚠ Port 25 may be blocked (common on OVH, requires support ticket)${NC}"
+  PORT25_STATUS="${RED}✗ BLOCKED?${NC}"
+fi
+
+done_ok
+
+# =============================================================================
+# 19. FAIL2BAN SETUP
+# =============================================================================
+
+step "Installing Fail2ban for Exim"
+
+if command -v apt-get >/dev/null 2>&1; then
+  apt-get install -y fail2ban
+fi
+
+cat >/etc/fail2ban/jail.d/exim4.conf <<'EOF'
+[exim4-auth]
+enabled = true
+port = smtp,587
+filter = exim4
+logpath = /var/log/exim4/mainlog
+maxretry = 5
+bantime = 3600
+findtime = 3600
+EOF
+
+cat >/etc/fail2ban/filter.d/exim4.conf <<'EOF'
+[Definition]
+failregex = ^%(pid)s %(hostinfo)s.*auth.*login.*failed.*$
+ignoreregex =
+EOF
+
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl restart fail2ban || true
+fi
+
+done_ok
+
+# =============================================================================
+# 20. START EXIM
 # =============================================================================
 
 if [ "${SKIP_EXIM}" = "1" ]; then
@@ -342,11 +459,11 @@ else
 fi
 
 # =============================================================================
-# 17. PRINT DKIM DNS RECORDS
+# 21. PRINT DNS RECORDS
 # =============================================================================
 
 echo ""
-echo -e "${GREEN}=== DKIM DNS RECORDS ===${NC}"
+echo -e "${GREEN}=== DNS RECORDS TO CONFIGURE ===${NC}"
 
 for domain in ${MAIL_DOMAINS}; do
   if [ -f "${DKIM_BASE}/${domain}/dns_record.txt" ]; then
@@ -355,5 +472,36 @@ for domain in ${MAIL_DOMAINS}; do
     echo ""
   fi
 done
+
+echo -e "${BLUE}SPF:${NC}"
+echo -e "  ${PRIMARY_HOSTNAME}. TXT \"v=spf1 a mx ip4:${PUBLIC_IP} ~all\""
+echo ""
+
+echo -e "${BLUE}DMARC:${NC}"
+echo -e "  _dmarc.${PRIMARY_HOSTNAME}. TXT \"v=DMARC1; p=quarantine; rua=mailto:${FORWARD_TO}; fo=1\""
+echo ""
+
+# =============================================================================
+# 22. SUMMARY
+# =============================================================================
+
+echo ""
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}   CONFIGURATION SUMMARY${NC}"
+echo -e "${GREEN}========================================${NC}"
+if [ "$(hostname)" = "${PRIMARY_HOSTNAME}" ]; then
+  echo -e "  Hostname:    ${GREEN}✓ ${PRIMARY_HOSTNAME}${NC}"
+else
+  echo -e "  Hostname:    ${RED}✗ MISMATCH${NC}"
+fi
+echo -e "  PTR Record:  ${PTR_STATUS}"
+if [ "${TLS_CERT_EXISTS}" = "1" ]; then
+  echo -e "  TLS Cert:    ${GREEN}✓ ${TLS_CERT}${NC}"
+else
+  echo -e "  TLS Cert:    ${YELLOW}✗ NOT FOUND${NC}"
+fi
+echo -e "  DKIM Keys:   ${GREEN}✓ Generated${NC}"
+echo -e "  Port 25:     ${PORT25_STATUS}"
+echo -e "${GREEN}========================================${NC}"
 
 echo -e "${GREEN}Configuration Complete.${NC}"
