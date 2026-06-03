@@ -62,6 +62,7 @@ primary_hostname = ${PRIMARY_HOSTNAME}
 daemon_smtp_ports = 25 : 587
 DKIM_SELECTOR = ${DKIM_SELECTOR}
 tls_require_ciphers = ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384
+acl_smtp_auth = acl_check_auth
 EOF
 
 done_ok
@@ -185,7 +186,26 @@ fi
 done_ok
 
 # =============================================================================
-# 8. RATE LIMITING FOR AUTH
+# 8. CHECK DEPENDENCIES
+# =============================================================================
+
+step "Checking system dependencies"
+
+for cmd in curl dig nc; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    NEED_INSTALL=1
+    break
+  fi
+done
+
+if [ "${NEED_INSTALL:-0}" = "1" ]; then
+  apt-get update && apt-get install -y curl dnsutils netcat-openbsd
+fi
+
+done_ok
+
+# =============================================================================
+# 9. RATE LIMITING FOR AUTH
 # =============================================================================
 
 step "Configuring rate limiting for auth"
@@ -201,7 +221,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 9. DKIM KEYS
+# 10. DKIM KEYS
 # =============================================================================
 
 step "Generating DKIM keys"
@@ -234,7 +254,7 @@ done
 done_ok
 
 # =============================================================================
-# 10. DKIM LOOKUP FILE
+# 11. DKIM LOOKUP FILE
 # =============================================================================
 
 step "Writing DKIM lookup file"
@@ -250,7 +270,7 @@ chmod 640 /etc/exim4/dkim_keys
 done_ok
 
 # =============================================================================
-# 11. DKIM TRANSPORT
+# 12. DKIM TRANSPORT
 # =============================================================================
 
 step "Creating DKIM transport"
@@ -267,7 +287,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 12. ROUTER PATCH
+# 13. ROUTER PATCH
 # =============================================================================
 
 step "Patching primary router"
@@ -281,7 +301,7 @@ fi
 done_ok
 
 # =============================================================================
-# 13. CATCHALL FORWARD
+# 14. CATCHALL FORWARD
 # =============================================================================
 
 step "Configuring catchall forwarding"
@@ -300,12 +320,12 @@ EOF
 done_ok
 
 # =============================================================================
-# 14. POSTMASTER/ABUSE ALIASES
+# 15. POSTMASTER/ABUSE ALIASES
 # =============================================================================
 
 step "Creating postmaster/abuse aliases"
 
-cat >/etc/exim4/conf.d/router/860_postmaster_abuse <<'EOF'
+cat >/etc/exim4/conf.d/router/860_postmaster_abuse <<EOF
 postmaster_alias:
   driver = redirect
   local_parts = postmaster
@@ -323,7 +343,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 15. UPDATE-EXIM4.CONF.CONF
+# 16. UPDATE-EXIM4.CONF.CONF
 # =============================================================================
 
 step "Updating update-exim4.conf.conf"
@@ -350,7 +370,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 16. REBUILD AND VALIDATE
+# 17. REBUILD AND VALIDATE
 # =============================================================================
 
 step "Rebuilding and validating Exim configuration"
@@ -364,18 +384,10 @@ exim -bP authenticators | grep -q "plain_server" || fail "authenticators validat
 done_ok
 
 # =============================================================================
-# 17. CHECK REVERSE DNS
+# 18. CHECK REVERSE DNS
 # =============================================================================
 
 step "Checking reverse DNS"
-
-# Check for required tools
-if ! command -v curl >/dev/null 2>&1; then
-  apt-get update && apt-get install -y curl
-fi
-if ! command -v dig >/dev/null 2>&1; then
-  apt-get update && apt-get install -y dnsutils
-fi
 
 PUBLIC_IP=$(curl -s https://api.ipify.org)
 PTR_RECORD=$(dig +short -x "${PUBLIC_IP}" 2>/dev/null | sed 's/\.$//' | tr -d '\n')
@@ -389,15 +401,13 @@ else
   PTR_STATUS="${RED}✗ MISMATCH${NC}"
 fi
 
+done_ok
+
 # =============================================================================
-# 18. CHECK PORT 25
+# 19. CHECK PORT 25
 # =============================================================================
 
 step "Checking port 25 connectivity"
-
-if ! command -v nc >/dev/null 2>&1; then
-  apt-get update && apt-get install -y netcat-openbsd
-fi
 
 if timeout 5 bash -c "echo '' | nc -w 3 8.8.8.8 25" >/dev/null 2>&1; then
   echo -e "${GREEN}✓ Port 25 reachable${NC}"
@@ -410,7 +420,7 @@ fi
 done_ok
 
 # =============================================================================
-# 19. FAIL2BAN SETUP
+# 20. FAIL2BAN SETUP
 # =============================================================================
 
 step "Installing Fail2ban for Exim"
@@ -432,7 +442,7 @@ EOF
 
 cat >/etc/fail2ban/filter.d/exim4.conf <<'EOF'
 [Definition]
-failregex = ^%(pid)s %(hostinfo)s.*auth.*login.*failed.*$
+failregex = .*auth.*login.*failed.*
 ignoreregex =
 EOF
 
@@ -443,7 +453,7 @@ fi
 done_ok
 
 # =============================================================================
-# 20. START EXIM
+# 21. START EXIM
 # =============================================================================
 
 if [ "${SKIP_EXIM}" = "1" ]; then
@@ -459,7 +469,7 @@ else
 fi
 
 # =============================================================================
-# 21. PRINT DNS RECORDS
+# 22. PRINT DNS RECORDS
 # =============================================================================
 
 echo ""
@@ -482,14 +492,14 @@ echo -e "  _dmarc.${PRIMARY_HOSTNAME}. TXT \"v=DMARC1; p=quarantine; rua=mailto:
 echo ""
 
 # =============================================================================
-# 22. SUMMARY
+# 23. SUMMARY
 # =============================================================================
 
 echo ""
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}   CONFIGURATION SUMMARY${NC}"
 echo -e "${GREEN}========================================${NC}"
-if [ "$(hostname)" = "${PRIMARY_HOSTNAME}" ]; then
+if [ "$(hostname -f 2>/dev/null || hostname)" = "${PRIMARY_HOSTNAME}" ]; then
   echo -e "  Hostname:    ${GREEN}✓ ${PRIMARY_HOSTNAME}${NC}"
 else
   echo -e "  Hostname:    ${RED}✗ MISMATCH${NC}"
