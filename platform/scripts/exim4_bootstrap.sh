@@ -13,6 +13,7 @@ set -Eeuo pipefail
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
+YELLOW='\033[0;33m'
 NC='\033[0m'
 
 step() { printf "${BLUE}  - %s... ${NC}" "$1"; }
@@ -60,7 +61,23 @@ EOF
 done_ok
 
 # =============================================================================
-# 2. TLS OPTIONS
+# 2. SET SYSTEM HOSTNAME
+# =============================================================================
+
+step "Setting system hostname"
+
+hostnamectl set-hostname "${PRIMARY_HOSTNAME}"
+
+if grep -q "^127\.0\.1\.1" /etc/hosts; then
+  sed -i "s/^127\.0\.1\.1.*$/127\.0\.1\.1 ${PRIMARY_HOSTNAME}/" /etc/hosts
+else
+  echo "127.0.1.1 ${PRIMARY_HOSTNAME}" >> /etc/hosts
+fi
+
+done_ok
+
+# =============================================================================
+# 3. TLS OPTIONS
 # =============================================================================
 
 step "Configuring TLS"
@@ -78,7 +95,7 @@ sed -i 's/^tls_certificate = MAIN_TLS_CERT/#tls_certificate = MAIN_TLS_CERT/' /e
 done_ok
 
 # =============================================================================
-# 3. LETSENCRYPT PERMISSIONS
+# 4. LETSENCRYPT PERMISSIONS
 # =============================================================================
 
 step "Fixing certificate permissions"
@@ -89,7 +106,7 @@ chmod 750 /etc/letsencrypt/live /etc/letsencrypt/archive
 done_ok
 
 # =============================================================================
-# 4. STARTTLS ACL
+# 5. STARTTLS ACL
 # =============================================================================
 
 step "Configuring STARTTLS ACL"
@@ -106,7 +123,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 5. SMTP AUTH
+# 6. SMTP AUTH
 # =============================================================================
 
 step "Configuring SMTP AUTH"
@@ -132,7 +149,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 6. SMTP AUTH PASSWORD FILE
+# 7. SMTP AUTH PASSWORD FILE
 # =============================================================================
 
 step "Creating SMTP password file"
@@ -152,7 +169,7 @@ fi
 done_ok
 
 # =============================================================================
-# 7. DKIM KEYS
+# 8. DKIM KEYS
 # =============================================================================
 
 step "Generating DKIM keys"
@@ -185,7 +202,7 @@ done
 done_ok
 
 # =============================================================================
-# 8. DKIM LOOKUP FILE
+# 9. DKIM LOOKUP FILE
 # =============================================================================
 
 step "Writing DKIM lookup file"
@@ -201,7 +218,7 @@ chmod 640 /etc/exim4/dkim_keys
 done_ok
 
 # =============================================================================
-# 9. DKIM TRANSPORT
+# 10. DKIM TRANSPORT
 # =============================================================================
 
 step "Creating DKIM transport"
@@ -218,7 +235,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 10. ROUTER PATCH
+# 11. ROUTER PATCH
 # =============================================================================
 
 step "Patching primary router"
@@ -232,7 +249,7 @@ fi
 done_ok
 
 # =============================================================================
-# 11. CATCHALL FORWARD
+# 12. CATCHALL FORWARD
 # =============================================================================
 
 step "Configuring catchall forwarding"
@@ -251,7 +268,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 12. UPDATE-EXIM4.CONF.CONF
+# 13. UPDATE-EXIM4.CONF.CONF
 # =============================================================================
 
 step "Updating update-exim4.conf.conf"
@@ -278,7 +295,7 @@ EOF
 done_ok
 
 # =============================================================================
-# 13. REBUILD AND VALIDATE
+# 14. REBUILD AND VALIDATE
 # =============================================================================
 
 step "Rebuilding and validating Exim configuration"
@@ -292,7 +309,24 @@ exim -bP authenticators | grep -q "plain_server" || fail "authenticators validat
 done_ok
 
 # =============================================================================
-# 14. START EXIM
+# 15. CHECK REVERSE DNS
+# =============================================================================
+
+step "Checking reverse DNS"
+
+PUBLIC_IP=$(curl -s https://api.ipify.org)
+PTR_RECORD=$(dig +short -x "${PUBLIC_IP}" 2>/dev/null | sed 's/\.$//' | tr -d '\n')
+
+if [ "${PTR_RECORD}" = "${PRIMARY_HOSTNAME}" ]; then
+  echo -e "${GREEN}✓ Reverse DNS OK: ${PTR_RECORD}${NC}"
+else
+  echo -e "${YELLOW}⚠ Reverse DNS mismatch: expected ${PRIMARY_HOSTNAME}, got '${PTR_RECORD}'${NC}"
+  echo -e "${YELLOW}  Log into your VPS provider's control panel and set the reverse DNS (PTR) record${NC}"
+  echo -e "${YELLOW}  for your public IP ${PUBLIC_IP} to ${PRIMARY_HOSTNAME}${NC}"
+fi
+
+# =============================================================================
+# 16. START EXIM
 # =============================================================================
 
 if [ "${SKIP_EXIM}" = "1" ]; then
@@ -308,7 +342,7 @@ else
 fi
 
 # =============================================================================
-# 15. PRINT DKIM DNS RECORDS
+# 17. PRINT DKIM DNS RECORDS
 # =============================================================================
 
 echo ""
