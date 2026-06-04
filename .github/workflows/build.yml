@@ -241,7 +241,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: RokctAI/Monorepo
-          path: docker-context/monorepo_overrides
+          path: docker-context/overrides/monorepo
           token: ${{ secrets.MONOREPO_PAT || github.token }}
 
       - name: Checkout Gravity Repository
@@ -489,7 +489,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: RokctAI/Monorepo
-          path: monorepo_overrides
+          path: overrides/monorepo
           token: ${{ secrets.MONOREPO_PAT || github.token }}
 
       - name: Configure SSH and Deploy to Master VPS

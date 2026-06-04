@@ -59,7 +59,7 @@ USER frappe
 ARG DB_HOST=127.0.0.1
 
 # Inject Context & Run Golden Build
-COPY --chown=frappe:frappe monorepo_overrides /home/frappe/monorepo_overrides
+COPY --chown=frappe:frappe overrides/monorepo /home/frappe/monorepo_overrides
 COPY --chown=frappe:frappe current_repo /home/frappe/current_repo
 COPY --chown=frappe:frappe platform/scripts/build_ecosystem.sh /usr/local/bin/build_ecosystem.sh
 RUN GIT_TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN}}"; \
