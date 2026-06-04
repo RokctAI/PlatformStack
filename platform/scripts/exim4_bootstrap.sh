@@ -427,7 +427,7 @@ done_ok
 step "Installing Fail2ban for Exim"
 
 if command -v apt-get >/dev/null 2>&1; then
-  apt-get install -y fail2ban
+  apt-get update && apt-get install -y fail2ban
   apt-get clean && rm -rf /var/lib/apt/lists/*
 fi
 

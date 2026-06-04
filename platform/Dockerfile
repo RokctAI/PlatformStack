@@ -14,7 +14,8 @@ RUN apt-get update -qq && apt-get install -yqq curl ca-certificates gnupg sudo w
     && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --batch --yes -o /etc/apt/keyrings/postgresql.gpg \
     && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
     && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # System Dependencies - Step 2: Install packages (after repos are added)
 RUN apt-get update -qq && apt-get install -yqq \
@@ -23,7 +24,7 @@ RUN apt-get update -qq && apt-get install -yqq \
     cron vim nodejs redis-server netcat-openbsd \
     libffi-dev libjpeg-dev zlib1g-dev \
     >/dev/null 2>&1 \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Docker CLI and Docker Compose statically to allow container orchestration
 RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.0.7.tgz | tar -xz -C /tmp \
@@ -89,7 +90,7 @@ RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
 # Stage 3: Control Hub (Full Image)
 FROM builder AS full
 USER root
-RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools openssl && apt-get clean && rm -rf /var/lib/apt/lists/*
 VOLUME ["/etc/exim4", "/var/spool/exim4", "/var/log/exim4", "/etc/opendkim", "/etc/nginx", "/var/log/nginx", "/etc/cron.d"]
 RUN chmod -R 777 /var/log/nginx /var/lib/nginx
 WORKDIR /home/frappe/frappe-bench
