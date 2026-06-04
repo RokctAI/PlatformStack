@@ -1344,8 +1344,13 @@ if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
   run_step "Cloning Monorepo for persistence" bash -c "rm -rf \"$MONOREPO_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/Monorepo.git\" \"$MONOREPO_TMP\" 2>&1 | grep -v \"^remote:\""
   RET=$?
   if [ $RET -eq 0 ]; then
-    run_step "Committing baked assets" bash -c "mkdir -p \"$MONOREPO_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$MONOREPO_TMP/$PLATFORM_DEST/\" && cd \"$MONOREPO_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD:main; fi"
-    rm -rf "$MONOREPO_TMP"
+    if [ ! -d "$MONOREPO_TMP/.git" ]; then
+      _log "Warning: Clone appeared to succeed but $MONOREPO_TMP/.git not found. Aborting asset persistence."
+      rm -rf "$MONOREPO_TMP"
+    else
+      run_step "Committing baked assets" bash -c "mkdir -p \"$MONOREPO_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$MONOREPO_TMP/$PLATFORM_DEST/\" && cd \"$MONOREPO_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD:main; fi"
+      rm -rf "$MONOREPO_TMP"
+    fi
   else
     _log "Warning: Asset persistence failed."
   fi
