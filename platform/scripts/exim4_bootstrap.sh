@@ -442,7 +442,7 @@ EOF
 
 cat >/etc/fail2ban/filter.d/exim4.conf <<'EOF'
 [Definition]
-failregex = .*auth.*login.*failed.*
+failregex = authenticator failed for .*\[<HOST>\]
 ignoreregex =
 EOF
 
