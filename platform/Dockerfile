@@ -33,7 +33,7 @@ RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.
     && curl -fsSL "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose \
     && chmod +x /usr/local/bin/docker-compose
 
-RUN npm install -g yarn pnpm
+RUN npm install -g yarn pnpm && npm cache clean --force
 RUN useradd -ms /bin/bash frappe && \
     usermod -aG sudo frappe && \
     echo "frappe ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/frappe && \
