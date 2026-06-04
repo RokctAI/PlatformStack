@@ -409,7 +409,7 @@ done_ok
 
 step "Checking port 25 connectivity"
 
-if timeout 5 bash -c "echo '' | nc -w 3 8.8.8.8 25" >/dev/null 2>&1; then
+if timeout 10 bash -c "echo QUIT | nc -w 5 gmail-smtp-in.l.google.com 25" 2>/dev/null | grep -q "220"; then
   echo -e "${GREEN}✓ Port 25 reachable${NC}"
   PORT25_STATUS="${GREEN}✓ OK${NC}"
 else
