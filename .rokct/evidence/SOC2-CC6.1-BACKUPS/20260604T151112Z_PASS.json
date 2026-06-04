@@ -1,0 +1,7 @@
+{
+  "timestamp": "2026-06-04T15:11:12.606447Z",
+  "control_id": "SOC2-CC6.1-BACKUPS",
+  "status": "PASS",
+  "system": "rpanel-backup-verifier",
+  "detail": "Backup encryption verification test passed. Encryption context validated successfully."
+}
