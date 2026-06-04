@@ -235,13 +235,13 @@ jobs:
         with:
            path: docker-context
 
-      - name: Checkout Monorepo for Overrides
+      - name: Checkout Vector for Overrides
         if: github.repository_owner == 'RokctAI'
         continue-on-error: true
         uses: actions/checkout@v4
         with:
-          repository: RokctAI/Monorepo
-          path: docker-context/overrides/monorepo
+          repository: RokctAI/vector
+          path: docker-context/overrides/vector
           token: ${{ secrets.MONOREPO_PAT || github.token }}
 
       - name: Checkout Gravity Repository
@@ -341,8 +341,8 @@ jobs:
       - name: Build and Push Drone Edge (Go)
         uses: docker/build-push-action@v6
         with:
-          context: docker-context/overrides/monorepo/IoT
-          file: docker-context/overrides/monorepo/IoT/Dockerfile
+          context: docker-context/overrides/vector
+          file: docker-context/overrides/vector/Dockerfile
           push: true
           tags: |
             ghcr.io/rokctai/monorepo/drone-edge:latest
