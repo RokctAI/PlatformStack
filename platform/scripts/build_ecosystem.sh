@@ -840,7 +840,7 @@ elif [ -d "/home/frappe/overrides/monorepo" ]; then
 fi
 
 if [ -n "$OVERRIDES_DIR" ]; then
-  _log "Applying Monorepo Overrides from $OVERRIDES_DIR..."
+  _log "Applying Overrides from $OVERRIDES_DIR..."
   for app_dir in apps/*/; do
     app=$(basename "$app_dir")
     PRIVATE_DIR="$OVERRIDES_DIR/${app}_private"
@@ -861,55 +861,52 @@ if [ -n "$OVERRIDES_DIR" ]; then
     # Merge if private dir exists and is valid
     if [ -d "$PRIVATE_DIR" ]; then
       run_step "Applying private overrides for $app" cp -rf "$PRIVATE_DIR/." "apps/$app/"
+
+      # Process app-level blueprints
+      BLUEPRINT_FILE="$PRIVATE_DIR/.rokct/app_blueprints.json"
+      if [ -f "$BLUEPRINT_FILE" ]; then
+        _log "Applying Monorepo Blueprints for $app from $BLUEPRINT_FILE..."
+        export PRIVATE_DIR APP_NAME_TARGET="$app"
+        run_step "Processing Monorepo Blueprints for $app" python3 -c "
+import json, os
+blueprint_path = os.path.join(os.environ['PRIVATE_DIR'], '.rokct', 'app_blueprints.json')
+app_name = os.environ['APP_NAME_TARGET']
+if os.path.exists(blueprint_path):
+    with open(blueprint_path, 'r') as f:
+        config = json.load(f)
+    app_pkg_path = os.path.join('apps', app_name, app_name)
+    if os.path.isdir(app_pkg_path):
+        # 1. Update modules.txt
+        modules_txt = os.path.join(app_pkg_path, 'modules.txt')
+        if os.path.exists(modules_txt):
+            with open(modules_txt, 'r') as f:
+                existing_modules = [l.strip() for l in f if l.strip()]
+            updated = False
+            for mod in config.get('modules', []):
+                if mod not in existing_modules:
+                    existing_modules.append(mod)
+                    updated = True
+            if updated:
+                with open(modules_txt, 'w') as f:
+                    f.write('\\n'.join(existing_modules) + '\\n')
+                print(f'  - Updated modules.txt for {app_name}')
+        # 2. Update hooks.py
+        hooks_py = os.path.join(app_pkg_path, 'hooks.py')
+        if os.path.exists(hooks_py) and config.get('hooks'):
+            with open(hooks_py, 'r') as f:
+                content = f.read()
+            header = '# --- Private Monorepo Hooks ---'
+            if header not in content:
+                with open(hooks_py, 'a') as f:
+                    f.write('\\n' + '\\n'.join(config['hooks']) + '\\n')
+                print(f'  - Injected monorepo hooks into {app_name}/hooks.py')
+"
+      fi
     fi
   done
-  _log "    Monorepo overrides applied."
-
-  # 5A. Process Monorepo Blueprints (modules.txt and hooks.py)
-  # Uses .rokct/app_blueprints.json to dynamically register private modules and hooks.
-  BLUEPRINT_FILE="$OVERRIDES_DIR/monorepo/.rokct/app_blueprints.json"
-  if [ -f "$BLUEPRINT_FILE" ]; then
-    _log "Applying Monorepo Blueprints from $BLUEPRINT_FILE..."
-    export OVERRIDES_DIR
-    run_step "Processing Monorepo Blueprints" python3 -c "
-import json, os
-blueprint_path = os.path.join(os.environ['OVERRIDES_DIR'], 'monorepo', '.rokct', 'app_blueprints.json')
-if not os.path.exists(blueprint_path):
-    exit(0)
-with open(blueprint_path, 'r') as f:
-    blueprints = json.load(f)
-for app_name, config in blueprints.items():
-    app_pkg_path = os.path.join('apps', app_name, app_name)
-    if not os.path.isdir(app_pkg_path):
-        continue
-    # 1. Update modules.txt
-    modules_txt = os.path.join(app_pkg_path, 'modules.txt')
-    if os.path.exists(modules_txt):
-        with open(modules_txt, 'r') as f:
-            existing_modules = [l.strip() for l in f if l.strip()]
-        updated = False
-        for mod in config.get('modules', []):
-            if mod not in existing_modules:
-                existing_modules.append(mod)
-                updated = True
-        if updated:
-            with open(modules_txt, 'w') as f:
-                f.write('\\n'.join(existing_modules) + '\\n')
-            print(f'  - Updated modules.txt for {app_name}')
-    # 2. Update hooks.py
-    hooks_py = os.path.join(app_pkg_path, 'hooks.py')
-    if os.path.exists(hooks_py) and config.get('hooks'):
-        with open(hooks_py, 'r') as f:
-            content = f.read()
-        header = '# --- Private Monorepo Hooks ---'
-        if header not in content:
-            with open(hooks_py, 'a') as f:
-                f.write('\\n' + '\\n'.join(config['hooks']) + '\\n')
-            print(f'  - Injected monorepo hooks into {app_name}/hooks.py')
-"
-  fi
+  _log "    Overrides applied."
 else
-  _log "No monorepo_overrides directory found - skipping."
+  _log "No overrides directory found - skipping."
 fi
 
 # C. Stack Dependencies (Apps requested by install_stack.py)
