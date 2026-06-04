@@ -6,13 +6,13 @@ set -eo pipefail
 
 # --- Load Monorepo Secrets from env file if present ---
 OVERRIDES_DIR=""
-if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/monorepo_overrides" ]; then
-  OVERRIDES_DIR="$GITHUB_WORKSPACE/monorepo_overrides"
-elif [ -d "/home/frappe/monorepo_overrides" ]; then
-  OVERRIDES_DIR="/home/frappe/monorepo_overrides"
+if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/overrides/monorepo" ]; then
+  OVERRIDES_DIR="$GITHUB_WORKSPACE/overrides"
+elif [ -d "/home/frappe/overrides/monorepo" ]; then
+  OVERRIDES_DIR="/home/frappe/overrides"
 fi
 
-if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
+if [ -f "$OVERRIDES_DIR/monorepo/.env/production.env" ]; then
   # Read .env file line by line, export non-empty/non-comment lines
   while IFS= read -r line || [ -n "$line" ]; do
     # Remove leading/trailing whitespaces and skip comments/empty lines
@@ -28,7 +28,7 @@ if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
         export DB_PW="$val"
       fi
     fi
-  done <"$OVERRIDES_DIR/.env/production.env"
+  done <"$OVERRIDES_DIR/monorepo/.env/production.env"
 fi
 
 # --- Dynamically Apply Git Credentials if GITHUB_TOKEN is loaded ---
@@ -833,31 +833,47 @@ fi
 # For each app already present in apps/, check if monorepo_overrides has a matching
 # folder and apply it. This way no non-app directories from the Monorepo are touched.
 OVERRIDES_DIR=""
-if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/monorepo_overrides" ]; then
-  OVERRIDES_DIR="$GITHUB_WORKSPACE/monorepo_overrides"
-elif [ -d "/home/frappe/monorepo_overrides" ]; then
-  OVERRIDES_DIR="/home/frappe/monorepo_overrides"
+if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/overrides/monorepo" ]; then
+  OVERRIDES_DIR="$GITHUB_WORKSPACE/overrides"
+elif [ -d "/home/frappe/overrides/monorepo" ]; then
+  OVERRIDES_DIR="/home/frappe/overrides"
 fi
 
 if [ -n "$OVERRIDES_DIR" ]; then
   _log "Applying Monorepo Overrides from $OVERRIDES_DIR..."
   for app_dir in apps/*/; do
     app=$(basename "$app_dir")
-    if [ -d "$OVERRIDES_DIR/$app" ]; then
-      run_step "Applying overrides for $app" cp -rf "$OVERRIDES_DIR/$app/." "apps/$app/"
+    PRIVATE_DIR="$OVERRIDES_DIR/${app}_private"
+
+    # Lazy-fetch private repo if not already present
+    if [ ! -d "$PRIVATE_DIR" ] && [ -n "$GITHUB_TOKEN" ]; then
+      PRIVATE_REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/${app}_private.git"
+      set +e
+      git clone --depth 1 "$PRIVATE_REPO_URL" "$PRIVATE_DIR" >/dev/null 2>&1
+      CLONE_RET=$?
+      set -e
+      if [ $CLONE_RET -ne 0 ]; then
+        rm -rf "$PRIVATE_DIR"
+        _log "    No private repo found for $app — skipping."
+      fi
+    fi
+
+    # Merge if private dir exists and is valid
+    if [ -d "$PRIVATE_DIR" ]; then
+      run_step "Applying private overrides for $app" cp -rf "$PRIVATE_DIR/." "apps/$app/"
     fi
   done
   _log "    Monorepo overrides applied."
 
   # 5A. Process Monorepo Blueprints (modules.txt and hooks.py)
   # Uses .rokct/app_blueprints.json to dynamically register private modules and hooks.
-  BLUEPRINT_FILE="$OVERRIDES_DIR/.rokct/app_blueprints.json"
+  BLUEPRINT_FILE="$OVERRIDES_DIR/monorepo/.rokct/app_blueprints.json"
   if [ -f "$BLUEPRINT_FILE" ]; then
     _log "Applying Monorepo Blueprints from $BLUEPRINT_FILE..."
     export OVERRIDES_DIR
     run_step "Processing Monorepo Blueprints" python3 -c "
 import json, os
-blueprint_path = os.path.join(os.environ['OVERRIDES_DIR'], '.rokct', 'app_blueprints.json')
+blueprint_path = os.path.join(os.environ['OVERRIDES_DIR'], 'monorepo', '.rokct', 'app_blueprints.json')
 if not os.path.exists(blueprint_path):
     exit(0)
 with open(blueprint_path, 'r') as f:
@@ -1192,12 +1208,12 @@ else
   run_step "Configuring site" bash -c "bench --site \"$SITE_NAME\" set-config developer_mode 1 && bench --site \"$SITE_NAME\" set-config allow_tests true"
 
   # Inject Monorepo overrides .env secrets into the site config
-  if [ -f "$OVERRIDES_DIR/.env/production.env" ]; then
-    _log "Injecting secrets from $OVERRIDES_DIR/.env/production.env..."
+  if [ -f "$OVERRIDES_DIR/monorepo/.env/production.env" ]; then
+    _log "Injecting secrets from $OVERRIDES_DIR/monorepo/.env/production.env..."
     export SITE_NAME OVERRIDES_DIR
     run_step "Injecting Monorepo secrets" python3 -c "
 import os, subprocess
-env_path = os.path.join(os.environ['OVERRIDES_DIR'], '.env', 'production.env')
+env_path = os.path.join(os.environ['OVERRIDES_DIR'], 'monorepo', '.env', 'production.env')
 site_name = os.environ['SITE_NAME']
 if os.path.exists(env_path):
     with open(env_path, 'r') as f:

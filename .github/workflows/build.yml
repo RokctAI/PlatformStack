@@ -341,8 +341,8 @@ jobs:
       - name: Build and Push Drone Edge (Go)
         uses: docker/build-push-action@v6
         with:
-          context: docker-context/monorepo_overrides/IoT
-          file: docker-context/monorepo_overrides/IoT/Dockerfile
+          context: docker-context/overrides/monorepo/IoT
+          file: docker-context/overrides/monorepo/IoT/Dockerfile
           push: true
           tags: |
             ghcr.io/rokctai/monorepo/drone-edge:latest
@@ -500,8 +500,8 @@ jobs:
           SSH_KEY="$SECRET_SSH_KEY"
           SSH_HOST="$SECRET_SSH_HOST"
           
-          # Read from .env/production.env inside checked out monorepo_overrides if present
-          ENV_FILE="monorepo_overrides/.env/production.env"
+          # Read from .env/production.env inside checked out overrides/monorepo if present
+          ENV_FILE="overrides/monorepo/.env/production.env"
           if [ -f "$ENV_FILE" ]; then
             echo "🔍 Scanning $ENV_FILE for Host and SSH Key credentials..."
             
