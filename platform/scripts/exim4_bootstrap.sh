@@ -200,6 +200,7 @@ done
 
 if [ "${NEED_INSTALL:-0}" = "1" ]; then
   apt-get update && apt-get install -y curl dnsutils netcat-openbsd
+  apt-get clean && rm -rf /var/lib/apt/lists/*
 fi
 
 done_ok
@@ -427,6 +428,7 @@ step "Installing Fail2ban for Exim"
 
 if command -v apt-get >/dev/null 2>&1; then
   apt-get install -y fail2ban
+  apt-get clean && rm -rf /var/lib/apt/lists/*
 fi
 
 cat >/etc/fail2ban/jail.d/exim4.conf <<'EOF'
