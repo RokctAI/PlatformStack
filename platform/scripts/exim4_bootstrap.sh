@@ -436,7 +436,7 @@ port = smtp,587
 filter = exim4
 logpath = /var/log/exim4/mainlog
 maxretry = 5
-bantime = 3600
+bantime = -1
 findtime = 3600
 EOF
 
