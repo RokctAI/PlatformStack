@@ -1,18 +1,18 @@
-#!/bin/bash
+﻿#!/bin/bash
 # Copyright (c) 2024, Rokct Intelligence (pty) Ltd.
 # For license information, please see license.txt
 
 set -eo pipefail
 
-# --- Load Monorepo Secrets from env file if present ---
+# --- Load Occultation Secrets from env file if present ---
 OVERRIDES_DIR=""
-if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/overrides/monorepo" ]; then
+if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/overrides/occultation" ]; then
   OVERRIDES_DIR="$GITHUB_WORKSPACE/overrides"
-elif [ -d "/home/frappe/overrides/monorepo" ]; then
+elif [ -d "/home/frappe/overrides/occultation" ]; then
   OVERRIDES_DIR="/home/frappe/overrides"
 fi
 
-if [ -f "$OVERRIDES_DIR/monorepo/.env/production.env" ]; then
+if [ -f "$OVERRIDES_DIR/occultation/.env/production.env" ]; then
   # Read .env file line by line, export non-empty/non-comment lines
   while IFS= read -r line || [ -n "$line" ]; do
     # Remove leading/trailing whitespaces and skip comments/empty lines
@@ -28,7 +28,7 @@ if [ -f "$OVERRIDES_DIR/monorepo/.env/production.env" ]; then
         export DB_PW="$val"
       fi
     fi
-  done <"$OVERRIDES_DIR/monorepo/.env/production.env"
+  done <"$OVERRIDES_DIR/occultation/.env/production.env"
 fi
 
 # --- Dynamically Apply Git Credentials if GITHUB_TOKEN is loaded ---
@@ -829,13 +829,13 @@ else
   fi
 fi
 
-# 5. Monorepo Overrides Staging & Application
-# For each app already present in apps/, check if monorepo_overrides has a matching
-# folder and apply it. This way no non-app directories from the Monorepo are touched.
+# 5. Occultation Overrides Staging & Application
+# For each app already present in apps/, check if occultation_overrides has a matching
+# folder and apply it. This way no non-app directories from the Occultation are touched.
 OVERRIDES_DIR=""
-if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/overrides/monorepo" ]; then
+if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/overrides/occultation" ]; then
   OVERRIDES_DIR="$GITHUB_WORKSPACE/overrides"
-elif [ -d "/home/frappe/overrides/monorepo" ]; then
+elif [ -d "/home/frappe/overrides/occultation" ]; then
   OVERRIDES_DIR="/home/frappe/overrides"
 fi
 
@@ -865,9 +865,9 @@ if [ -n "$OVERRIDES_DIR" ]; then
       # Process app-level blueprints
       BLUEPRINT_FILE="$PRIVATE_DIR/.rokct/app_blueprints.json"
       if [ -f "$BLUEPRINT_FILE" ]; then
-        _log "Applying Monorepo Blueprints for $app from $BLUEPRINT_FILE..."
+        _log "Applying Occultation Blueprints for $app from $BLUEPRINT_FILE..."
         export PRIVATE_DIR APP_NAME_TARGET="$app"
-        run_step "Processing Monorepo Blueprints for $app" python3 -c "
+        run_step "Processing Occultation Blueprints for $app" python3 -c "
 import json, os
 blueprint_path = os.path.join(os.environ['PRIVATE_DIR'], '.rokct', 'app_blueprints.json')
 app_name = os.environ['APP_NAME_TARGET']
@@ -895,11 +895,11 @@ if os.path.exists(blueprint_path):
         if os.path.exists(hooks_py) and config.get('hooks'):
             with open(hooks_py, 'r') as f:
                 content = f.read()
-            header = '# --- Private Monorepo Hooks ---'
+            header = '# --- Private Occultation Hooks ---'
             if header not in content:
                 with open(hooks_py, 'a') as f:
                     f.write('\\n' + '\\n'.join(config['hooks']) + '\\n')
-                print(f'  - Injected monorepo hooks into {app_name}/hooks.py')
+                print(f'  - Injected occultation hooks into {app_name}/hooks.py')
 "
       fi
     fi
@@ -1204,13 +1204,13 @@ else
 
   run_step "Configuring site" bash -c "bench --site \"$SITE_NAME\" set-config developer_mode 1 && bench --site \"$SITE_NAME\" set-config allow_tests true"
 
-  # Inject Monorepo overrides .env secrets into the site config
-  if [ -f "$OVERRIDES_DIR/monorepo/.env/production.env" ]; then
-    _log "Injecting secrets from $OVERRIDES_DIR/monorepo/.env/production.env..."
+  # Inject Occultation overrides .env secrets into the site config
+  if [ -f "$OVERRIDES_DIR/occultation/.env/production.env" ]; then
+    _log "Injecting secrets from $OVERRIDES_DIR/occultation/.env/production.env..."
     export SITE_NAME OVERRIDES_DIR
-    run_step "Injecting Monorepo secrets" python3 -c "
+    run_step "Injecting Occultation secrets" python3 -c "
 import os, subprocess
-env_path = os.path.join(os.environ['OVERRIDES_DIR'], 'monorepo', '.env', 'production.env')
+env_path = os.path.join(os.environ['OVERRIDES_DIR'], 'occultation', '.env', 'production.env')
 site_name = os.environ['SITE_NAME']
 if os.path.exists(env_path):
     with open(env_path, 'r') as f:
@@ -1352,17 +1352,17 @@ elif [ -d "apps/rcore/rcore/platform" ]; then
 fi
 
 if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
-  _log "RokctAI: Persisting baked rcore assets to Monorepo..."
-  MONOREPO_TMP="/tmp/monorepo-bake-push"
-  run_step "Cloning Monorepo for persistence" bash -c "rm -rf \"$MONOREPO_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/Monorepo.git\" \"$MONOREPO_TMP\" 2>&1 | grep -v \"^remote:\""
+  _log "RokctAI: Persisting baked rcore assets to Occultation..."
+  OCCULTATION_TMP="/tmp/occultation-bake-push"
+  run_step "Cloning Occultation for persistence" bash -c "rm -rf \"$OCCULTATION_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/Occultation.git\" \"$OCCULTATION_TMP\" 2>&1 | grep -v \"^remote:\""
   RET=$?
   if [ $RET -eq 0 ]; then
-    if [ ! -d "$MONOREPO_TMP/.git" ]; then
-      _log "Warning: Clone appeared to succeed but $MONOREPO_TMP/.git not found. Aborting asset persistence."
-      rm -rf "$MONOREPO_TMP"
+    if [ ! -d "$OCCULTATION_TMP/.git" ]; then
+      _log "Warning: Clone appeared to succeed but $OCCULTATION_TMP/.git not found. Aborting asset persistence."
+      rm -rf "$OCCULTATION_TMP"
     else
-      run_step "Committing baked assets" bash -c "mkdir -p \"$MONOREPO_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$MONOREPO_TMP/$PLATFORM_DEST/\" && cd \"$MONOREPO_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD:main; fi"
-      rm -rf "$MONOREPO_TMP"
+      run_step "Committing baked assets" bash -c "mkdir -p \"$OCCULTATION_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$OCCULTATION_TMP/$PLATFORM_DEST/\" && cd \"$OCCULTATION_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD:main; fi"
+      rm -rf "$OCCULTATION_TMP"
     fi
   else
     _log "Warning: Asset persistence failed."
