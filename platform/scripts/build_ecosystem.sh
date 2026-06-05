@@ -1369,16 +1369,46 @@ fi
 
 if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
   _log "RokctAI: Persisting baked rcore assets to rcore_private..."
-  RCORE_PRIVATE_TMP="/tmp/rcore-private-bake-push"
-  run_step "Cloning rcore_private for persistence" bash -c "rm -rf \"$RCORE_PRIVATE_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/rcore_private.git\" \"$RCORE_PRIVATE_TMP\" 2>&1 | grep -v \"^remote:\""
-  RET=$?
+  CLEANUP_REQUIRED="false"
+  if [ -n "$OVERRIDES_DIR" ] && [ -d "$OVERRIDES_DIR/rcore_private/.git" ]; then
+    RCORE_PRIVATE_TMP="$OVERRIDES_DIR/rcore_private"
+    _log "RokctAI: Reusing existing rcore_private clone from $RCORE_PRIVATE_TMP"
+    RET=0
+  else
+    RCORE_PRIVATE_TMP="/tmp/rcore-private-bake-push"
+    _log "RokctAI: No existing clone found, creating temporary clone at $RCORE_PRIVATE_TMP"
+    run_step "Cloning rcore_private for persistence" bash -c "rm -rf \"$RCORE_PRIVATE_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/rcore_private.git\" \"$RCORE_PRIVATE_TMP\" 2>&1 | grep -v \"^remote:\""
+    RET=$?
+    CLEANUP_REQUIRED="true"
+  fi
+
   if [ $RET -eq 0 ]; then
     if [ ! -d "$RCORE_PRIVATE_TMP/.git" ]; then
-      _log "Warning: Clone appeared to succeed but $RCORE_PRIVATE_TMP/.git not found. Aborting asset persistence."
-      rm -rf "$RCORE_PRIVATE_TMP"
+      _log "Warning: rcore_private repo path $RCORE_PRIVATE_TMP/.git not found. Aborting asset persistence."
+      if [ "$CLEANUP_REQUIRED" = "true" ]; then rm -rf "$RCORE_PRIVATE_TMP"; fi
     else
-      run_step "Committing baked assets" bash -c "mkdir -p \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST/\" && cd \"$RCORE_PRIVATE_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD:main; fi"
-      rm -rf "$RCORE_PRIVATE_TMP"
+      run_step "Committing baked assets and creating PR" bash -c " \
+        mkdir -p \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST\" && \
+        cp -r $PLATFORM_SRC/. \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST/\" && \
+        cd \"$RCORE_PRIVATE_TMP\" && \
+        CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && \
+        if [ \"\$CHANGES\" -gt 0 ]; then \
+          git config user.email \"bot@rokct.ai\" && \
+          git config user.name \"RokctAI Bot\" && \
+          BRANCH_NAME=\"auto-bake-assets\" && \
+          git checkout -b \"\$BRANCH_NAME\" 2>/dev/null || git checkout \"\$BRANCH_NAME\" && \
+          git add \$PLATFORM_DEST && \
+          git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && \
+          git push origin \"\$BRANCH_NAME\" -f && \
+          curl -s -X POST \
+            -H \"Authorization: token $GITHUB_TOKEN\" \
+            -H \"Accept: application/vnd.github.v3+json\" \
+            https://api.github.com/repos/RokctAI/rcore_private/pulls \
+            -d \"{\\\"title\\\":\\\"chore(rcore): auto-bake platform assets\\\",\\\"head\\\":\\\"\$BRANCH_NAME\\\",\\\"base\\\":\\\"main\\\",\\\"body\\\":\\\"Automated PR for baked assets.\\\"}\" || true; \
+        fi"
+      if [ "$CLEANUP_REQUIRED" = "true" ]; then
+        rm -rf "$RCORE_PRIVATE_TMP"
+      fi
     fi
   else
     _log "Warning: Asset persistence failed."
