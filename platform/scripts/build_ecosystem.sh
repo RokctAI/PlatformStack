@@ -860,7 +860,22 @@ if [ -n "$OVERRIDES_DIR" ]; then
 
     # Merge if private dir exists and is valid
     if [ -d "$PRIVATE_DIR" ]; then
-      run_step "Applying private overrides for $app" cp -rf "$PRIVATE_DIR/." "apps/$app/"
+      export PRIVATE_DIR APP_NAME_TARGET="$app"
+      run_step "Applying private overrides for $app" python3 -c "
+import shutil, os
+src_dir = os.environ['PRIVATE_DIR']
+dest_dir = os.path.join('apps', os.environ['APP_NAME_TARGET'])
+os.makedirs(dest_dir, exist_ok=True)
+for root, dirs, files in os.walk(src_dir):
+    parts = os.path.normpath(root).split(os.sep)
+    if '.git' in parts:
+        continue
+    rel_path = os.path.relpath(root, src_dir)
+    target_dir = dest_dir if rel_path == '.' else os.path.join(dest_dir, rel_path)
+    os.makedirs(target_dir, exist_ok=True)
+    for file in files:
+        shutil.copy2(os.path.join(root, file), os.path.join(target_dir, file))
+"
 
       # Process app-level blueprints
       BLUEPRINT_FILE="$PRIVATE_DIR/.rokct/app_blueprints.json"
