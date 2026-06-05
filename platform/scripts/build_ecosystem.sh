@@ -1341,14 +1341,15 @@ if [ -d "apps/rcore" ]; then
 fi
 
 # 8B. Persist Baked Assets (rcore)
+# Dest paths are relative to rcore_private root (which IS the rcore repo — no leading rcore/ needed)
 PLATFORM_SRC=""
 PLATFORM_DEST=""
 if [ -d "apps/rcore/rcore/rcore/platform" ]; then
   PLATFORM_SRC="apps/rcore/rcore/rcore/platform"
-  PLATFORM_DEST="rcore/rcore/rcore/platform"
+  PLATFORM_DEST="rcore/rcore/platform"
 elif [ -d "apps/rcore/rcore/platform" ]; then
   PLATFORM_SRC="apps/rcore/rcore/platform"
-  PLATFORM_DEST="rcore/rcore/platform"
+  PLATFORM_DEST="rcore/platform"
 fi
 
 if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
