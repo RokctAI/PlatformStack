@@ -1,10 +1,10 @@
-# 🚀 RokctAI PlatformStack
+﻿# 🚀 RokctAI PlatformStack
 
 **PlatformStack** is the authoritative infrastructure, orchestration, and containerization layer for the RokctAI ecosystem. It defines the "Golden State" of the Frappe-based multi-tenant environment and the specialized edge-intelligence spokes.
 
 > [!CAUTION]
 > **Proprietary & Protected Architecture**
-> This repository is not a standalone product. Successful builds and deployments require access to private RokctAI Monorepo overrides, protected application blueprints, and authorized GitHub secrets. Unauthorized use will result in failure during the "Golden Build" orchestration phase.
+> This repository is not a standalone product. Successful builds and deployments require access to private RokctAI Occultation overrides, protected application blueprints, and authorized GitHub secrets. Unauthorized use will result in failure during the "Golden Build" orchestration phase.
 
 ---
 
@@ -57,7 +57,7 @@ At the heart of PlatformStack is `build_ecosystem.sh` — a sophisticated orches
 
 ### Key Capabilities:
 - **Python 3.14+**: Universal environment management via `uv`.
-- **Monorepo Overrides**: Seamlessly applies private blueprints and module overrides.
+- **Occultation Overrides**: Seamlessly applies private blueprints and module overrides.
 - **ROK AI Tooling**: Deep integration of the `rok` CLI agent framework.
 - **Ecosystem Hacks**: Automated patching for PostgreSQL stability, API deprecations, and non-TTY CI environments.
 

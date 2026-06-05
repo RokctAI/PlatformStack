@@ -1,4 +1,4 @@
-# Comprehensive Audit Report for the ROKCT Platform Ecosystem
+﻿# Comprehensive Audit Report for the ROKCT Platform Ecosystem
 
 ## 1. Cloning Status and Branch Verifications
 
@@ -6,7 +6,7 @@
 - **Control App (`control`)**: Cloned successfully, `main` branch checked out.
 - **Tenant App (`rcore`)**: Cloned successfully, `main` branch checked out.
 - **Next.js Frontend (`RokctAI_frontend`)**: Cloned successfully, `main` branch checked out.
-- **IoT Edge Spoke (`Monorepo`)**: Cloned successfully, `main` branch checked out.
+- **IoT Edge Spoke (`Occultation`)**: Cloned successfully, `main` branch checked out.
 - **The ROKCT Protocol Submodule (`The-Rokct-Protocol`)**: Cloned successfully, `main` branch checked out.
 - **ROK Core (`ROK`)**: Cloned successfully, `rokct` branch checked out.
 - **ROK Paperclip Adapter (`rok-paperclip-adapter`)**: The requested `rokct` branch was not found on the remote. Cloned successfully but fell back to the `main` branch.

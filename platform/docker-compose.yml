@@ -1,11 +1,11 @@
-
+﻿
 # RokctAI: Control Hub (Master VPS)
 # Manages SSL, Routing, and Shared Trial Pool
 
 services:
   db:
     # Shared Database for Trial Tenants & Control Logic
-    image: ghcr.io/rokctai/monorepo/rpanel-db:latest
+    image: ghcr.io/rokctai/occultation/rpanel-db:latest
     environment:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-admin}
       - POSTGRES_USER=postgres
@@ -32,7 +32,7 @@ services:
 
   app:
     # The Orchestrator (Full Stage: Nginx + Exim + Bench)
-    image: ghcr.io/rokctai/monorepo/rpanel-control:latest
+    image: ghcr.io/rokctai/occultation/rpanel-control:latest
     environment:
       - MODE=full
       - SITE_NAME=${SITE_NAME:-platform.rokct.ai}
@@ -70,7 +70,7 @@ services:
       - "8000:8000"
 
   gravity:
-    image: ghcr.io/rokctai/monorepo/gravity:latest
+    image: ghcr.io/rokctai/occultation/gravity:latest
     container_name: gravity-syncer
     environment:
       - ROKCT_ENV=production
@@ -83,7 +83,7 @@ services:
     restart: always
     volumes:
       - ../..:/workspace
-    working_dir: /workspace/Monorepo
+    working_dir: /workspace/Occultation
     command: watch
 
 volumes:

@@ -1,4 +1,4 @@
-# Emergency re-tag of rpanel-db:latest
+﻿# Emergency re-tag of rpanel-db:latest
 # Run manually when rpanel-db:latest is missing from GHCR.
 # Pulls an existing versioned tag and re-pushes it as :latest — no build needed.
 
@@ -29,8 +29,8 @@ jobs:
 
       - name: Retag existing version as :latest
         run: |
-          SOURCE="ghcr.io/rokctai/monorepo/rpanel-db:${{ inputs.source_tag }}"
-          TARGET="ghcr.io/rokctai/monorepo/rpanel-db:latest"
+          SOURCE="ghcr.io/rokctai/occultation/rpanel-db:${{ inputs.source_tag }}"
+          TARGET="ghcr.io/rokctai/occultation/rpanel-db:latest"
           echo "Pulling $SOURCE..."
           docker pull "$SOURCE"
           echo "Retagging as $TARGET..."

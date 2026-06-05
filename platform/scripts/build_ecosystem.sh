@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Copyright (c) 2024, Rokct Intelligence (pty) Ltd.
 # For license information, please see license.txt
 
@@ -1352,17 +1352,17 @@ elif [ -d "apps/rcore/rcore/platform" ]; then
 fi
 
 if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
-  _log "RokctAI: Persisting baked rcore assets to Occultation..."
-  OCCULTATION_TMP="/tmp/occultation-bake-push"
-  run_step "Cloning Occultation for persistence" bash -c "rm -rf \"$OCCULTATION_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/Occultation.git\" \"$OCCULTATION_TMP\" 2>&1 | grep -v \"^remote:\""
+  _log "RokctAI: Persisting baked rcore assets to rcore_private..."
+  RCORE_PRIVATE_TMP="/tmp/rcore-private-bake-push"
+  run_step "Cloning rcore_private for persistence" bash -c "rm -rf \"$RCORE_PRIVATE_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/rcore_private.git\" \"$RCORE_PRIVATE_TMP\" 2>&1 | grep -v \"^remote:\""
   RET=$?
   if [ $RET -eq 0 ]; then
-    if [ ! -d "$OCCULTATION_TMP/.git" ]; then
-      _log "Warning: Clone appeared to succeed but $OCCULTATION_TMP/.git not found. Aborting asset persistence."
-      rm -rf "$OCCULTATION_TMP"
+    if [ ! -d "$RCORE_PRIVATE_TMP/.git" ]; then
+      _log "Warning: Clone appeared to succeed but $RCORE_PRIVATE_TMP/.git not found. Aborting asset persistence."
+      rm -rf "$RCORE_PRIVATE_TMP"
     else
-      run_step "Committing baked assets" bash -c "mkdir -p \"$OCCULTATION_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$OCCULTATION_TMP/$PLATFORM_DEST/\" && cd \"$OCCULTATION_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD:main; fi"
-      rm -rf "$OCCULTATION_TMP"
+      run_step "Committing baked assets" bash -c "mkdir -p \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST\" && cp -r $PLATFORM_SRC/. \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST/\" && cd \"$RCORE_PRIVATE_TMP\" && CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && if [ \"\$CHANGES\" -gt 0 ]; then git config user.email \"bot@rokct.ai\" && git config user.name \"RokctAI Bot\" && git add $PLATFORM_DEST && git commit -m \"chore(rcore): auto-bake platform assets [skip ci]\" && git push origin HEAD:main; fi"
+      rm -rf "$RCORE_PRIVATE_TMP"
     fi
   else
     _log "Warning: Asset persistence failed."

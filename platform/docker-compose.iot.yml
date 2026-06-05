@@ -1,4 +1,4 @@
-
+﻿
 # RokctAI: IoT/Edge Spoke
 # Optimized for low-RAM devices (Drones/Sensors)
 
@@ -13,7 +13,7 @@ services:
       - iot-redis-data:/data
 
   app:
-    image: ghcr.io/rokctai/monorepo/drone-brain:latest
+    image: ghcr.io/rokctai/occultation/drone-brain:latest
     environment:
       - MODE=iot
       - DB_TYPE=sqlite

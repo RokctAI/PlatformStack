@@ -1,10 +1,10 @@
-
+﻿
 # RokctAI: Tenant Spoke Template
 # This file is used as a template by the Control Hub to spin up isolated tenants.
 
 services:
   db:
-    image: ghcr.io/rokctai/monorepo/rpanel-db:latest
+    image: ghcr.io/rokctai/occultation/rpanel-db:latest
     environment:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_USER=postgres
@@ -30,7 +30,7 @@ services:
       - tenant-redis-data:/data
 
   app:
-    image: ghcr.io/rokctai/monorepo/rpanel-tenant:latest
+    image: ghcr.io/rokctai/occultation/rpanel-tenant:latest
     environment:
       - MODE=api
       - SITE_NAME=${SITE_NAME}

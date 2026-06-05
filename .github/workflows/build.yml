@@ -1,4 +1,4 @@
-name: Build (Smart)
+﻿name: Build (Smart)
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -198,7 +198,7 @@ jobs:
       version_format: ${{ inputs.version_format || '##.##.##' }}
       bootstrap: true
       # --- Credentials ---
-      # For Golden Seed generation: Ensures CI DB password matches Monorepo .env/production.env
+      # For Golden Seed generation: Ensures CI DB password matches Occultation .env/production.env
     secrets: inherit
 
   docker-release:
@@ -296,8 +296,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/monorepo/rpanel-control:latest
-            ghcr.io/rokctai/monorepo/rpanel-control:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/rpanel-control:latest
+            ghcr.io/rokctai/occultation/rpanel-control:${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
@@ -313,8 +313,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/monorepo/rpanel-tenant:latest
-            ghcr.io/rokctai/monorepo/rpanel-tenant:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/rpanel-tenant:latest
+            ghcr.io/rokctai/occultation/rpanel-tenant:${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
@@ -330,8 +330,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/monorepo/drone-brain:latest
-            ghcr.io/rokctai/monorepo/drone-brain:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/drone-brain:latest
+            ghcr.io/rokctai/occultation/drone-brain:${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
@@ -345,16 +345,16 @@ jobs:
           file: docker-context/overrides/vector/Dockerfile
           push: true
           tags: |
-            ghcr.io/rokctai/monorepo/drone-edge:latest
-            ghcr.io/rokctai/monorepo/drone-edge:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/drone-edge:latest
+            ghcr.io/rokctai/occultation/drone-edge:${{ steps.meta.outputs.version }}
 
       - name: Check Database Changes
         id: db-check
         run: |
           DB_CHANGED="true"
           echo "Checking if latest rpanel-db image has PostgreSQL 17 baked in..."
-          if docker pull ghcr.io/rokctai/monorepo/rpanel-db:latest >/dev/null 2>&1; then
-            ENV_VERSION=$(docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' ghcr.io/rokctai/monorepo/rpanel-db:latest | grep "PG_MAJOR=" | cut -d= -f2 || true)
+          if docker pull ghcr.io/rokctai/occultation/rpanel-db:latest >/dev/null 2>&1; then
+            ENV_VERSION=$(docker inspect --format='{{range .Config.Env}}{{println .}}{{end}}' ghcr.io/rokctai/occultation/rpanel-db:latest | grep "PG_MAJOR=" | cut -d= -f2 || true)
             if [ "$ENV_VERSION" = "17" ]; then
               if [ "${{ github.event_name }}" = "push" ]; then
                 if ! git diff --name-only HEAD~1 HEAD | grep -qE "platform/postgres.Dockerfile|platform/scripts/db_upgrade_entrypoint.sh"; then
@@ -371,8 +371,8 @@ jobs:
       - name: Re-tag and Push existing Database Image
         if: steps.db-check.outputs.db_changed == 'false'
         run: |
-          docker tag ghcr.io/rokctai/monorepo/rpanel-db:latest ghcr.io/rokctai/monorepo/rpanel-db:${{ steps.meta.outputs.version }}
-          docker push ghcr.io/rokctai/monorepo/rpanel-db:${{ steps.meta.outputs.version }}
+          docker tag ghcr.io/rokctai/occultation/rpanel-db:latest ghcr.io/rokctai/occultation/rpanel-db:${{ steps.meta.outputs.version }}
+          docker push ghcr.io/rokctai/occultation/rpanel-db:${{ steps.meta.outputs.version }}
 
       - name: Build and Push Postgres (Custom)
         if: steps.db-check.outputs.db_changed == 'true'
@@ -382,8 +382,8 @@ jobs:
           file: docker-context/platform/postgres.Dockerfile
           push: true
           tags: |
-            ghcr.io/rokctai/monorepo/rpanel-db:latest
-            ghcr.io/rokctai/monorepo/rpanel-db:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/rpanel-db:latest
+            ghcr.io/rokctai/occultation/rpanel-db:${{ steps.meta.outputs.version }}
 
       - name: Build and Push Gravity
         uses: docker/build-push-action@v6
@@ -392,8 +392,8 @@ jobs:
           file: docker-context/gravity/Dockerfile
           push: true
           tags: |
-            ghcr.io/rokctai/monorepo/gravity:latest
-            ghcr.io/rokctai/monorepo/gravity:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/gravity:latest
+            ghcr.io/rokctai/occultation/gravity:${{ steps.meta.outputs.version }}
           build-args: |
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT || secrets.GITHUB_TOKEN }}
 
@@ -420,7 +420,7 @@ jobs:
           # NOTE: rpanel-db is intentionally excluded — it is a shared infrastructure image
           # (Postgres + extensions). It does not change with app code and should never be
           # rolled back. Excluding it ensures rpanel-db:latest always stays valid.
-          PACKAGES=("monorepo%2Frpanel-control" "monorepo%2Frpanel-tenant" "monorepo%2Fdrone-brain" "monorepo%2Fdrone-edge")
+          PACKAGES=("occultation%2Frpanel-control" "occultation%2Frpanel-tenant" "occultation%2Fdrone-brain" "occultation%2Fdrone-edge")
 
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
@@ -450,7 +450,7 @@ jobs:
           #
           # NOTE: rpanel-db is intentionally excluded (see Delete step above).
           PACKAGES=("rpanel-control" "rpanel-tenant" "drone-brain" "drone-edge")
-          REGISTRY="ghcr.io/rokctai/monorepo"
+          REGISTRY="ghcr.io/rokctai/occultation"
           ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
 
           for PKG in "${PACKAGES[@]}"; do
@@ -459,7 +459,7 @@ jobs:
             # Find the most recent remaining semver tag (excluding 'latest') via the API
             PREV_TAG=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
               -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/orgs/$ORG_NAME/packages/container/monorepo%2F$PKG/versions" \
+              "https://api.github.com/orgs/$ORG_NAME/packages/container/occultation%2F$PKG/versions" \
               | jq -r '[.[] | select(.metadata.container.tags[] | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].metadata.container.tags[] | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' \
               | head -n 1)
 
@@ -484,12 +484,12 @@ jobs:
       - name: Checkout Target Repository
         uses: actions/checkout@v4
 
-      - name: Checkout Monorepo for Config Overrides
+      - name: Checkout Occultation for Config Overrides
         continue-on-error: true
         uses: actions/checkout@v4
         with:
-          repository: RokctAI/Monorepo
-          path: overrides/monorepo
+          repository: RokctAI/Occultation
+          path: overrides/occultation
           token: ${{ secrets.MONOREPO_PAT || github.token }}
 
       - name: Configure SSH and Deploy to Master VPS
@@ -500,8 +500,8 @@ jobs:
           SSH_KEY="$SECRET_SSH_KEY"
           SSH_HOST="$SECRET_SSH_HOST"
           
-          # Read from .env/production.env inside checked out overrides/monorepo if present
-          ENV_FILE="overrides/monorepo/.env/production.env"
+          # Read from .env/production.env inside checked out overrides/occultation if present
+          ENV_FILE="overrides/occultation/.env/production.env"
           if [ -f "$ENV_FILE" ]; then
             echo "🔍 Scanning $ENV_FILE for Host and SSH Key credentials..."
             
