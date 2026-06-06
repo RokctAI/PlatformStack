@@ -66,31 +66,10 @@ def main():
     try:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2, ensure_ascii=False)
-        print(f"Evidence logged successfully to: {filepath}")
+        print(f"Evidence logged to: {filepath}")
     except Exception as e:
         print(f"Error writing evidence file: {e}", file=sys.stderr)
         sys.exit(1)
-        
-    # Commit changes to PlatformStack git repo
-    try:
-        # Check if platform_stack_dir is indeed a git repo
-        if not os.path.exists(os.path.join(platform_stack_dir, ".git")):
-            print(f"PlatformStack directory {platform_stack_dir} is not a Git repository. Skipping commit.", file=sys.stderr)
-            return
-
-        # git add the new evidence file
-        subprocess.run(["git", "-C", platform_stack_dir, "add", filepath], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        # git commit
-        commit_msg = f"compliance(evidence): log SOC 2 evidence for {args.control_id} ({args.status})"
-        subprocess.run(["git", "-C", platform_stack_dir, "commit", "-m", commit_msg], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
-        print("Evidence committed to PlatformStack local Git history (sanitized).")
-    except subprocess.CalledProcessError as e:
-        err_msg = e.stderr.decode('utf-8', errors='ignore')
-        print(f"Git execution warning/error: {err_msg.strip()}", file=sys.stderr)
-    except Exception as e:
-        print(f"Unexpected error running Git: {e}", file=sys.stderr)
 
 if __name__ == "__main__":
     main()
