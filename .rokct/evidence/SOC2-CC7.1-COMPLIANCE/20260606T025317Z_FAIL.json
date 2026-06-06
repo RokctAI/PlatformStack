@@ -1,0 +1,7 @@
+{
+  "timestamp": "2026-06-06T02:53:17.672887Z",
+  "control_id": "SOC2-CC7.1-COMPLIANCE",
+  "status": "FAIL",
+  "system": "compliance-scanner",
+  "detail": "Architectural compliance scan failed with 9 violations across source code checks."
+}
