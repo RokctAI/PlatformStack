@@ -1,4 +1,4 @@
-﻿
+
 # RokctAI: Control Hub (Master VPS)
 # Manages SSL, Routing, and Shared Trial Pool
 
@@ -76,6 +76,7 @@ services:
       - ROKCT_ENV=production
       - GITHUB_TOKEN=${GITHUB_TOKEN}
       - MONOREPO_PAT=${MONOREPO_PAT}
+      - CONTROL_HOST=http://app:8000
     deploy:
       resources:
         limits:
@@ -84,7 +85,7 @@ services:
     volumes:
       - ../..:/workspace
     working_dir: /workspace/Occultation
-    command: watch
+    command: bash -c "gravity watch & gravity serve --host 0.0.0.0 --port 8000"
 
 volumes:
   control-db-data:
