@@ -57,3 +57,6 @@
 2026-06-08 16:52:20,652 - INFO - Detected project type: python for C:\Users\sinya\Desktop\RokctAI\PlatformStack
 2026-06-08 16:52:20,989 - INFO - Auto-creating missing documentation for: platform\scripts\log_evidence.py
 2026-06-08 16:52:20,991 - INFO - Auto-created missing doc: docs\api\platform_scripts_log_evidence.md <- platform\scripts\log_evidence.py
+2026-06-13 09:43:33,991 - INFO - Detected project type: python for /home/runner/work/PlatformStack/PlatformStack
+2026-06-13 09:43:34,111 - INFO - Synced: docs/api/.shared-workflows_scripts_update_docs.md <- .shared-workflows/scripts/update_docs.py
+2026-06-13 09:43:34,153 - INFO - Synced: docs/api/platform_scripts_log_evidence.md <- platform/scripts/log_evidence.py
