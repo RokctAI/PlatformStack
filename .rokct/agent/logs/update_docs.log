@@ -1,0 +1,7 @@
+2026-07-08 20:01:55,275 - INFO - Detected project type: python for /home/runner/work/PlatformStack/PlatformStack
+2026-07-08 20:01:55,378 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/fleet_compliance.py
+2026-07-08 20:01:55,378 - INFO - Auto-created missing doc: docs/api/.shared-workflows_scripts_fleet_compliance.md <- .shared-workflows/scripts/fleet_compliance.py
+2026-07-08 20:01:55,461 - INFO - Synced: docs/api/.shared-workflows_scripts_update_docs.md <- .shared-workflows/scripts/update_docs.py
+2026-07-08 20:01:55,478 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_11.py
+2026-07-08 20:01:55,478 - INFO - Auto-created missing doc: docs/api/.shared-workflows_scripts_compliance_layer_11.md <- .shared-workflows/scripts/compliance/layer_11.py
+2026-07-08 20:01:55,526 - INFO - Synced: docs/api/platform_scripts_log_evidence.md <- platform/scripts/log_evidence.py
