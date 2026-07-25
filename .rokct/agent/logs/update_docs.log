@@ -36,3 +36,12 @@
 2026-07-17 23:58:06,359 - INFO - Synced: docs/api/.shared-workflows_scripts_compliance_layer_18.md <- .shared-workflows/scripts/compliance/layer_18.py
 2026-07-17 23:58:06,360 - INFO - Synced: docs/api/.shared-workflows_scripts_compliance___init__.md <- .shared-workflows/scripts/compliance/__init__.py
 2026-07-19 05:22:45,683 - INFO - Detected project type: python for /home/runner/work/PlatformStack/PlatformStack
+2026-07-25 00:10:52,010 - INFO - Detected project type: python for /home/runner/work/PlatformStack/PlatformStack
+2026-07-25 00:10:52,390 - INFO - Synced: docs/api/.shared-workflows_scripts_compliance_layer_15.md <- .shared-workflows/scripts/compliance/layer_15.py
+2026-07-25 00:10:52,398 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/controls.py
+2026-07-25 00:10:52,399 - INFO - Auto-created missing doc: docs/api/.shared-workflows_scripts_compliance_controls.md <- .shared-workflows/scripts/compliance/controls.py
+2026-07-25 00:10:52,402 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/config.py
+2026-07-25 00:10:52,408 - INFO - Auto-created missing doc: docs/api/.shared-workflows_scripts_compliance_config.md <- .shared-workflows/scripts/compliance/config.py
+2026-07-25 00:10:52,476 - INFO - Synced: docs/api/.shared-workflows_scripts_compliance_base.md <- .shared-workflows/scripts/compliance/base.py
+2026-07-25 00:10:52,588 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_compliance_layers.py
+2026-07-25 00:10:52,662 - INFO - Auto-created missing doc: docs/api/.shared-workflows_scripts_tests_test_compliance_layers.md <- .shared-workflows/scripts/tests/test_compliance_layers.py
