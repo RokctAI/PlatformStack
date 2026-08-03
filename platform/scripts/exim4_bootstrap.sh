@@ -78,10 +78,10 @@ hostnamectl set-hostname "${PRIMARY_HOSTNAME}"
 if grep -q "^127\.0\.1\.1" /etc/hosts; then
   sed -i "s/^127\.0\.1\.1.*$/127\.0\.1\.1 ${PRIMARY_HOSTNAME}/" /etc/hosts
 else
-  echo "127.0.1.1 ${PRIMARY_HOSTNAME}" >> /etc/hosts
+  echo "127.0.1.1 ${PRIMARY_HOSTNAME}" >>/etc/hosts
 fi
 
-echo "${PRIMARY_HOSTNAME}" > /etc/mailname
+echo "${PRIMARY_HOSTNAME}" >/etc/mailname
 
 done_ok
 
