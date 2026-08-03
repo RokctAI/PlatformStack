@@ -103,7 +103,26 @@ CMD ["bench", "start"]
 
 # --- Stage 4A: Tenant Stripper ---
 FROM builder AS tenant_stripper
+ARG DB_HOST=127.0.0.1
 WORKDIR /home/frappe/frappe-bench
+# Uninstall control/rpanel from the baked seed site's DATABASE while their code
+# still exists on disk — bench needs to import an app to run its uninstall
+# hooks. Without this, the seed site's DB keeps referencing control/rpanel as
+# installed apps even after the code below is deleted, which crashes module
+# resolution the moment a tenant boots from that baked site (the site gets
+# renamed and reused verbatim by docker-entrypoint.sh's BAKED_SITE path).
+# The baked site's name isn't a single reliable constant (install.sh's
+# bootstrap always creates "rpanel.local" regardless of what build_ecosystem.sh
+# computed as SITE_NAME, which can itself resolve to "platform.rokct.ai") — so
+# iterate over whatever site directories actually exist instead of assuming one.
+RUN export DB_HOST="${DB_HOST}" && \
+    export PATH="/home/frappe/frappe-bench/env/bin:$PATH" && \
+    for site_dir in sites/*/; do \
+        site=$(basename "$site_dir"); \
+        [ -f "$site_dir/site_config.json" ] || continue; \
+        bench --site "$site" uninstall-app control --yes --force 2>&1 || true; \
+        bench --site "$site" uninstall-app rpanel --yes --force 2>&1 || true; \
+    done
 RUN cd apps && \
     ../env/bin/pip uninstall -y control rpanel || true && \
     rm -rf control rpanel
@@ -112,9 +131,34 @@ RUN env/bin/pip uninstall -y rok-agent || true && \
 RUN echo "frappe" > sites/apps.txt && \
     ls -1 apps | grep -v 'frappe' >> sites/apps.txt || true
 
-# Stage 4: Tenant (Trimmed Image)
-FROM base AS tenant
+# Stage 4: Supacharge (Tenant image, keeps lms)
+# Supacharge is just a normal tenant — its own image is the plain
+# tenant_stripper output, unmodified. lms lives in every tenant's rcore
+# composition already; Supacharge is simply the tenant that gets to keep it.
+FROM base AS tenant_supacharge
 COPY --from=tenant_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
+WORKDIR /home/frappe/frappe-bench
+USER root
+COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER frappe
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["bench", "start"]
+
+# --- Stage 4B: Generic Tenant Stripper ---
+# lms is Supacharge's home SDK, composed into rcore for every tenant (see
+# rcore/composer.json). Non-Supacharge tenants don't need it, so strip the
+# composed module out of rcore's own package tree before it ships.
+FROM tenant_stripper AS generic_tenant_stripper
+WORKDIR /home/frappe/frappe-bench
+RUN if [ -d "apps/rcore/rcore/lms" ]; then \
+        rm -rf apps/rcore/rcore/lms && \
+        sed -i '/^lms$/d' apps/rcore/rcore/modules.txt 2>/dev/null || true; \
+    fi
+
+# Stage 4: Tenant (Trimmed Image, lms stripped — the default/generic tenant)
+FROM base AS tenant
+COPY --from=generic_tenant_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
 WORKDIR /home/frappe/frappe-bench
 USER root
 COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
@@ -126,7 +170,9 @@ CMD ["bench", "start"]
 # --- Stage 5A: IoT Stripper ---
 FROM tenant_stripper AS iot_stripper
 WORKDIR /home/frappe/frappe-bench
-ENV IOT_KEEP_APPS="frappe rcore brain"
+# brain is no longer a separate app — it's merged into rcore, so keeping
+# rcore already keeps brain's code (see build_ecosystem.sh's frappebrain alias).
+ENV IOT_KEEP_APPS="frappe rcore"
 RUN cd apps && \
     for app in *; do \
         if [ -d "$app" ] && ! echo "$IOT_KEEP_APPS" | grep -qw "$app"; then \

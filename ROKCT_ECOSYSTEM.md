@@ -57,7 +57,7 @@ These standard and customized Frappe applications are dynamically fetched and up
 *   **`rcore`**: [RokctAI/rcore](https://github.com/RokctAI/rcore.git) (branch: `main`) - Custom Tenant Hub module.
 *   **`rpaas` (PaaS)**: [RokctAI/paas](https://github.com/RokctAI/paas.git) (branch: `main`) - Custom SaaS business plane connector.
 *   **`rpanel`**: [RokctAI/rpanel](https://github.com/RokctAI/rpanel.git) (branch: `main`) - System-wide administration portal app.
-*   **`brain`**: [RokctAI/brain](https://github.com/RokctAI/brain.git) (branch: `main`) - Memory Engrams and pgvector semantic query databases.
+*   **`brain`**: no longer a separate app — merged into `rcore` (Memory Engrams and pgvector semantic query databases; imported as `frappebrain`, an alias for the `rcore` package).
 
 ---
 
@@ -139,7 +139,7 @@ Clone the following core platform repositories, checking out their correct targe
 - Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
-- frappe (branch: rokct), erpnext (branch: rokct), payments (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), crm (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main), brain (branch: main).
+- frappe (branch: rokct), erpnext (branch: rokct), payments (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), crm (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main). (brain is no longer a separate app — it's merged into rcore.)
 
 ### 2. Cross-VPS Decoupling Audit
 Audit rcore and control codebases to ensure absolute cross-VPS safety:

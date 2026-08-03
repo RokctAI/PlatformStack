@@ -321,6 +321,23 @@ jobs:
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
             DB_HOST=127.0.0.1
 
+      - name: Build and Push Supacharge (Tenant, keeps lms)
+        uses: docker/build-push-action@v6
+        with:
+          context: docker-context
+          file: docker-context/platform/Dockerfile
+          target: tenant_supacharge
+          network: host
+          push: true
+          tags: |
+            ghcr.io/rokctai/occultation/rpanel-supacharge:latest
+            ghcr.io/rokctai/occultation/rpanel-supacharge:${{ steps.meta.outputs.version }}
+          build-args: |
+            GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
+            MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
+            IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
+            DB_HOST=127.0.0.1
+
       - name: Build and Push Drone Brain (Frappe)
         uses: docker/build-push-action@v6
         with:
@@ -420,7 +437,7 @@ jobs:
           # NOTE: rpanel-db is intentionally excluded — it is a shared infrastructure image
           # (Postgres + extensions). It does not change with app code and should never be
           # rolled back. Excluding it ensures rpanel-db:latest always stays valid.
-          PACKAGES=("occultation%2Frpanel-control" "occultation%2Frpanel-tenant" "occultation%2Fdrone-brain" "occultation%2Fdrone-edge")
+          PACKAGES=("occultation%2Frpanel-control" "occultation%2Frpanel-tenant" "occultation%2Frpanel-supacharge" "occultation%2Fdrone-brain" "occultation%2Fdrone-edge")
 
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
@@ -449,7 +466,7 @@ jobs:
           # does not reliably update GHCR tags — docker pull+retag+push is the safe method.
           #
           # NOTE: rpanel-db is intentionally excluded (see Delete step above).
-          PACKAGES=("rpanel-control" "rpanel-tenant" "drone-brain" "drone-edge")
+          PACKAGES=("rpanel-control" "rpanel-tenant" "rpanel-supacharge" "drone-brain" "drone-edge")
           REGISTRY="ghcr.io/rokctai/occultation"
           ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
 

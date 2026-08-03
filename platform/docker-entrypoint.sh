@@ -79,8 +79,11 @@ setup_site() {
       fi
 
       # 2. Base Installation / Restoration
-      BASE_APPS="rcore brain"
-      if [ "$MODE" = "full" ]; then BASE_APPS="rpanel rcore paas control brain"; fi
+      # brain is no longer a separate app — it's merged into rcore (see
+      # build_ecosystem.sh's rcore -> frappebrain alias), so it must not be
+      # passed as its own --install-app flag.
+      BASE_APPS="rcore"
+      if [ "$MODE" = "full" ]; then BASE_APPS="rpanel rcore paas control"; fi
 
       # Merge base apps with additional apps, ensuring no duplicates
       # Use :- to guard against unset variables (Req 5)
