@@ -44,7 +44,7 @@ These standard and customized Frappe applications are dynamically fetched and up
 *   **`hrms`**: [Frappenize/hrms](https://github.com/Frappenize/hrms.git) (branch: `rokct`) - Human Resource management systems.
 
 ### 2.2 Domain & Professional Apps
-*   **`crm`**: [Frappenize/crm](https://github.com/Frappenize/crm.git) (branch: `rokct`) - Customer relationship and funnel tracker.
+*   **`crm`**: no longer a separate app — CRM ships composed inside `rcore` via the productivity SDK (rCore#100); the standalone Frappenize/crm fork is no longer installed.
 *   **`lms`**: [Frappenize/lms](https://github.com/Frappenize/lms.git) (branch: `rokct`) - Learning management systems for onboarding training.
 *   **`lending`**: [Frappenize/lending](https://github.com/Frappenize/lending.git) (branch: `rokct`) - Micro-credit and transactional loan manager.
 *   **`helpdesk`**: [Frappenize/helpdesk](https://github.com/Frappenize/helpdesk.git) (branch: `rokct`) - Support tickets and service level agreements (SLA).
@@ -139,7 +139,7 @@ Clone the following core platform repositories, checking out their correct targe
 - Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
-- frappe (branch: rokct), erpnext (branch: rokct), payments (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), crm (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main). (brain is no longer a separate app — it's merged into rcore.)
+- frappe (branch: rokct), erpnext (branch: rokct), payments (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main). (brain is no longer a separate app — it's merged into rcore. crm is no longer a separate app — it ships composed inside rcore via the productivity SDK.)
 
 ### 2. Cross-VPS Decoupling Audit
 Audit rcore and control codebases to ensure absolute cross-VPS safety:
