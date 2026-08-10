@@ -19,7 +19,6 @@
 - **lending**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **helpdesk**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **hrms**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **crm**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **raven**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **gameplan**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **paas**: Will be resolved cleanly dynamically via `install_stack.py` (target: `main`).
