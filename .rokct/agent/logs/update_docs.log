@@ -54,3 +54,101 @@
 2026-08-07 23:39:55,783 - INFO - Auto-created missing doc: docs/api/.shared-workflows_scripts_sdk_validator.md <- .shared-workflows/scripts/sdk_validator.py
 2026-08-09 03:42:46,353 - INFO - Detected project type: python for /home/runner/work/PlatformStack/PlatformStack
 2026-08-10 20:56:08,762 - INFO - Detected project type: python for /home/runner/work/PlatformStack/PlatformStack
+2026-08-13 20:21:39,405 - INFO - Detected stacks: frappe for /home/runner/work/PlatformStack/PlatformStack
+2026-08-13 20:21:39,407 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_readme_badges.py
+2026-08-13 20:21:39,407 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_update_readme_badges.md
+2026-08-13 20:21:39,408 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_readme_badges.md <- .shared-workflows/scripts/update_readme_badges.py
+2026-08-13 20:21:39,426 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance_scanner.py
+2026-08-13 20:21:39,440 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_scanner.md
+2026-08-13 20:21:39,440 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_scanner.md <- .shared-workflows/scripts/compliance_scanner.py
+2026-08-13 20:21:39,442 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/audit_inputs_and_drift.py
+2026-08-13 20:21:39,461 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_audit_inputs_and_drift.md
+2026-08-13 20:21:39,461 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_audit_inputs_and_drift.md <- .shared-workflows/scripts/audit_inputs_and_drift.py
+2026-08-13 20:21:39,470 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/sdk_validator.py
+2026-08-13 20:21:39,483 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_sdk_validator.md
+2026-08-13 20:21:39,483 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_sdk_validator.md <- .shared-workflows/scripts/sdk_validator.py
+2026-08-13 20:21:39,485 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_usage_badge.py
+2026-08-13 20:21:39,485 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_update_usage_badge.md
+2026-08-13 20:21:39,485 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_usage_badge.md <- .shared-workflows/scripts/update_usage_badge.py
+2026-08-13 20:21:39,498 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/standardize_fleet.py
+2026-08-13 20:21:39,523 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_standardize_fleet.md
+2026-08-13 20:21:39,523 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_standardize_fleet.md <- .shared-workflows/scripts/standardize_fleet.py
+2026-08-13 20:21:39,565 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_docs.py
+2026-08-13 20:21:39,692 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_update_docs.md
+2026-08-13 20:21:39,692 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_docs.md <- .shared-workflows/scripts/update_docs.py
+2026-08-13 20:21:39,695 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/pr_auto_labeler.py
+2026-08-13 20:21:39,718 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_pr_auto_labeler.md
+2026-08-13 20:21:39,718 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_pr_auto_labeler.md <- .shared-workflows/scripts/pr_auto_labeler.py
+2026-08-13 20:21:39,720 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/fleet_compliance.py
+2026-08-13 20:21:39,720 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_fleet_compliance.md
+2026-08-13 20:21:39,721 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_fleet_compliance.md <- .shared-workflows/scripts/fleet_compliance.py
+2026-08-13 20:21:39,795 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_compliance_layers.py
+2026-08-13 20:21:39,857 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_tests_test_compliance_layers.md
+2026-08-13 20:21:39,857 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_compliance_layers.md <- .shared-workflows/scripts/tests/test_compliance_layers.py
+2026-08-13 20:21:39,858 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/__init__.py
+2026-08-13 20:21:39,858 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance___init__.md
+2026-08-13 20:21:39,858 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance___init__.md <- .shared-workflows/scripts/compliance/__init__.py
+2026-08-13 20:21:39,869 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_12.py
+2026-08-13 20:21:39,903 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_12.md
+2026-08-13 20:21:39,903 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_12.md <- .shared-workflows/scripts/compliance/layer_12.py
+2026-08-13 20:21:39,903 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_8.py
+2026-08-13 20:21:39,904 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_8.md
+2026-08-13 20:21:39,904 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_8.md <- .shared-workflows/scripts/compliance/layer_8.py
+2026-08-13 20:21:39,905 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_4_5.py
+2026-08-13 20:21:39,906 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_4_5.md
+2026-08-13 20:21:39,906 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_4_5.md <- .shared-workflows/scripts/compliance/layer_4_5.py
+2026-08-13 20:21:39,907 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_15.py
+2026-08-13 20:21:39,910 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_15.md
+2026-08-13 20:21:39,910 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_15.md <- .shared-workflows/scripts/compliance/layer_15.py
+2026-08-13 20:21:39,911 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_13.py
+2026-08-13 20:21:39,912 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_13.md
+2026-08-13 20:21:39,912 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_13.md <- .shared-workflows/scripts/compliance/layer_13.py
+2026-08-13 20:21:39,916 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_18.py
+2026-08-13 20:21:39,944 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_18.md
+2026-08-13 20:21:39,944 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_18.md <- .shared-workflows/scripts/compliance/layer_18.py
+2026-08-13 20:21:39,945 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/config.py
+2026-08-13 20:21:39,950 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_config.md
+2026-08-13 20:21:39,950 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_config.md <- .shared-workflows/scripts/compliance/config.py
+2026-08-13 20:21:39,951 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_6.py
+2026-08-13 20:21:39,951 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_6.md
+2026-08-13 20:21:39,951 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_6.md <- .shared-workflows/scripts/compliance/layer_6.py
+2026-08-13 20:21:39,952 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_19.py
+2026-08-13 20:21:39,952 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_19.md
+2026-08-13 20:21:39,952 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_19.md <- .shared-workflows/scripts/compliance/layer_19.py
+2026-08-13 20:21:39,953 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_2.py
+2026-08-13 20:21:39,953 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_2.md
+2026-08-13 20:21:39,953 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_2.md <- .shared-workflows/scripts/compliance/layer_2.py
+2026-08-13 20:21:39,955 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_11.py
+2026-08-13 20:21:39,956 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_11.md
+2026-08-13 20:21:39,956 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_11.md <- .shared-workflows/scripts/compliance/layer_11.py
+2026-08-13 20:21:39,958 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/controls.py
+2026-08-13 20:21:39,959 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_controls.md
+2026-08-13 20:21:39,959 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_controls.md <- .shared-workflows/scripts/compliance/controls.py
+2026-08-13 20:21:39,960 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_7.py
+2026-08-13 20:21:39,960 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_7.md
+2026-08-13 20:21:39,960 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_7.md <- .shared-workflows/scripts/compliance/layer_7.py
+2026-08-13 20:21:39,961 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_16.py
+2026-08-13 20:21:39,961 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_16.md
+2026-08-13 20:21:39,961 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_16.md <- .shared-workflows/scripts/compliance/layer_16.py
+2026-08-13 20:21:39,962 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_3.py
+2026-08-13 20:21:39,962 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_3.md
+2026-08-13 20:21:39,962 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_3.md <- .shared-workflows/scripts/compliance/layer_3.py
+2026-08-13 20:21:39,963 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_9.py
+2026-08-13 20:21:39,963 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_9.md
+2026-08-13 20:21:39,963 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_9.md <- .shared-workflows/scripts/compliance/layer_9.py
+2026-08-13 20:21:39,963 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_17.py
+2026-08-13 20:21:39,963 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_17.md
+2026-08-13 20:21:39,964 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_17.md <- .shared-workflows/scripts/compliance/layer_17.py
+2026-08-13 20:21:39,965 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_10.py
+2026-08-13 20:21:39,966 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_10.md
+2026-08-13 20:21:39,966 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_10.md <- .shared-workflows/scripts/compliance/layer_10.py
+2026-08-13 20:21:39,966 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_14.py
+2026-08-13 20:21:39,966 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_layer_14.md
+2026-08-13 20:21:39,966 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_14.md <- .shared-workflows/scripts/compliance/layer_14.py
+2026-08-13 20:21:39,969 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/base.py
+2026-08-13 20:21:39,979 - INFO - Migrated legacy doc: removed docs/api/.shared-workflows_scripts_compliance_base.md
+2026-08-13 20:21:39,979 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_base.md <- .shared-workflows/scripts/compliance/base.py
+2026-08-13 20:21:39,980 - INFO - Auto-creating missing documentation for: platform/scripts/log_evidence.py
+2026-08-13 20:21:39,981 - INFO - Migrated legacy doc: removed docs/api/platform_scripts_log_evidence.md
+2026-08-13 20:21:39,981 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_log_evidence.md <- platform/scripts/log_evidence.py
+2026-08-13 20:21:39,981 - INFO - Pruned empty legacy dir: docs/api/
