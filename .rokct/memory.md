@@ -21,6 +21,5 @@
 
 *   **[Date]** - [Lesson]
 
-
 ## Safe ID
 sinyage.f74d39
