@@ -5,6 +5,7 @@
 services:
   db:
     image: ghcr.io/rokctai/occultation/rpanel-db:latest
+    restart: unless-stopped
     environment:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_USER=postgres
@@ -22,6 +23,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     deploy:
       resources:
         limits:
@@ -31,6 +33,7 @@ services:
 
   app:
     image: ghcr.io/rokctai/occultation/rpanel-tenant:latest
+    restart: unless-stopped
     environment:
       - MODE=api
       - SITE_NAME=${SITE_NAME}

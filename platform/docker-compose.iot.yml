@@ -5,6 +5,7 @@
 services:
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     deploy:
       resources:
         limits:
@@ -14,6 +15,7 @@ services:
 
   app:
     image: ghcr.io/rokctai/occultation/drone-brain:latest
+    restart: unless-stopped
     environment:
       - MODE=iot
       - DB_TYPE=sqlite

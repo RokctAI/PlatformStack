@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 # Ensure bench CLI is prioritized in PATH
 export PATH="/usr/local/bin:/home/frappe/.local/bin:$PATH"
@@ -135,14 +134,21 @@ setup_site() {
     echo "⏳ Checking database connection and status for '$SITE_NAME'..."
     export PGPASSWORD="${DB_ROOT_PASSWORD:-admin}"
 
-    # Wait for PostgreSQL to be ready
+    # Wait for PostgreSQL to be ready (bounded, mirroring the new-site wait above)
+    PG_MAX_TRIES=60
+    PG_COUNT=0
     until pg_isready -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres >/dev/null 2>&1; do
+      PG_COUNT=$((PG_COUNT + 1))
+      if [ $PG_COUNT -ge $PG_MAX_TRIES ]; then
+        echo "❌ PostgreSQL at $DB_HOST not ready after $PG_MAX_TRIES attempts. Exiting."
+        exit 1
+      fi
       echo "Waiting for PostgreSQL at $DB_HOST..."
       sleep 2
     done
 
-    DB_NAME=$(python3 -c "import json; print(json.load(open('sites/$SITE_NAME/site_config.json')).get('db_name', ''))" 2>/dev/null || echo "")
-    DB_PASS=$(python3 -c "import json; print(json.load(open('sites/$SITE_NAME/site_config.json')).get('db_password', ''))" 2>/dev/null || echo "")
+    DB_NAME=$(SITE="$SITE_NAME" python3 -c 'import os,json; print(json.load(open("sites/"+os.environ["SITE"]+"/site_config.json")).get("db_name",""))' 2>/dev/null || echo "")
+    DB_PASS=$(SITE="$SITE_NAME" python3 -c 'import os,json; print(json.load(open("sites/"+os.environ["SITE"]+"/site_config.json")).get("db_password",""))' 2>/dev/null || echo "")
 
     if [ -n "$DB_NAME" ] && [ -n "$DB_PASS" ]; then
       DB_EXISTS=$(psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='$DB_NAME'" 2>/dev/null || echo "0")
@@ -162,7 +168,13 @@ setup_site() {
         # Restore seed database if present
         if [ -f "apps/seed_data/seed.sql.gz" ]; then
           echo "✨ Restoring database '$DB_NAME' from Golden Seed..."
-          gunzip -c apps/seed_data/seed.sql.gz | PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_NAME" -d "$DB_NAME" >/dev/null 2>&1
+          # pipefail (scoped to the subshell) so a gunzip failure isn't masked by
+          # psql's exit; surface psql stderr and fail loudly instead of printing
+          # a false success on empty/garbled input.
+          if ! ( set -o pipefail; gunzip -c apps/seed_data/seed.sql.gz | PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_NAME" -d "$DB_NAME" >/dev/null ); then
+            echo "❌ Database restore failed for '$DB_NAME'."
+            exit 1
+          fi
           echo "✅ Database restored successfully."
         else
           echo "⚠️ No database seed found at apps/seed_data/seed.sql.gz. Skipping restoration."
