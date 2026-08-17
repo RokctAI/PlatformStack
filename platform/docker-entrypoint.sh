@@ -83,7 +83,7 @@ setup_site() {
       # build_ecosystem.sh's rcore -> frappebrain alias), so it must not be
       # passed as its own --install-app flag.
       BASE_APPS="rcore"
-      if [ "$MODE" = "full" ]; then BASE_APPS="rpanel rcore paas control"; fi
+      if [ "$MODE" = "full" ]; then BASE_APPS="rpanel rcore control"; fi
 
       # Merge base apps with additional apps, ensuring no duplicates
       # Use :- to guard against unset variables (Req 5)
