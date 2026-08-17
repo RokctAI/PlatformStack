@@ -41,7 +41,7 @@ on:
 jobs:
   release:
     permissions: write-all
-    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@main
+    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@b41cc5ff4404112cae6516e7aed91eefdfb8a201 # shared-workflows main (gateway envelope)
     with:
       backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
       project_type: 'frappe'
@@ -58,7 +58,7 @@ jobs:
       one_time_cleanup_cutoff_date: '2026-01-30'
       
       # Brain Endpoint 
-      brain_endpoint: https://platform.rokct.ai/api/method/brain.api.generate_release_notes
+      brain_endpoint: https://platform.rokct.ai/api/v1/method/rokct.platform.api
       # Environment configuration
       node-version: ${{ inputs.node-version || '24' }}
       python-version: ${{ inputs.python-version || '3.14' }}
