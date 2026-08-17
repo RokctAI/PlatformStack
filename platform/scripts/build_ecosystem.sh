@@ -762,10 +762,10 @@ CALLERS_DIR="/home/frappe/startup_os_callers"
 sudo mkdir -p "$CALLERS_DIR"
 
 GITHUB_RAW_BASE="https://raw.githubusercontent.com/RokctAI/The-Rokct-Protocol/main"
-# Fetch thin callers
-for script in compile.py provision.py log_milestone.py seed_cv_ledger.py; do
+# Fetch thin callers (plus their shared _bootstrap.py loader)
+for script in _bootstrap.py compile.py provision.py log_milestone.py seed_cv_ledger.py; do
   run_step "Fetching StartupOS caller: $script" \
-    sudo wget -q -O "$CALLERS_DIR/$script" "$GITHUB_RAW_BASE/core/skills/startup_os/scripts/$script"
+    sudo wget -q -O "$CALLERS_DIR/$script" "$GITHUB_RAW_BASE/core/skills/.rok/startup_os/scripts/$script"
 done
 
 # Ensure root ownership and read-only for others (including frappe user)
