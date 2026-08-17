@@ -992,6 +992,11 @@ for app_dir in apps/*; do
       run_step "[$this_app] Creating frappebrain alias" ln -sf "$this_app" "apps/$this_app/frappebrain"
     fi
 
+    # Transition shim: legacy 'import paas' resolves to rcore (paas merged into rcore)
+    if [ "$this_app" = "rcore" ] && [ ! -e "apps/$this_app/paas" ]; then
+      run_step "[$this_app] Creating paas transition alias" ln -sf "$this_app" "apps/$this_app/paas"
+    fi
+
     # C. Platform Module Linker
     # If a top-level 'platform' directory exists but isn't in the package, link it
     if [ -d "apps/$this_app/platform" ] && [ ! -d "apps/$this_app/$this_app/platform" ]; then
