@@ -33,7 +33,11 @@ def parse_args():
     parser.add_argument("--status", choices=["PASS", "FAIL"], required=True, help="Status of the check (PASS/FAIL)")
     parser.add_argument("--system", required=True, help="Name of system or test suite running the check")
     parser.add_argument("--detail", required=True, help="Detailed explanation of the check result or verification proof")
-    return parser.parse_args()
+    args = parser.parse_args()
+    # Guard against path traversal: control_id is used to build a filesystem path.
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", args.control_id) or ".." in args.control_id or os.sep in args.control_id:
+        parser.error("--control-id must match [A-Za-z0-9._-]+ and contain no '..' or path separators")
+    return args
 
 def sanitize_text(text):
     """
@@ -53,6 +57,19 @@ def sanitize_text(text):
 
     # 3. Sanitize potential credentials/secrets/tokens in key-value format (e.g. pass=xyz, token=abc)
     text = re.sub(r'(?i)(password|passwd|secret|token|key|auth|credential|api_key|pkey)\s*[:=]\s*[^\s,;]+', r'\1=[REDACTED]', text)
+
+    # 4. Redact bare token literals (GitHub PATs and similar prefixed tokens)
+    text = re.sub(r'\b(?:gh[posru]|github_pat)_[A-Za-z0-9_]+', '[REDACTED_TOKEN]', text)
+
+    # 5. Redact PEM private-key blocks
+    text = re.sub(r'-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----',
+                  '[REDACTED_PRIVATE_KEY]', text, flags=re.DOTALL)
+
+    # 6. Redact Bearer authorization tokens
+    text = re.sub(r'(?i)\bBearer\s+[A-Za-z0-9._\-]+', 'Bearer [REDACTED]', text)
+
+    # 7. Redact credentials embedded in connection-string userinfo (scheme://user:pass@host)
+    text = re.sub(r'://([^:@/\s]+):([^@/\s]+)@', r'://\1:[REDACTED]@', text)
 
     return text
 
