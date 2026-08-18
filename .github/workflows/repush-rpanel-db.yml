@@ -21,15 +21,17 @@ jobs:
       contents: read
     steps:
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.MONOREPO_PAT || github.token }}
 
       - name: Retag existing version as :latest
+        env:
+          SOURCE_TAG: ${{ inputs.source_tag }}
         run: |
-          SOURCE="ghcr.io/rokctai/occultation/rpanel-db:${{ inputs.source_tag }}"
+          SOURCE="ghcr.io/rokctai/occultation/rpanel-db:${SOURCE_TAG}"
           TARGET="ghcr.io/rokctai/occultation/rpanel-db:latest"
           echo "Pulling $SOURCE..."
           docker pull "$SOURCE"

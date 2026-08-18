@@ -101,6 +101,12 @@ def fetch_dir_from_github(rel_src, dst):
                 if rel_src == "workflows" and rel in ("sync_workspace.py", "sync_workspace.yml", "maintenance.yml"):
                     continue
                 dest = os.path.join(dst, rel)
+                # Zip-slip guard: never write outside dst.
+                real_dst = os.path.realpath(dst)
+                real_dest = os.path.realpath(dest)
+                if real_dest != real_dst and not real_dest.startswith(real_dst + os.sep):
+                    print(f"[init] Skipping unsafe archive path: {name}", file=sys.stderr)
+                    continue
                 os.makedirs(os.path.dirname(dest), exist_ok=True)
                 with open(dest, "wb") as f:
                     f.write(z.read(name))

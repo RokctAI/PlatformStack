@@ -274,12 +274,12 @@ safe_install_app() {
 
   printf "  - \033[0;34mInstalling %s on %s\033[0m... " "$app" "$SITE_NAME"
   set +e
-  OUTPUT=$(env/bin/python -c "
-import frappe
-frappe.init(site='$SITE_NAME', sites_path='sites')
+  OUTPUT=$(RKT_SITE="$SITE_NAME" RKT_APP="$app" env/bin/python -c "
+import os, frappe
+frappe.init(site=os.environ['RKT_SITE'], sites_path='sites')
 frappe.connect()
 from frappe.installer import install_app
-install_app('$app', force=True)
+install_app(os.environ['RKT_APP'], force=True)
 " 2>&1)
   RET=$?
   set -e
@@ -312,7 +312,9 @@ install_app('$app', force=True)
 }
 
 # Detect if running in Docker or CI Container
-if [ -f /.dockerenv ] || [ -n "$CI" ]; then
+# ("$CI" defaults to the string "false", so test its value, not just non-empty,
+# otherwise a bare VPS is misdetected as a container.)
+if [ -f /.dockerenv ] || [ "$CI" = "true" ]; then
   IS_DOCKER=true
   _log "     Environment: Docker/CI Container detected."
 else
@@ -341,7 +343,12 @@ if [ "$IS_DOCKER" = "false" ]; then
   wait_step "Waiting for Redis instances" bash -c '
     for port in 11000 12000 13000; do
       if command -v nc >/dev/null; then
-        while ! nc -z localhost $port; do sleep 1; done
+        tries=0
+        while ! nc -z localhost $port; do
+          tries=$((tries + 1))
+          if [ $tries -ge 60 ]; then echo "Timed out waiting for redis on port $port" >&2; exit 1; fi
+          sleep 1
+        done
       else
         sleep 2
       fi
@@ -377,8 +384,14 @@ if [ "$DB_TYPE" = "postgres" ]; then
     run_step "Installing postgresql-client" bash -c "apt-get update -qq && apt-get install -y -qq postgresql-client"
   fi
 
-  # 2. Verifying DB Connectivity
+  # 2. Verifying DB Connectivity (bounded so a dead DB fails loudly, not hangs)
+  pg_tries=0
   until pg_isready -h "$DB_HOST" -p 5432 -U postgres; do
+    pg_tries=$((pg_tries + 1))
+    if [ $pg_tries -ge 60 ]; then
+      echo "❌ External database at $DB_HOST not ready after 60 attempts." >&2
+      exit 1
+    fi
     echo "Waiting for external database at $DB_HOST..."
     sleep 2
   done
@@ -419,10 +432,11 @@ command -v bench >/dev/null || {
 if [ "$BOOTSTRAP" = "false" ]; then
   if [ ! -d "frappe-bench" ]; then
     echo "  - Initializing frappe-bench (Verbose)..."
-    if ! bench init --skip-redis-config-generation --skip-assets --python "$PY_BIN" frappe-bench --verbose 2>&1 | tee /tmp/bench_init.log; then
+    BENCH_INIT_LOG=$(mktemp)
+    if ! bench init --skip-redis-config-generation --skip-assets --python "$PY_BIN" frappe-bench --verbose 2>&1 | tee "$BENCH_INIT_LOG"; then
       echo "Bench initialization failed"
       echo "---- BENCH INIT LOG START ----"
-      cat /tmp/bench_init.log
+      cat "$BENCH_INIT_LOG"
       echo "---- BENCH INIT LOG END ----"
       exit 1
     fi
@@ -488,7 +502,7 @@ else
   # PATCH: Ensure install.sh is executable
   chmod +x install.sh
 
-  _log "Executing: sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN DB_HOST=\"${DB_HOST:-127.0.0.1}\" DB_ROOT_PASS=\"${DB_PW:-admin}\" bash ./install.sh"
+  _log "Executing: sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN DB_HOST=\"${DB_HOST:-127.0.0.1}\" DB_ROOT_PASS=*** bash ./install.sh"
   # Softer check for install.sh: mark success if frappe-bench exists even if error patterns appeared in log.
   bench_step "Executing install.sh" bash -c "
     sudo CI=true DB_TYPE=$DB_TYPE SKIP_ASSETS=true PYTHON_BIN=$PY_BIN DB_HOST=\"${DB_HOST:-127.0.0.1}\" DB_ROOT_PASS=\"${DB_PW:-admin}\" bash ./install.sh
@@ -609,10 +623,8 @@ if [ "$INSTALL_ROK" = "true" ]; then
 
   if [ ! -d "$ROK_DIR/.git" ]; then
     rm -rf "$ROK_DIR"
-    run_step "Cloning ROK into $ROK_DIR (ref: $ROK_REF)" \
-      git clone --depth 1 --branch "$ROK_REF" "$ROK_REPO_URL" "$ROK_DIR"
-    RET=$?
-    if [ $RET -ne 0 ]; then
+    if ! run_step "Cloning ROK into $ROK_DIR (ref: $ROK_REF)" \
+      git clone --depth 1 --branch "$ROK_REF" "$ROK_REPO_URL" "$ROK_DIR"; then
       run_step "Cloning ROK (fallback)" \
         git clone "$ROK_REPO_URL" "$ROK_DIR"
     fi
@@ -933,7 +945,7 @@ for extra_app in lending rcore; do
   if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/$extra_app" ]; then
     _log "     Using LOCAL $extra_app from workspace..."
     run_step "Staging $extra_app" bash -c "mkdir -p \"apps/$extra_app\" && cp -r \"$GITHUB_WORKSPACE/$extra_app/.\" \"apps/$extra_app/\""
-  elif [ ! -d "apps/$extra_app" ] || [ -z "$(ls -A apps/$extra_app 2>/dev/null || true)" ]; then
+  elif [ ! -d "apps/$extra_app" ] || [ -z "$(ls -A "apps/$extra_app" 2>/dev/null || true)" ]; then
     if [ "$extra_app" = "lending" ]; then
       REPO_URL="https://github.com/Frappenize/lending.git"
       BRANCH="rokct"
@@ -948,10 +960,8 @@ for extra_app in lending rcore; do
       fi
     fi
 
-    bench_step "Fetching $extra_app" \
-      bench get-app "$REPO_URL" --branch "$BRANCH" --skip-assets
-    RET=$?
-    if [ $RET -ne 0 ]; then
+    if ! bench_step "Fetching $extra_app" \
+      bench get-app "$REPO_URL" --branch "$BRANCH" --skip-assets; then
       bench_step "Fetching $extra_app (fallback)" \
         bench get-app "$REPO_URL" --skip-assets
     fi
@@ -1006,18 +1016,18 @@ for app_dir in apps/*; do
 
   # D. Namespace Package Fix
   if [ -d "apps/$this_app/$this_app" ]; then
-    run_step "[$this_app] Fixing namespace packages" bash -c 'find "apps/'"$this_app"'/'"$this_app"'" -type d | while read dir; do
+    run_step "[$this_app] Fixing namespace packages" bash -c 'app="$1"; find "apps/$app/$app" -type d | while read -r dir; do
       case "$(basename "$dir")" in
         workspace_sidebar|desktop_icon|sidebar_item_group|notification_log)
           rm -f "$dir/__init__.py"
           continue ;;
       esac
       if [ ! -f "$dir/__init__.py" ]; then touch "$dir/__init__.py"; fi
-    done'
+    done' _ "$this_app"
   fi
 
   # E. API Deprecation Patch
-  run_step "[$this_app] Patching API deprecations" bash -c "grep -r \"frappe.utils.update_site_config\" \"apps/$this_app\" | cut -d: -f1 | sort | uniq | xargs -r sed -i 's/frappe.utils.update_site_config/frappe.installer.update_site_config/g' || true"
+  run_step "[$this_app] Patching API deprecations" bash -c "grep -rlZ \"frappe.utils.update_site_config\" \"apps/$this_app\" | xargs -0 -r sed -i 's/frappe.utils.update_site_config/frappe.installer.update_site_config/g' || true"
 
   # F. Hook Guard (Postgres Stability)
   # G. Dynamic App Dependency Stripping
@@ -1142,7 +1152,7 @@ PY
     fi
 
   fi
-  run_step "[$this_app] Guarding hooks" bash -c "find \"apps/$this_app\" -name \"*.py\" | xargs -r grep -lE \"^[[:space:]]+def (on_update|after_insert)\(self[^\)]*\):\" | while read -r hook_file; do \
+  run_step "[$this_app] Guarding hooks" bash -c "find \"apps/$this_app\" -name \"*.py\" -print0 | xargs -0 -r grep -lZE \"^[[:space:]]+def (on_update|after_insert)\(self[^\)]*\):\" | while IFS= read -r -d '' hook_file; do \
     if grep -q \"# rokct-no-guard\" \"\$hook_file\"; then continue; fi; \
     HOOK_FILE=\"\$hook_file\" env/bin/python -c '
 import os, sys, re
@@ -1325,9 +1335,7 @@ bench_step "Migrating site" \
   bench --site "$SITE_NAME" migrate
 
 if bench --site "$SITE_NAME" list-apps 2>/dev/null | grep -q "^erpnext$"; then
-  run_step "Seeding ERPNext defaults" bench --site "$SITE_NAME" execute erpnext.setup.setup_wizard.operations.install_fixtures.install
-  RET=$?
-  if [ $RET -ne 0 ]; then
+  if ! run_step "Seeding ERPNext defaults" bench --site "$SITE_NAME" execute erpnext.setup.setup_wizard.operations.install_fixtures.install; then
     _log "Warning: ERPNext fixture seeding failed."
   fi
 fi
@@ -1351,9 +1359,7 @@ fi
 if [ -d "apps/rcore" ]; then
   HAS_PLATFORM=$(env/bin/python -c "import importlib.util; print('yes' if importlib.util.find_spec('rcore.platform') or importlib.util.find_spec('rcore.rcore.platform') else 'no')" 2>/dev/null || echo "no")
   if [ "$HAS_PLATFORM" = "yes" ]; then
-    run_step "Baking rcore assets" bash -c "bench --site \"$SITE_NAME\" execute rcore.platform.manager.bake_assets || bench --site \"$SITE_NAME\" execute rcore.rcore.platform.manager.bake_assets"
-    RET=$?
-    if [ $RET -ne 0 ]; then
+    if ! run_step "Baking rcore assets" bash -c "bench --site \"$SITE_NAME\" execute rcore.platform.manager.bake_assets || bench --site \"$SITE_NAME\" execute rcore.rcore.platform.manager.bake_assets"; then
       _log "Warning: Failed to bake rcore assets."
     fi
   fi
@@ -1379,7 +1385,7 @@ if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
     _log "RokctAI: Reusing existing rcore_private clone from $RCORE_PRIVATE_TMP"
     RET=0
   else
-    RCORE_PRIVATE_TMP="/tmp/rcore-private-bake-push"
+    RCORE_PRIVATE_TMP="$(mktemp -d)"
     _log "RokctAI: No existing clone found, creating temporary clone at $RCORE_PRIVATE_TMP"
     run_step "Cloning rcore_private for persistence" bash -c "rm -rf \"$RCORE_PRIVATE_TMP\" && git clone --depth 1 \"https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/rcore_private.git\" \"$RCORE_PRIVATE_TMP\" 2>&1 | grep -v \"^remote:\""
     RET=$?
@@ -1393,7 +1399,7 @@ if [ -n "$PLATFORM_SRC" ] && [ -n "$GITHUB_TOKEN" ]; then
     else
       run_step "Committing baked assets and creating PR" bash -c " \
         mkdir -p \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST\" && \
-        cp -r $PLATFORM_SRC/. \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST/\" && \
+        cp -r \"$PLATFORM_SRC/.\" \"$RCORE_PRIVATE_TMP/$PLATFORM_DEST/\" && \
         cd \"$RCORE_PRIVATE_TMP\" && \
         CHANGES=\$(git status --porcelain $PLATFORM_DEST | wc -l) && \
         if [ \"\$CHANGES\" -gt 0 ]; then \
@@ -1449,16 +1455,16 @@ fi
 
 if [ -n "$STACK_INSTALLER" ]; then
   bench_step "Generating Golden DB Seed" bench --site "$SITE_NAME" backup
-  BACKUP_FILE=$(ls sites/$SITE_NAME/private/backups/*-database.sql.gz 2>/dev/null | head -n 1)
+  BACKUP_FILE=$(ls "sites/$SITE_NAME/private/backups/"*-database.sql.gz 2>/dev/null | head -n 1)
   if [ -f "$BACKUP_FILE" ]; then
     run_step "Creating seed artifact" bash -c "mkdir -p apps/seed_data && cp \"$BACKUP_FILE\" \"apps/seed_data/seed.sql.gz\""
   fi
 fi
 
 # Verification
-bench_step "Post-build compliance verification" env/bin/python -c "
-import frappe, sys
-frappe.init(site='$SITE_NAME', sites_path='sites')
+bench_step "Post-build compliance verification" env RKT_SITE="$SITE_NAME" env/bin/python -c "
+import frappe, sys, os
+frappe.init(site=os.environ['RKT_SITE'], sites_path='sites')
 frappe.connect()
 installed_apps = frappe.get_installed_apps()
 all_doctypes = frappe.get_all('DocType', fields=['name', 'issingle'])
@@ -1496,7 +1502,7 @@ fi
 
 # Finalize
 if [ "${DOCKER_BUILD}" != "true" ] && [ "${CI}" != "true" ] && [ "$SITE_NAME" != "platform.rokct.ai" ]; then
-  if [ -d "sites/$SITE_NAME" ]; then
+  if [ -d "sites/$SITE_NAME" ] && [ ! -e "sites/platform.rokct.ai" ]; then
     run_step "Renaming site to platform.rokct.ai" mv "sites/$SITE_NAME" "sites/platform.rokct.ai"
     SITE_NAME="platform.rokct.ai"
     echo "$SITE_NAME" >sites/currentsite.txt

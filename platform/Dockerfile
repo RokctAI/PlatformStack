@@ -4,7 +4,8 @@ FROM python:3.14-slim AS base
 ARG GITHUB_TOKEN
 ARG MONOREPO_PAT
 ARG EMAIL_ENCRYPTION_KEY
-ENV EMAIL_ENCRYPTION_KEY=$EMAIL_ENCRYPTION_KEY
+# Do NOT promote EMAIL_ENCRYPTION_KEY to a persisted image ENV (leaks via docker
+# history/inspect). It is injected at runtime by the compose files instead.
 ENV DEBIAN_FRONTEND=noninteractive
 ENV PIP_BREAK_SYSTEM_PACKAGES=1
 
@@ -27,10 +28,13 @@ RUN apt-get update -qq && apt-get install -yqq \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Docker CLI and Docker Compose statically to allow container orchestration
-RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.0.7.tgz | tar -xz -C /tmp \
+RUN curl -fsSL https://download.docker.com/linux/static/stable/x86_64/docker-24.0.7.tgz -o /tmp/docker.tgz \
+    && echo "984d59a77fa6acab97ea725a966facd33725e0e09c2fee975397fe1c6379bd3d  /tmp/docker.tgz" | sha256sum -c - \
+    && tar -xz -C /tmp -f /tmp/docker.tgz \
     && mv /tmp/docker/docker /usr/local/bin/ \
-    && rm -rf /tmp/docker \
+    && rm -rf /tmp/docker /tmp/docker.tgz \
     && curl -fsSL "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose \
+    && echo "94355be1d1d395040bbda1490f98d5c7627c30798a7955e1f2a78fda33a4b3e1  /usr/local/bin/docker-compose" | sha256sum -c - \
     && chmod +x /usr/local/bin/docker-compose
 
 RUN npm install -g yarn pnpm && npm cache clean --force
@@ -94,8 +98,8 @@ RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opend
 VOLUME ["/etc/exim4", "/var/spool/exim4", "/var/log/exim4", "/etc/opendkim", "/etc/nginx", "/var/log/nginx", "/etc/cron.d"]
 RUN chmod -R 777 /var/log/nginx /var/lib/nginx
 WORKDIR /home/frappe/frappe-bench
-COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-COPY --chown=frappe:frappe platform/scripts/exim4_bootstrap.sh /usr/local/bin/exim4_bootstrap.sh
+COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chown=root:root platform/scripts/exim4_bootstrap.sh /usr/local/bin/exim4_bootstrap.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/exim4_bootstrap.sh
 USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
@@ -139,7 +143,7 @@ FROM base AS tenant_supacharge
 COPY --from=tenant_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
 WORKDIR /home/frappe/frappe-bench
 USER root
-COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
@@ -161,7 +165,7 @@ FROM base AS tenant
 COPY --from=generic_tenant_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
 WORKDIR /home/frappe/frappe-bench
 USER root
-COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
@@ -189,7 +193,7 @@ FROM base AS iot
 COPY --from=iot_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
 WORKDIR /home/frappe/frappe-bench
 USER root
-COPY --chown=frappe:frappe platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]

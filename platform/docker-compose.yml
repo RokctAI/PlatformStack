@@ -6,6 +6,7 @@ services:
   db:
     # Shared Database for Trial Tenants & Control Logic
     image: ghcr.io/rokctai/occultation/rpanel-db:latest
+    restart: unless-stopped
     environment:
       - POSTGRES_PASSWORD=${DB_PASSWORD:-admin}
       - POSTGRES_USER=postgres
@@ -23,6 +24,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
     deploy:
       resources:
         limits:
@@ -33,6 +35,7 @@ services:
   app:
     # The Orchestrator (Full Stage: Nginx + Exim + Bench)
     image: ghcr.io/rokctai/occultation/rpanel-control:latest
+    restart: unless-stopped
     environment:
       - MODE=full
       - SITE_NAME=${SITE_NAME:-platform.rokct.ai}
@@ -67,7 +70,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "8000:8000"
+      # Raw bench/gunicorn port: bound to localhost only (in-cluster peers reach
+      # it as http://app:8000 over the compose network, not via the host).
+      - "127.0.0.1:8000:8000"
 
   gravity:
     image: ghcr.io/rokctai/occultation/gravity:latest

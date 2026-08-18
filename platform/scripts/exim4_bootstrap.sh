@@ -6,6 +6,14 @@
 
 set -Eeuo pipefail
 
+# Restrict permissions on files this script creates (DKIM keys, passwd, log).
+umask 077
+
+# Ensure the split-config directories exist before writing into them. On a fresh
+# Docker VOLUME the package dirs are masked, so writes would fail under set -e.
+mkdir -p /etc/exim4/conf.d/main /etc/exim4/conf.d/acl /etc/exim4/conf.d/auth \
+         /etc/exim4/conf.d/transport /etc/exim4/conf.d/router
+
 # =============================================================================
 # COLORS
 # =============================================================================
@@ -49,6 +57,7 @@ SKIP_EXIM="${SKIP_EXIM:-0}"
 
 # Logging setup
 LOG_FILE="/var/log/exim4_bootstrap.log"
+touch "${LOG_FILE}" && chmod 600 "${LOG_FILE}"
 exec > >(tee -a "${LOG_FILE}") 2>&1 || true
 
 # =============================================================================
@@ -61,7 +70,8 @@ cat >/etc/exim4/conf.d/main/00_local_macros <<EOF
 primary_hostname = ${PRIMARY_HOSTNAME}
 daemon_smtp_ports = 25 : 587
 DKIM_SELECTOR = ${DKIM_SELECTOR}
-tls_require_ciphers = ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384
+# Cipher selection left to Exim/GnuTLS defaults: exim4-daemon-heavy links GnuTLS,
+# which expects a priority string, not an OpenSSL cipher list.
 acl_smtp_auth = acl_check_auth
 EOF
 
@@ -73,7 +83,10 @@ done_ok
 
 step "Setting system hostname"
 
-hostnamectl set-hostname "${PRIMARY_HOSTNAME}"
+# hostnamectl needs systemd/dbus, absent in a container; skip it there.
+if command -v hostnamectl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
+  hostnamectl set-hostname "${PRIMARY_HOSTNAME}" || true
+fi
 
 if grep -q "^127\.0\.1\.1" /etc/hosts; then
   sed -i "s/^127\.0\.1\.1.*$/127\.0\.1\.1 ${PRIMARY_HOSTNAME}/" /etc/hosts
@@ -101,11 +114,17 @@ else
   TLS_CERT_EXISTS=1
 fi
 
-cat >/etc/exim4/conf.d/main/01_tls_paths <<EOF
+# Only advertise STARTTLS when the certificate actually exists; otherwise the
+# handshake fails and AUTH (gated on tls_in_cipher) never becomes available.
+if [ "${TLS_CERT_EXISTS}" = "1" ]; then
+  cat >/etc/exim4/conf.d/main/01_tls_paths <<EOF
 tls_certificate = ${TLS_CERT}
 tls_privatekey = ${TLS_KEY}
 tls_advertise_hosts = *
 EOF
+else
+  : >/etc/exim4/conf.d/main/01_tls_paths
+fi
 
 sed -i 's/^tls_certificate = MAIN_TLS_CERT/#tls_certificate = MAIN_TLS_CERT/' /etc/exim4/conf.d/main/03_exim4-config_tlsoptions
 
@@ -117,8 +136,18 @@ done_ok
 
 step "Fixing certificate permissions"
 
-chgrp -R "${EXIM_USER}" /etc/letsencrypt/live /etc/letsencrypt/archive
-chmod 750 /etc/letsencrypt/live /etc/letsencrypt/archive
+# Scope group ownership to the mail host's own certificate only (not every
+# cert on the box), and guard against a fresh VPS where the dirs don't exist yet.
+if [ -d "/etc/letsencrypt/live/${PRIMARY_HOSTNAME}" ]; then
+  chgrp -R "${EXIM_USER}" \
+    "/etc/letsencrypt/live/${PRIMARY_HOSTNAME}" \
+    "/etc/letsencrypt/archive/${PRIMARY_HOSTNAME}"
+  chmod 750 \
+    "/etc/letsencrypt/live/${PRIMARY_HOSTNAME}" \
+    "/etc/letsencrypt/archive/${PRIMARY_HOSTNAME}"
+  # Ensure Exim can read the private key(s) it needs.
+  chmod 640 "/etc/letsencrypt/archive/${PRIMARY_HOSTNAME}"/privkey*.pem 2>/dev/null || true
+fi
 
 done_ok
 
@@ -172,10 +201,15 @@ done_ok
 step "Creating SMTP password file"
 
 if [ -n "${SMTP_AUTH_PASS}" ]; then
-  HASHED_PASS=$(openssl passwd -6 "${SMTP_AUTH_PASS}")
-  cat >/etc/exim4/passwd <<EOF
-${SMTP_AUTH_USER}:${HASHED_PASS}
-EOF
+  # Feed the plaintext via stdin so it never lands on the process argv (ps-visible).
+  HASHED_PASS=$(printf '%s' "${SMTP_AUTH_PASS}" | openssl passwd -6 -stdin)
+  # Update in place rather than truncate: /etc/exim4 is a persistent VOLUME, so a
+  # re-run must not wipe any other accounts already present.
+  touch /etc/exim4/passwd
+  sed -i "\|^${SMTP_AUTH_USER}:|d" /etc/exim4/passwd
+  printf '%s:%s\n' "${SMTP_AUTH_USER}" "${HASHED_PASS}" >>/etc/exim4/passwd
+else
+  echo -e "${YELLOW}  SMTP_AUTH_PASS unset - no SMTP account created; authenticated submission will not work${NC}"
 fi
 
 if [ -f /etc/exim4/passwd ]; then
@@ -200,7 +234,7 @@ done
 
 if [ "${NEED_INSTALL:-0}" = "1" ]; then
   apt-get update && apt-get install -y curl dnsutils netcat-openbsd
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  apt-get clean
 fi
 
 done_ok
@@ -248,6 +282,8 @@ ${DKIM_SELECTOR}._domainkey.${domain}. TXT "v=DKIM1; k=rsa; p=${PUBKEY}"
 EOF
 
   chown -R "${EXIM_USER}" "${DOMAIN_DIR}"
+  # Root owns the signing key; Exim only reads it (group-read).
+  chown root:"${EXIM_USER}" "${PRIVATE_KEY}"
   chmod 640 "${PRIVATE_KEY}"
   chmod 644 "${PUBLIC_KEY}"
 done
@@ -296,7 +332,7 @@ step "Patching primary router"
 ROUTER_FILE="/etc/exim4/conf.d/router/200_exim4-config_primary"
 
 if ! grep -q "transport = remote_smtp_dkim" "${ROUTER_FILE}"; then
-  sed -i 's/transport = remote_smtp/transport = remote_smtp_dkim/g' "${ROUTER_FILE}"
+  sed -i 's/^\(\s*\)transport = remote_smtp$/\1transport = remote_smtp_dkim/' "${ROUTER_FILE}"
 fi
 
 done_ok
@@ -390,7 +426,11 @@ done_ok
 
 step "Checking reverse DNS"
 
-PUBLIC_IP=$(curl -s https://api.ipify.org)
+PUBLIC_IP=$(curl -fsS --max-time 10 https://api.ipify.org 2>/dev/null || echo "")
+if ! echo "${PUBLIC_IP}" | grep -qE '^[0-9]{1,3}(\.[0-9]{1,3}){3}$'; then
+  echo -e "${YELLOW}  Could not determine a valid public IP (got '${PUBLIC_IP}')${NC}"
+  PUBLIC_IP=""
+fi
 PTR_RECORD=$(dig +short -x "${PUBLIC_IP}" 2>/dev/null | sed 's/\.$//' | tr -d '\n')
 
 if [ "${PTR_RECORD}" = "${PRIMARY_HOSTNAME}" ]; then
@@ -427,24 +467,31 @@ done_ok
 step "Installing Fail2ban for Exim"
 
 if command -v apt-get >/dev/null 2>&1; then
-  apt-get update && apt-get install -y fail2ban
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  command -v fail2ban-server >/dev/null 2>&1 || { apt-get update && apt-get install -y fail2ban; }
+  apt-get clean
 fi
 
 cat >/etc/fail2ban/jail.d/exim4.conf <<'EOF'
 [exim4-auth]
 enabled = true
 port = smtp,587
-filter = exim4
+filter = exim4-rokct
 logpath = /var/log/exim4/mainlog
 maxretry = 5
-bantime = -1
+bantime = 86400
 findtime = 3600
+ignoreip = 127.0.0.1/8 ::1
 EOF
 
-cat >/etc/fail2ban/filter.d/exim4.conf <<'EOF'
+# Ship as a distinct filter that EXTENDS the distro's exim filter rather than
+# overwriting the package-managed /etc/fail2ban/filter.d/exim.conf.
+cat >/etc/fail2ban/filter.d/exim4-rokct.conf <<'EOF'
+[INCLUDES]
+before = exim.conf
+
 [Definition]
-failregex = authenticator failed for .*\[<HOST>\]
+failregex = %(known/failregex)s
+            authenticator failed for .*\[<HOST>\]
 ignoreregex =
 EOF
 
@@ -485,12 +532,22 @@ for domain in ${MAIL_DOMAINS}; do
   fi
 done
 
-echo -e "${BLUE}SPF:${NC}"
-echo -e "  ${PRIMARY_HOSTNAME}. TXT \"v=spf1 a mx ip4:${PUBLIC_IP} ~all\""
+# SPF/DMARC are evaluated against the sending (envelope-from / From) domain,
+# not the mail host, so emit a record per configured MAIL_DOMAIN.
+echo -e "${BLUE}SPF (one per sending domain):${NC}"
+for domain in ${MAIL_DOMAINS}; do
+  if [ -n "${PUBLIC_IP}" ]; then
+    echo -e "  ${domain}. TXT \"v=spf1 a mx ip4:${PUBLIC_IP} ~all\""
+  else
+    echo -e "  ${domain}. TXT \"v=spf1 a mx ~all\""
+  fi
+done
 echo ""
 
-echo -e "${BLUE}DMARC:${NC}"
-echo -e "  _dmarc.${PRIMARY_HOSTNAME}. TXT \"v=DMARC1; p=quarantine; rua=mailto:${FORWARD_TO}; fo=1\""
+echo -e "${BLUE}DMARC (one per sending domain):${NC}"
+for domain in ${MAIL_DOMAINS}; do
+  echo -e "  _dmarc.${domain}. TXT \"v=DMARC1; p=quarantine; rua=mailto:${FORWARD_TO}; fo=1\""
+done
 echo ""
 
 # =============================================================================

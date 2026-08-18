@@ -70,7 +70,7 @@ jobs:
         run: |
           apt-get update && apt-get install -y git curl jq
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       
       - name: Check Upstream Updates (Cron Only)
         id: upstream_check
@@ -176,7 +176,7 @@ jobs:
   pipeline:
     needs: detect
     if: needs.detect.outputs.should_build == 'true'
-    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@main
+    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@1941ed0eeedc3aeab408eb6bcd5d58bfa3061e48 # main
     with:
       backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
       project_type: ${{ needs.detect.outputs.is_flutter == 'true' && 'flutter' || (needs.detect.outputs.is_node == 'true' && 'node' || 'frappe') }}
@@ -231,14 +231,14 @@ jobs:
           apt-get update && apt-get install -y git rsync
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
            path: docker-context
 
       - name: Checkout Vector for Overrides
         if: github.repository_owner == 'RokctAI'
         continue-on-error: true
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: RokctAI/vector
           path: docker-context/overrides/vector
@@ -247,14 +247,14 @@ jobs:
       - name: Checkout Gravity Repository
         if: github.repository_owner == 'RokctAI'
         continue-on-error: true
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: RokctAI/gravity
           path: docker-context/gravity
           token: ${{ secrets.MONOREPO_PAT || github.token }}
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -288,7 +288,7 @@ jobs:
           timeout 30s bash -c "until pg_isready -h 127.0.0.1 -p 5432 -U postgres; do echo 'Waiting for PostgreSQL...'; sleep 2; done"
 
       - name: Build and Push Control Hub (Full)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context
           file: docker-context/platform/Dockerfile
@@ -305,7 +305,7 @@ jobs:
             DB_HOST=127.0.0.1
 
       - name: Build and Push Tenant Spoke (Tenant)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context
           file: docker-context/platform/Dockerfile
@@ -322,7 +322,7 @@ jobs:
             DB_HOST=127.0.0.1
 
       - name: Build and Push Supacharge (Tenant, keeps lms)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context
           file: docker-context/platform/Dockerfile
@@ -339,7 +339,7 @@ jobs:
             DB_HOST=127.0.0.1
 
       - name: Build and Push Drone Brain (Frappe)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context
           file: docker-context/platform/Dockerfile
@@ -356,7 +356,7 @@ jobs:
             DB_HOST=127.0.0.1
 
       - name: Build and Push Drone Edge (Go)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context/overrides/vector
           file: docker-context/overrides/vector/Dockerfile
@@ -393,7 +393,7 @@ jobs:
 
       - name: Build and Push Postgres (Custom)
         if: steps.db-check.outputs.db_changed == 'true'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context
           file: docker-context/platform/postgres.Dockerfile
@@ -403,7 +403,7 @@ jobs:
             ghcr.io/rokctai/occultation/rpanel-db:${{ steps.meta.outputs.version }}
 
       - name: Build and Push Gravity
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context/gravity
           file: docker-context/gravity/Dockerfile
@@ -416,7 +416,7 @@ jobs:
 
   upgrade-test:
     needs: [pipeline, docker-release]
-    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@main
+    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@1941ed0eeedc3aeab408eb6bcd5d58bfa3061e48 # main
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
       min_legacy_version: '2.4.8'
@@ -429,6 +429,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Delete Failed Images from GHCR
+        env:
+          MONOREPO_PAT: ${{ secrets.MONOREPO_PAT }}
         run: |
           VERSION="${{ needs.docker-release.outputs.version }}"
           echo "Rolling back failed version: $VERSION"
@@ -441,14 +443,14 @@ jobs:
 
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
-            VERSION_ID=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+            VERSION_ID=$(curl -s -H "Authorization: token $MONOREPO_PAT" \
               -H "Accept: application/vnd.github.v3+json" \
               "https://api.github.com/orgs/RokctAI/packages/container/$PKG/versions" \
               | jq -r ".[] | select(.metadata.container.tags[]? == \"$VERSION\") | .id" | head -n 1)
 
             if [ -n "$VERSION_ID" ] && [ "$VERSION_ID" != "null" ]; then
               echo "Found ID $VERSION_ID. Issuing delete request..."
-              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+              RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: token $MONOREPO_PAT" \
                 -H "Accept: application/vnd.github.v3+json" \
                 "https://api.github.com/orgs/RokctAI/packages/container/$PKG/versions/$VERSION_ID")
               echo "Delete response code: $RESPONSE"
@@ -458,8 +460,10 @@ jobs:
           done
 
       - name: Restore Previous Version as Latest
+        env:
+          MONOREPO_PAT: ${{ secrets.MONOREPO_PAT }}
         run: |
-          echo "${{ secrets.MONOREPO_PAT }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          echo "$MONOREPO_PAT" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
           # Restore :latest for app images only by pulling the previous semver tag and
           # re-pushing it as :latest. The GitHub API PATCH on container version metadata
@@ -474,7 +478,7 @@ jobs:
             echo "Restoring :latest for $PKG..."
 
             # Find the most recent remaining semver tag (excluding 'latest') via the API
-            PREV_TAG=$(curl -s -H "Authorization: token ${{ secrets.MONOREPO_PAT }}" \
+            PREV_TAG=$(curl -s -H "Authorization: token $MONOREPO_PAT" \
               -H "Accept: application/vnd.github+json" \
               "https://api.github.com/orgs/$ORG_NAME/packages/container/occultation%2F$PKG/versions" \
               | jq -r '[.[] | select(.metadata.container.tags[] | test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))] | .[0].metadata.container.tags[] | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' \
@@ -499,11 +503,11 @@ jobs:
     continue-on-error: true
     steps:
       - name: Checkout Target Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Checkout Occultation for Config Overrides
         continue-on-error: true
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: RokctAI/Occultation
           path: overrides/occultation
@@ -560,7 +564,7 @@ jobs:
     permissions: write-all
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           token: ${{ secrets.MONOREPO_PAT || github.token }}
           
