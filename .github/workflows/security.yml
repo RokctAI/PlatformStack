@@ -8,12 +8,7 @@ on:
 
 jobs:
   scan:
-    permissions:
-      contents: read
-      actions: read
-      security-events: write
-      issues: write
-      pull-requests: write
+    permissions: write-all
     uses: RokctAI/shared-workflows/.github/workflows/universal-security.yml@1941ed0eeedc3aeab408eb6bcd5d58bfa3061e48 # main
     secrets: inherit
 
