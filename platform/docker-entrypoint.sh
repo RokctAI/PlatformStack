@@ -171,7 +171,10 @@ setup_site() {
           # pipefail (scoped to the subshell) so a gunzip failure isn't masked by
           # psql's exit; surface psql stderr and fail loudly instead of printing
           # a false success on empty/garbled input.
-          if ! ( set -o pipefail; gunzip -c apps/seed_data/seed.sql.gz | PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_NAME" -d "$DB_NAME" >/dev/null ); then
+          if ! (
+            set -o pipefail
+            gunzip -c apps/seed_data/seed.sql.gz | PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "${DB_PORT:-5432}" -U "$DB_NAME" -d "$DB_NAME" >/dev/null
+          ); then
             echo "❌ Database restore failed for '$DB_NAME'."
             exit 1
           fi
