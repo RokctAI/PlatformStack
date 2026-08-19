@@ -15,7 +15,6 @@
 ### Frappe Application Stack Repositories
 - **frappe**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **erpnext**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **payments**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **lending**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **helpdesk**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **hrms**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).

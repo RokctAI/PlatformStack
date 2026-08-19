@@ -45,7 +45,6 @@ jobs:
     with:
       backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
       project_type: 'frappe'
-      install-payments: true
       # Dogfooding: Use the new Weekly Strategy
       release_strategy: 'weekly'
 

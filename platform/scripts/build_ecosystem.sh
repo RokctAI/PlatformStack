@@ -796,16 +796,7 @@ fi
 export APP_NAME
 _log "Target App Detected: $APP_NAME"
 
-# A. Standard Dependencies (ERPNext, Payments)
-INSTALL_PAYMENTS=${INSTALL_PAYMENTS:-false}
-if [ "$INSTALL_PAYMENTS" = "true" ]; then
-  _log "Fetching Payments..."
-  if [ ! -d "apps/payments" ]; then
-    bench_step "Fetching Payments" \
-      bench get-app https://github.com/Frappenize/payments.git --branch rokct --resolve-deps --skip-assets
-  fi
-fi
-
+# A. Standard Dependencies (ERPNext)
 INSTALL_ERPNEXT=${INSTALL_ERPNEXT:-false}
 if [ "$INSTALL_ERPNEXT" = "true" ]; then
   _log "Fetching ERPNext..."
@@ -971,6 +962,26 @@ for extra_app in lending rcore; do
 done
 
 sync_apps_txt
+
+# --- 4b. Compose rcore's SDK modules (shell-app model: composer.json at repo root) ---
+# The designed channel for composed output is rcore CI committing the composed tree
+# back to rcore main; this step is the image-build fallback so the golden bench
+# always bakes a composed rcore (including the gateways module that replaces the
+# retired upstream payments app), independent of that CI commit having landed.
+# Requires rcore's composer.json to carry SHA-pinned refs (no sibling checkouts
+# exist here, so compose_backend clones each SDK repo at its pin).
+# Skipped when the fetched rcore tree already contains composed output.
+if [ -f "apps/rcore/composer.json" ] && [ ! -d "apps/rcore/rcore/gateways" ]; then
+  bench_step "Composing rcore SDK modules" \
+    bash -c "cd apps/rcore && \
+      if [ -f .rokct/skills/.rok/frappe/scripts/compose.py ]; then COMPOSE_WRAPPER=.rokct/skills/.rok/frappe/scripts/compose.py; \
+      elif [ -f .rokct/skills/frappe/scripts/compose.py ]; then COMPOSE_WRAPPER=.rokct/skills/frappe/scripts/compose.py; \
+      else curl -sSL https://raw.githubusercontent.com/RokctAI/The-Rokct-Protocol/main/core/skills/.rok/frappe/scripts/compose.py -o /tmp/rokct_compose.py && COMPOSE_WRAPPER=/tmp/rokct_compose.py; fi && \
+      MONOREPO_PAT=\"$GITHUB_TOKEN\" python3 \"\$COMPOSE_WRAPPER\""
+  # Compose injects the modules' pip deps (stripe, braintree, razorpay, ...) into
+  # rcore's requirements/pyproject; re-install so the bench env picks them up.
+  run_step "Reinstalling composed rcore" bench pip install -e apps/rcore
+fi
 
 # --- 5. Global Ecosystem Hacks (Post-Fetch) ---
 run_step "Cleaning up empty JSON files" find apps -name "*.json" -size 0 -delete
@@ -1147,10 +1158,6 @@ for py_file in lending_path.rglob("*.py"):
 print(f"Patched {patched} files in lending app")
 PY
     fi
-    if [ "$this_app" = "rcore" ]; then
-      run_step "[$this_app] Stripping 'payments' requirement" sed -i "s/[\"']payments[\"']//g" "apps/$this_app/$this_app/hooks.py"
-    fi
-
   fi
   run_step "[$this_app] Guarding hooks" bash -c "find \"apps/$this_app\" -name \"*.py\" -print0 | xargs -0 -r grep -lZE \"^[[:space:]]+def (on_update|after_insert)\(self[^\)]*\):\" | while IFS= read -r -d '' hook_file; do \
     if grep -q \"# rokct-no-guard\" \"\$hook_file\"; then continue; fi; \
@@ -1260,10 +1267,6 @@ fi
 mkdir -p "sites/$SITE_NAME/logs"
 
 # Ensure all dependencies are installed on site
-if [ "$INSTALL_PAYMENTS" = "true" ]; then
-  safe_install_app payments
-fi
-
 if [ "$INSTALL_ERPNEXT" = "true" ]; then
   safe_install_app erpnext
 fi
