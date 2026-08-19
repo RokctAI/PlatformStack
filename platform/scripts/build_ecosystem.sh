@@ -971,12 +971,15 @@ sync_apps_txt
 # Requires rcore's composer.json to carry SHA-pinned refs (no sibling checkouts
 # exist here, so compose_backend clones each SDK repo at its pin).
 # Skipped when the fetched rcore tree already contains composed output.
+# The remote-fetch fallback below is pinned to an immutable protocol commit SHA
+# (not a moving branch), consistent with the wave's SHA-pinning; bumping the pin
+# to a newer protocol commit is a deliberate, reviewed change.
 if [ -f "apps/rcore/composer.json" ] && [ ! -d "apps/rcore/rcore/gateways" ]; then
   bench_step "Composing rcore SDK modules" \
     bash -c "cd apps/rcore && \
       if [ -f .rokct/skills/.rok/frappe/scripts/compose.py ]; then COMPOSE_WRAPPER=.rokct/skills/.rok/frappe/scripts/compose.py; \
       elif [ -f .rokct/skills/frappe/scripts/compose.py ]; then COMPOSE_WRAPPER=.rokct/skills/frappe/scripts/compose.py; \
-      else curl -sSL https://raw.githubusercontent.com/RokctAI/The-Rokct-Protocol/main/core/skills/.rok/frappe/scripts/compose.py -o /tmp/rokct_compose.py && COMPOSE_WRAPPER=/tmp/rokct_compose.py; fi && \
+      else curl -sSL https://raw.githubusercontent.com/RokctAI/The-Rokct-Protocol/155f31d24d87d8dcff154c65b4a05fe1d3d05abd/core/skills/.rok/frappe/scripts/compose.py -o /tmp/rokct_compose.py && COMPOSE_WRAPPER=/tmp/rokct_compose.py; fi && \
       MONOREPO_PAT=\"$GITHUB_TOKEN\" python3 \"\$COMPOSE_WRAPPER\""
   # Compose injects the modules' pip deps (stripe, braintree, razorpay, ...) into
   # rcore's requirements/pyproject; re-install so the bench env picks them up.
