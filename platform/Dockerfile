@@ -186,7 +186,7 @@ RUN cd apps && \
         fi \
     done && \
     rm -rf ../tools/rok /home/frappe/rok-paperclip-adapter /home/frappe/paperclip
-RUN printf "frappe\nrcore\nbrain\n" > sites/apps.txt
+RUN printf "frappe\nrcore\n" > sites/apps.txt
 
 # Stage 5: IoT (Minimal Image)
 FROM base AS iot
