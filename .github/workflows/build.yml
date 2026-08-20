@@ -55,6 +55,14 @@ on:
         type: string
         default: '##.##.#'
         description: "Format for version bumping (e.g. ##.##.## or ##.##.#)"
+      composed-product:
+        type: string
+        default: ''
+        description: "OPT-IN: build the composed per-product tenant image from this protocol compose template (e.g. rcore). Empty = skip (default)."
+      protocol-ref:
+        type: string
+        default: 'main'
+        description: "The-Rokct-Protocol ref for the composed tenant build (pin a commit SHA for reproducible builds)"
 
 jobs:
   # --- 1. DETECT PROJECT TYPE & UPSTREAM UPDATES ---
@@ -673,3 +681,99 @@ jobs:
             https://api.github.com/repos/RokctAI/RokctAI_frontend/dispatches \
             -d '{"event_type":"schema_updated"}'
 
+
+  # --- OPT-IN: Composed per-product tenant image (compose-at-build path) ---
+  # Never runs on push or schedule: only a manual workflow_dispatch with the
+  # `composed-product` input set (e.g. "rcore") triggers it. Completely
+  # independent of docker-release — it neither gates nor alters the existing
+  # release images, and pushes under its own distinct image name
+  # (rpanel-tenant-composed) so nothing existing can accidentally consume it.
+  docker-composed:
+    if: github.event_name == 'workflow_dispatch' && inputs.composed-product != '' && startsWith(github.repository, 'RokctAI/')
+    runs-on: ubuntu-latest
+    permissions: write-all
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_PASSWORD: admin
+          POSTGRES_USER: postgres
+    steps:
+      - name: Install dependencies
+        run: |
+          { apt-get update && apt-get install -y git rsync; } || { sudo apt-get update && sudo apt-get install -y git rsync; }
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Checkout Repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+           path: docker-context
+
+      - name: Checkout Vector for Overrides
+        continue-on-error: true
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: RokctAI/vector
+          path: docker-context/overrides/vector
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.MONOREPO_PAT }}
+
+      - name: Build Context Staging
+        run: |
+          # Copy the current repository's code into the docker context and make
+          # sure the overrides dir exists even if the vector checkout was skipped
+          # (the Dockerfile COPYs it unconditionally).
+          rsync -a --exclude 'docker-context' . ./docker-context/current_repo/
+          mkdir -p docker-context/overrides
+
+      - name: Extract Version
+        id: meta
+        run: |
+          if [ -f "docker-context/version.json" ]; then
+            VERSION=$(grep -E '"(platform|rpanel)"' docker-context/version.json | head -n 1 | cut -d'"' -f4)
+          elif [ -f "docker-context/rpanel/versions.json" ]; then
+            VERSION=$(grep '"rpanel"' docker-context/rpanel/versions.json | cut -d'"' -f4)
+          else
+            VERSION=$(grep "__version__" docker-context/rpanel/__init__.py | cut -d'"' -f2)
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version!"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Extract version: $VERSION"
+
+      - name: Confirm Database Readiness
+        run: |
+          timeout 30s bash -c "until pg_isready -h 127.0.0.1 -p 5432 -U postgres; do echo 'Waiting for PostgreSQL...'; sleep 2; done"
+
+      - name: Build and Push Composed Tenant
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: docker-context
+          file: docker-context/platform/Dockerfile
+          target: tenant_composed
+          network: host
+          push: true
+          tags: |
+            ghcr.io/rokctai/occultation/rpanel-tenant-composed:${{ inputs.composed-product }}
+            ghcr.io/rokctai/occultation/rpanel-tenant-composed:${{ inputs.composed-product }}-${{ steps.meta.outputs.version }}
+          build-args: |
+            GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
+            MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
+            IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
+            DB_HOST=127.0.0.1
+            PRODUCT=${{ inputs.composed-product }}
+            PROTOCOL_REF=${{ inputs.protocol-ref }}

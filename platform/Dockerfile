@@ -198,3 +198,112 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bench", "start"]
+
+# =============================================================================
+# OPT-IN COMPOSE-AT-BUILD PATH (per-product tenant images)
+#
+# Everything below is additive and opt-in: no existing stage above references
+# these stages, and building any existing target is byte-identical to before.
+#
+# The golden `builder` stage fetches rcore with `bench get-app` — which today
+# ships the bare shell (modules.txt = rcore, paas) because nothing in this
+# pipeline ever invoked The-Rokct-Protocol composer. The `composed_builder`
+# stage instead composes rcore from a per-product template
+# (core/utils/frappe/composer/<PRODUCT>.json in The-Rokct-Protocol) BEFORE
+# running the same golden build, so the baked seed site actually installs the
+# product's full module set. Template refs that are mutable ("main") are
+# resolved to commit SHAs at build time via git ls-remote and logged in
+# composed_provenance.json inside the app — see compose_product.py.
+# =============================================================================
+
+# --- Stage 6A: Composed Builder (golden build with a composed rcore) ---
+FROM base AS composed_builder
+USER root
+ARG MONOREPO_PAT
+ARG GITHUB_TOKEN
+RUN GIT_TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN}}"; \
+    if [ -n "${GIT_TOKEN}" ] && [ "${GIT_TOKEN}" != "***" ]; then \
+        git config --global url."https://x-access-token:${GIT_TOKEN}@github.com/".insteadOf "git@github.com:" && \
+        git config --global url."https://x-access-token:${GIT_TOKEN}@github.com/".insteadOf "https://github.com/"; \
+    fi
+USER frappe
+ARG DB_HOST=127.0.0.1
+# Which product template to compose (core/utils/frappe/composer/<PRODUCT>.json).
+# PRODUCT=rcore composes the full 26-module manifest — the closest parity to
+# what rcore's own composer.json declares.
+ARG PRODUCT=rcore
+# Pin PROTOCOL_REF to a commit SHA for reproducible builds; "main" works but
+# floats (the resolved SHA is logged either way).
+ARG PROTOCOL_REF=main
+ARG RCORE_REF=main
+
+COPY --chown=frappe:frappe overrides /home/frappe/overrides
+COPY --chown=frappe:frappe current_repo /home/frappe/current_repo
+COPY --chown=frappe:frappe platform/scripts/build_ecosystem.sh /usr/local/bin/build_ecosystem.sh
+COPY --chown=frappe:frappe platform/scripts/compose_product.py /usr/local/bin/compose_product.py
+
+# 1. Compose the product's rcore app BEFORE the golden build. The output lands
+#    at $GITHUB_WORKSPACE/rcore, so build_ecosystem.sh's existing
+#    "Using LOCAL rcore from workspace" staging branch picks it up and
+#    `bench get-app rcore` never runs. build_ecosystem.sh itself is unchanged.
+RUN GIT_TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN}}"; \
+    export MONOREPO_PAT="${GIT_TOKEN}" && \
+    python3 /usr/local/bin/compose_product.py \
+        --product "${PRODUCT}" \
+        --protocol-ref "${PROTOCOL_REF}" \
+        --shell-ref "${RCORE_REF}" \
+        --output /home/frappe/current_repo/rcore
+
+# 2. Golden build — the same invocation as the builder stage.
+RUN GIT_TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN}}"; \
+    chmod +x /usr/local/bin/build_ecosystem.sh && \
+    export BOOTSTRAP=true && export DB_TYPE=postgres && export DB_PW=admin && \
+    export GITHUB_TOKEN="${GIT_TOKEN}" && \
+    export GITHUB_WORKSPACE=/home/frappe/current_repo && \
+    export DB_HOST=${DB_HOST} && \
+    export APP_NAME=$(cat /home/frappe/current_repo/pyproject.toml 2>/dev/null | grep -m1 'name = "' | cut -d'"' -f2 || echo "rpanel") && \
+    /usr/local/bin/build_ecosystem.sh || (cat /tmp/build_ecosystem.log && exit 1)
+
+# No paperclip/rok-paperclip-adapter clone here: this path only feeds tenant
+# images, and the tenant stripper removes those trees anyway.
+
+# Preserve the baked site so the entrypoint can seed an empty volume on first
+# boot (mirrors the builder stage).
+RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
+
+# --- Stage 6B: Composed Tenant Stripper ---
+# Same strip as tenant_stripper (Stage 4A), applied to the composed bench:
+# control/rpanel uninstalled from the baked seed DB while their code still
+# exists, then removed from disk. The rm -rf of rok/paperclip trees is a
+# no-op here (never cloned) but kept identical for symmetry.
+FROM composed_builder AS composed_tenant_stripper
+ARG DB_HOST=127.0.0.1
+WORKDIR /home/frappe/frappe-bench
+RUN export DB_HOST="${DB_HOST}" && \
+    export PATH="/home/frappe/frappe-bench/env/bin:$PATH" && \
+    for site_dir in sites/*/; do \
+        site=$(basename "$site_dir"); \
+        [ -f "$site_dir/site_config.json" ] || continue; \
+        bench --site "$site" uninstall-app control --yes --force 2>&1 || true; \
+        bench --site "$site" uninstall-app rpanel --yes --force 2>&1 || true; \
+    done
+RUN cd apps && \
+    ../env/bin/pip uninstall -y control rpanel || true && \
+    rm -rf control rpanel
+RUN env/bin/pip uninstall -y rok-agent || true && \
+    rm -rf tools/rok /home/frappe/rok-paperclip-adapter /home/frappe/paperclip
+RUN echo "frappe" > sites/apps.txt && \
+    ls -1 apps | grep -v 'frappe' >> sites/apps.txt || true
+
+# --- Stage 6: Composed Tenant (per-product image) ---
+# No lms strip and no per-module surgery here: the product's compose template
+# already defines exactly which modules this image carries.
+FROM base AS tenant_composed
+COPY --from=composed_tenant_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
+WORKDIR /home/frappe/frappe-bench
+USER root
+COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER frappe
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["bench", "start"]
