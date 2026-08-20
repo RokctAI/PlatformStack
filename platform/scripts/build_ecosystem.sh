@@ -796,25 +796,6 @@ fi
 export APP_NAME
 _log "Target App Detected: $APP_NAME"
 
-# A. Standard Dependencies (ERPNext, Payments)
-INSTALL_PAYMENTS=${INSTALL_PAYMENTS:-false}
-if [ "$INSTALL_PAYMENTS" = "true" ]; then
-  _log "Fetching Payments..."
-  if [ ! -d "apps/payments" ]; then
-    bench_step "Fetching Payments" \
-      bench get-app https://github.com/Frappenize/payments.git --branch rokct --resolve-deps --skip-assets
-  fi
-fi
-
-INSTALL_ERPNEXT=${INSTALL_ERPNEXT:-false}
-if [ "$INSTALL_ERPNEXT" = "true" ]; then
-  _log "Fetching ERPNext..."
-  if [ ! -d "apps/erpnext" ]; then
-    bench_step "Fetching ERPNext" \
-      bench get-app https://github.com/Frappenize/erpnext.git --branch rokct --resolve-deps --skip-assets
-  fi
-fi
-
 sync_apps_txt
 
 # 4. Control App Installation (The Installer)
@@ -940,24 +921,19 @@ fi
 _log "RokctAI: Checking stack dependencies..."
 # Only fetch the core apps that build_ecosystem.sh originally fetched.
 # Others are expected to be present or handled by install_stack.py.
-for extra_app in lending rcore; do
+for extra_app in rcore; do
   _log "Checking for $extra_app..."
   if [ -n "$GITHUB_WORKSPACE" ] && [ -d "$GITHUB_WORKSPACE/$extra_app" ]; then
     _log "     Using LOCAL $extra_app from workspace..."
     run_step "Staging $extra_app" bash -c "mkdir -p \"apps/$extra_app\" && cp -r \"$GITHUB_WORKSPACE/$extra_app/.\" \"apps/$extra_app/\""
   elif [ ! -d "apps/$extra_app" ] || [ -z "$(ls -A "apps/$extra_app" 2>/dev/null || true)" ]; then
-    if [ "$extra_app" = "lending" ]; then
-      REPO_URL="https://github.com/Frappenize/lending.git"
-      BRANCH="rokct"
+    REPO_URL="https://github.com/RokctAI/${extra_app}.git"
+    if [ -n "$GITHUB_TOKEN" ]; then REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/${extra_app}.git"; fi
+    if [ "$extra_app" = "rcore" ]; then
+      BRANCH="main"
     else
-      REPO_URL="https://github.com/RokctAI/${extra_app}.git"
-      if [ -n "$GITHUB_TOKEN" ]; then REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/RokctAI/${extra_app}.git"; fi
-      if [ "$extra_app" = "rcore" ]; then
-        BRANCH="main"
-      else
-        BRANCH=$(git ls-remote --tags "$REPO_URL" | grep -vE 'rc|beta|alpha|dev|\^' | awk -F/ '{print $3}' | sort -V -r | head -n1)
-        if [ -z "$BRANCH" ]; then BRANCH="main"; fi
-      fi
+      BRANCH=$(git ls-remote --tags "$REPO_URL" | grep -vE 'rc|beta|alpha|dev|\^' | awk -F/ '{print $3}' | sort -V -r | head -n1)
+      if [ -z "$BRANCH" ]; then BRANCH="main"; fi
     fi
 
     if ! bench_step "Fetching $extra_app" \
@@ -971,6 +947,34 @@ for extra_app in lending rcore; do
 done
 
 sync_apps_txt
+
+# --- 4b. Compose rcore's SDK modules (bare-shell model) ---
+# rCore is (per Ray's 2026-08-20 ruling, landing via rCore #121) a bare Frappe
+# app shell: no committed composed output and no root composer.json — the
+# canonical flavor templates live in The-Rokct-Protocol registry under
+# core/utils/frappe/composer/. This step handles BOTH rcore states:
+#   - bare shell (post-#121): materialize composer.json from the registry's
+#     rcore flavor template, then compose;
+#   - legacy composed tree committed on main (pre-#121): rcore/gateways exists,
+#     so both blocks self-skip and the fetched tree is used as-is.
+# All remote fetches below are pinned to an immutable protocol commit SHA
+# (not a moving branch), consistent with the wave's SHA-pinning; bumping the pin
+# to a newer protocol commit is a deliberate, reviewed change.
+if [ -d "apps/rcore" ] && [ ! -f "apps/rcore/composer.json" ] && [ ! -d "apps/rcore/rcore/gateways" ]; then
+  bench_step "Materializing rcore composer.json from protocol registry" \
+    curl -fsSL https://raw.githubusercontent.com/RokctAI/The-Rokct-Protocol/155f31d24d87d8dcff154c65b4a05fe1d3d05abd/core/utils/frappe/composer/rcore.json -o apps/rcore/composer.json
+fi
+if [ -f "apps/rcore/composer.json" ] && [ ! -d "apps/rcore/rcore/gateways" ]; then
+  bench_step "Composing rcore SDK modules" \
+    bash -c "cd apps/rcore && \
+      if [ -f .rokct/skills/.rok/frappe/scripts/compose.py ]; then COMPOSE_WRAPPER=.rokct/skills/.rok/frappe/scripts/compose.py; \
+      elif [ -f .rokct/skills/frappe/scripts/compose.py ]; then COMPOSE_WRAPPER=.rokct/skills/frappe/scripts/compose.py; \
+      else curl -sSL https://raw.githubusercontent.com/RokctAI/The-Rokct-Protocol/155f31d24d87d8dcff154c65b4a05fe1d3d05abd/core/skills/.rok/frappe/scripts/compose.py -o /tmp/rokct_compose.py && COMPOSE_WRAPPER=/tmp/rokct_compose.py; fi && \
+      MONOREPO_PAT=\"$GITHUB_TOKEN\" python3 \"\$COMPOSE_WRAPPER\""
+  # Compose injects the modules' pip deps (stripe, braintree, razorpay, ...) into
+  # rcore's requirements/pyproject; re-install so the bench env picks them up.
+  run_step "Reinstalling composed rcore" bench pip install -e apps/rcore
+fi
 
 # --- 5. Global Ecosystem Hacks (Post-Fetch) ---
 run_step "Cleaning up empty JSON files" find apps -name "*.json" -size 0 -delete
@@ -1147,10 +1151,6 @@ for py_file in lending_path.rglob("*.py"):
 print(f"Patched {patched} files in lending app")
 PY
     fi
-    if [ "$this_app" = "rcore" ]; then
-      run_step "[$this_app] Stripping 'payments' requirement" sed -i "s/[\"']payments[\"']//g" "apps/$this_app/$this_app/hooks.py"
-    fi
-
   fi
   run_step "[$this_app] Guarding hooks" bash -c "find \"apps/$this_app\" -name \"*.py\" -print0 | xargs -0 -r grep -lZE \"^[[:space:]]+def (on_update|after_insert)\(self[^\)]*\):\" | while IFS= read -r -d '' hook_file; do \
     if grep -q \"# rokct-no-guard\" \"\$hook_file\"; then continue; fi; \
@@ -1259,15 +1259,6 @@ fi
 
 mkdir -p "sites/$SITE_NAME/logs"
 
-# Ensure all dependencies are installed on site
-if [ "$INSTALL_PAYMENTS" = "true" ]; then
-  safe_install_app payments
-fi
-
-if [ "$INSTALL_ERPNEXT" = "true" ]; then
-  safe_install_app erpnext
-fi
-
 # Install the Target App
 safe_install_app "$APP_NAME"
 _log "Current apps directory: $(ls apps)"
@@ -1275,12 +1266,6 @@ _log "Current apps directory: $(ls apps)"
 sync_apps_txt
 
 # Final Migration & App Installation
-if [ -d "apps/lending" ]; then
-  safe_install_app lending
-  bench --site "$SITE_NAME" list-apps 2>/dev/null | grep -q lending &&
-    echo "  - lending installed OK...     DONE" ||
-    _log "WARNING: lending not installed on site"
-fi
 if [ -d "apps/rcore" ]; then safe_install_app rcore; fi
 safe_install_app control
 run_step "Initializing site apps.txt" bash -c "[ -f \"sites/$SITE_NAME/apps.txt\" ] || cp sites/apps.txt \"sites/$SITE_NAME/apps.txt\""

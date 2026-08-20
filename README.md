@@ -42,7 +42,7 @@ The central nervous system. Manages identity, global routing, SSL termination, a
 ### 2. Tenant Spokes (Cloud Business)
 Isolated, high-performance Frappe instances managed by the Control Hub.
 - **Memory Profile**: 2GB Optimized.
-- **Apps**: `rcore`, `brain`, `paas`.
+- **Apps**: `rcore`.
 
 ### 3. IoT/Edge Spokes (Dual-Layer)
 Specialized for hardware-integration (e.g., Drones, Sensors).

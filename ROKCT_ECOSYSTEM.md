@@ -37,27 +37,12 @@ This document serves as the absolute Source of Truth for all active repositories
 
 These standard and customized Frappe applications are dynamically fetched and updated by `install_stack.py` and the Golden Build pipeline to form our backend system:
 
-### 2.1 Core Frameworks & ERP Standard Apps
+### 2.1 Core Framework
 *   **`frappe`**: [Frappenize/frappe](https://github.com/Frappenize/frappe.git) (branch: `rokct`) - Custom-extended core Frappe framework.
-*   **`payments`**: [Frappenize/payments](https://github.com/Frappenize/payments.git) (branch: `rokct`) - Secure billing integrations layer.
-*   **`erpnext`**: [Frappenize/erpnext](https://github.com/Frappenize/erpnext.git) (branch: `rokct`) - Authoritative ERP resource platform.
-*   **`hrms`**: [Frappenize/hrms](https://github.com/Frappenize/hrms.git) (branch: `rokct`) - Human Resource management systems.
 
-### 2.2 Domain & Professional Apps
-*   **`crm`**: no longer a separate app — CRM ships composed inside `rcore` via the productivity SDK (rCore#100); the standalone Frappenize/crm fork is no longer installed.
-*   **`lms`**: [Frappenize/lms](https://github.com/Frappenize/lms.git) (branch: `rokct`) - Learning management systems for onboarding training.
-*   **`lending`**: [Frappenize/lending](https://github.com/Frappenize/lending.git) (branch: `rokct`) - Micro-credit and transactional loan manager.
-*   **`helpdesk`**: [Frappenize/helpdesk](https://github.com/Frappenize/helpdesk.git) (branch: `rokct`) - Support tickets and service level agreements (SLA).
-
-### 2.3 Productivity & Communication Apps
-*   **`raven`**: [Frappenize/raven](https://github.com/Frappenize/raven.git) (branch: `rokct`) - Internal team messaging services.
-*   **`gameplan`**: [Frappenize/gameplan](https://github.com/Frappenize/gameplan.git) (branch: `rokct`) - Team taskboards and visual roadmap orchestrator.
-
-### 2.4 ROKCT Platform Apps (Our Core Layer)
+### 2.2 ROKCT Platform Apps (Our Core Layer)
 *   **`rcore`**: [RokctAI/rcore](https://github.com/RokctAI/rcore.git) (branch: `main`) - Custom Tenant Hub module.
-*   **`rpaas` (PaaS)**: [RokctAI/paas](https://github.com/RokctAI/paas.git) (branch: `main`) - Custom SaaS business plane connector.
 *   **`rpanel`**: [RokctAI/rpanel](https://github.com/RokctAI/rpanel.git) (branch: `main`) - System-wide administration portal app.
-*   **`brain`**: no longer a separate app — merged into `rcore` (Memory Engrams and pgvector semantic query databases; imported as `frappebrain`, an alias for the `rcore` package).
 
 ---
 
@@ -139,7 +124,7 @@ Clone the following core platform repositories, checking out their correct targe
 - Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
-- frappe (branch: rokct), erpnext (branch: rokct), payments (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main). (brain is no longer a separate app — it's merged into rcore. crm is no longer a separate app — it ships composed inside rcore via the productivity SDK.)
+- frappe (branch: rokct), rcore (branch: main).
 
 ### 2. Cross-VPS Decoupling Audit
 Audit rcore and control codebases to ensure absolute cross-VPS safety:
