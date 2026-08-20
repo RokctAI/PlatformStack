@@ -54,7 +54,7 @@ These standard and customized Frappe applications are dynamically fetched and up
 
 ### 2.4 ROKCT Platform Apps (Our Core Layer)
 *   **`rcore`**: [RokctAI/rcore](https://github.com/RokctAI/rcore.git) (branch: `main`) - Custom Tenant Hub module.
-*   **`rpaas` (PaaS)**: [RokctAI/paas](https://github.com/RokctAI/paas.git) (branch: `main`) - Custom SaaS business plane connector.
+*   **`rpaas` (PaaS)**: no longer a separate app — merged into `rcore` (the delivery-platform modules ship composed inside `rcore`; a transition alias keeps legacy `import paas` resolving to the `rcore` package).
 *   **`rpanel`**: [RokctAI/rpanel](https://github.com/RokctAI/rpanel.git) (branch: `main`) - System-wide administration portal app.
 *   **`brain`**: no longer a separate app — merged into `rcore` (Memory Engrams and pgvector semantic query databases; imported as `frappebrain`, an alias for the `rcore` package).
 
@@ -138,7 +138,7 @@ Clone the following core platform repositories, checking out their correct targe
 - Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
-- frappe (branch: rokct), erpnext (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main), paas (branch: main). (brain is no longer a separate app — it's merged into rcore. crm is no longer a separate app — it ships composed inside rcore via the productivity SDK. payments is no longer a separate app — payment gateways ship composed inside rcore via the pay SDK's gateways module.)
+- frappe (branch: rokct), erpnext (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main). (brain is no longer a separate app — it's merged into rcore. crm is no longer a separate app — it ships composed inside rcore via the productivity SDK. payments is no longer a separate app — payment gateways ship composed inside rcore via the pay SDK's gateways module. paas is no longer a separate app — it's merged into rcore, and a transition alias keeps legacy `import paas` working.)
 
 ### 2. Cross-VPS Decoupling Audit
 Audit rcore and control codebases to ensure absolute cross-VPS safety:

@@ -20,8 +20,7 @@
 - **hrms**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **raven**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **gameplan**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **paas**: Will be resolved cleanly dynamically via `install_stack.py` (target: `main`).
-- **brain**: Will be resolved cleanly dynamically via `install_stack.py` (target: `main`).
+- **paas** and **brain**: no longer separate apps — both are merged into `rcore` (paas via a transition alias, brain as the `frappebrain` alias) and are not fetched by `install_stack.py`.
 
 ## 2. Distributed VPS Network Routing Audit
 
