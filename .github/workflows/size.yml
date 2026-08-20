@@ -7,9 +7,6 @@ on:
 
 jobs:
   size:
-    uses: RokctAI/shared-workflows/.github/workflows/universal-size.yml@1941ed0eeedc3aeab408eb6bcd5d58bfa3061e48 # main
-    permissions:
-      contents: read
-      issues: write
-      pull-requests: write
+    uses: RokctAI/shared-workflows/.github/workflows/universal-size.yml@6c22598ecd6a654f40d83ebb704763da5190b9a0 # main
+    permissions: write-all
     secrets: inherit

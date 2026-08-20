@@ -12,7 +12,7 @@ umask 077
 # Ensure the split-config directories exist before writing into them. On a fresh
 # Docker VOLUME the package dirs are masked, so writes would fail under set -e.
 mkdir -p /etc/exim4/conf.d/main /etc/exim4/conf.d/acl /etc/exim4/conf.d/auth \
-         /etc/exim4/conf.d/transport /etc/exim4/conf.d/router
+  /etc/exim4/conf.d/transport /etc/exim4/conf.d/router
 
 # =============================================================================
 # COLORS

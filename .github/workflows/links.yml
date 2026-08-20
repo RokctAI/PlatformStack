@@ -8,5 +8,5 @@ on:
 
 jobs:
   links:
-    uses: RokctAI/shared-workflows/.github/workflows/universal-links.yml@1941ed0eeedc3aeab408eb6bcd5d58bfa3061e48 # main
+    uses: RokctAI/shared-workflows/.github/workflows/universal-links.yml@6c22598ecd6a654f40d83ebb704763da5190b9a0 # main
     secrets: inherit
