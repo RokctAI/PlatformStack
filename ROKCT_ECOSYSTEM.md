@@ -37,14 +37,10 @@ This document serves as the absolute Source of Truth for all active repositories
 
 These standard and customized Frappe applications are dynamically fetched and updated by `install_stack.py` and the Golden Build pipeline to form our backend system:
 
-### 2.1 Core Frameworks & ERP Standard Apps
+### 2.1 Core Framework
 *   **`frappe`**: [Frappenize/frappe](https://github.com/Frappenize/frappe.git) (branch: `rokct`) - Custom-extended core Frappe framework.
-*   **`erpnext`**: [Frappenize/erpnext](https://github.com/Frappenize/erpnext.git) (branch: `rokct`) - Authoritative ERP resource platform.
 
-### 2.2 Domain & Professional Apps
-*   **`lending`**: [Frappenize/lending](https://github.com/Frappenize/lending.git) (branch: `rokct`) - Micro-credit and transactional loan manager.
-
-### 2.3 ROKCT Platform Apps (Our Core Layer)
+### 2.2 ROKCT Platform Apps (Our Core Layer)
 *   **`rcore`**: [RokctAI/rcore](https://github.com/RokctAI/rcore.git) (branch: `main`) - Custom Tenant Hub module.
 *   **`rpanel`**: [RokctAI/rpanel](https://github.com/RokctAI/rpanel.git) (branch: `main`) - System-wide administration portal app.
 
@@ -128,7 +124,7 @@ Clone the following core platform repositories, checking out their correct targe
 - Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
-- frappe (branch: rokct), erpnext (branch: rokct), lending (branch: rokct), rcore (branch: main).
+- frappe (branch: rokct), rcore (branch: main).
 
 ### 2. Cross-VPS Decoupling Audit
 Audit rcore and control codebases to ensure absolute cross-VPS safety:

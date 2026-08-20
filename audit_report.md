@@ -14,8 +14,6 @@
 
 ### Frappe Application Stack Repositories
 - **frappe**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **erpnext**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **lending**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 
 ## 2. Distributed VPS Network Routing Audit
 
