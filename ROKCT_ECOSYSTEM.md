@@ -40,17 +40,11 @@ These standard and customized Frappe applications are dynamically fetched and up
 ### 2.1 Core Frameworks & ERP Standard Apps
 *   **`frappe`**: [Frappenize/frappe](https://github.com/Frappenize/frappe.git) (branch: `rokct`) - Custom-extended core Frappe framework.
 *   **`erpnext`**: [Frappenize/erpnext](https://github.com/Frappenize/erpnext.git) (branch: `rokct`) - Authoritative ERP resource platform.
-*   **`hrms`**: [Frappenize/hrms](https://github.com/Frappenize/hrms.git) (branch: `rokct`) - Human Resource management systems.
 
 ### 2.2 Domain & Professional Apps
 *   **`lending`**: [Frappenize/lending](https://github.com/Frappenize/lending.git) (branch: `rokct`) - Micro-credit and transactional loan manager.
-*   **`helpdesk`**: [Frappenize/helpdesk](https://github.com/Frappenize/helpdesk.git) (branch: `rokct`) - Support tickets and service level agreements (SLA).
 
-### 2.3 Productivity & Communication Apps
-*   **`raven`**: [Frappenize/raven](https://github.com/Frappenize/raven.git) (branch: `rokct`) - Internal team messaging services.
-*   **`gameplan`**: [Frappenize/gameplan](https://github.com/Frappenize/gameplan.git) (branch: `rokct`) - Team taskboards and visual roadmap orchestrator.
-
-### 2.4 ROKCT Platform Apps (Our Core Layer)
+### 2.3 ROKCT Platform Apps (Our Core Layer)
 *   **`rcore`**: [RokctAI/rcore](https://github.com/RokctAI/rcore.git) (branch: `main`) - Custom Tenant Hub module.
 *   **`rpanel`**: [RokctAI/rpanel](https://github.com/RokctAI/rpanel.git) (branch: `main`) - System-wide administration portal app.
 
@@ -134,7 +128,7 @@ Clone the following core platform repositories, checking out their correct targe
 - Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
-- frappe (branch: rokct), erpnext (branch: rokct), lending (branch: rokct), helpdesk (branch: rokct), hrms (branch: rokct), raven (branch: rokct), gameplan (branch: rokct), rcore (branch: main).
+- frappe (branch: rokct), erpnext (branch: rokct), lending (branch: rokct), rcore (branch: main).
 
 ### 2. Cross-VPS Decoupling Audit
 Audit rcore and control codebases to ensure absolute cross-VPS safety:

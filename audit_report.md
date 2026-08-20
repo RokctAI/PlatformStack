@@ -16,10 +16,6 @@
 - **frappe**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **erpnext**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 - **lending**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **helpdesk**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **hrms**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **raven**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
-- **gameplan**: Will be resolved cleanly dynamically via `install_stack.py` (target: `rokct`).
 
 ## 2. Distributed VPS Network Routing Audit
 
