@@ -353,7 +353,13 @@ jobs:
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
             DB_HOST=127.0.0.1
 
+      # NOTE: continue-on-error keeps a broken vector/drone-edge build (an external
+      # repo) from aborting the release of the hub/tenant/supacharge images above,
+      # which are what deploy-master actually ships. A failure here is surfaced as
+      # a workflow warning by the step below instead of killing the whole release.
       - name: Build and Push Drone Edge (Go)
+        id: drone_edge
+        continue-on-error: true
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: docker-context/overrides/vector
@@ -362,6 +368,11 @@ jobs:
           tags: |
             ghcr.io/rokctai/occultation/drone-edge:latest
             ghcr.io/rokctai/occultation/drone-edge:${{ steps.meta.outputs.version }}
+
+      - name: Report Drone Edge Build Outcome
+        if: steps.drone_edge.outcome == 'failure'
+        run: |
+          echo "::warning title=Drone Edge image not released::The Drone Edge (RokctAI/vector) image build failed. The drone-edge image was NOT pushed this run, but the hub/tenant/supacharge release and the Master VPS deploy continue regardless. Fix the vector repo build separately."
 
       - name: Check Database Changes
         id: db-check
@@ -498,7 +509,9 @@ jobs:
     needs: [docker-release, upgrade-test]
     if: always() && needs.docker-release.result == 'success' && (needs.upgrade-test.result == 'success' || needs.upgrade-test.result == 'skipped') && github.ref_name == 'main'
     runs-on: ubuntu-latest
-    continue-on-error: true
+    # Deliberately NO continue-on-error here: if the deploy cannot run (missing or
+    # invalid SSH credentials, unreachable VPS, failed compose pull/up) this job
+    # must show RED. A silent no-op deploy is worse than a visible failure.
     steps:
       - name: Checkout Target Repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -537,16 +550,35 @@ jobs:
             fi
           fi
           
-          if [ -z "$SSH_KEY" ] || [ -z "$SSH_HOST" ]; then
-            echo "⚠️ SSH host or key not found in secrets or production.env config. Skipping VPS CD deployment step."
-            exit 0
+          # --- Honest gate: missing/invalid credentials FAIL the job loudly. ---
+          # (Never print key or host values here — names only.)
+          MISSING=""
+          if [ -z "$SSH_HOST" ]; then
+            MISSING="MASTER_VPS_HOST"
           fi
-          
+          if [ -z "$SSH_KEY" ]; then
+            MISSING="${MISSING:+$MISSING and }MASTER_VPS_SSH_KEY"
+          fi
+          if [ -n "$MISSING" ]; then
+            echo "::error title=Master VPS deploy cannot run::$MISSING not found in Actions secrets or Occultation .env/production.env. Set the missing value(s) so merges to main actually deploy. This job fails RED on purpose until then."
+            exit 1
+          fi
+
           echo "🔐 Setting up SSH connection key..."
           mkdir -p ~/.ssh
-          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          # Support single-line env-file storage: expand literal \n sequences into newlines.
+          printf '%b\n' "$SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
+
+          if ! grep -q "PRIVATE KEY" ~/.ssh/id_rsa; then
+            printf '%s\n' "::error title=Master VPS deploy cannot run::MASTER_VPS_SSH_KEY is not valid private key material (no PEM 'PRIVATE KEY' header found). Store the full private key (multiline, or single-line with \\n escapes) in the Actions secret or in Occultation .env/production.env."
+            exit 1
+          fi
+          if ! ssh-keygen -y -f ~/.ssh/id_rsa >/dev/null 2>&1; then
+            echo "::error title=Master VPS deploy cannot run::MASTER_VPS_SSH_KEY is not valid private key material (ssh-keygen could not parse it). Check for truncation, wrong quoting, or a passphrase-protected key."
+            exit 1
+          fi
+
           echo "🚀 Deploying latest Control Plane container to Master VPS..."
           ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
