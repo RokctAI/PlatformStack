@@ -571,7 +571,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
           if ! grep -q "PRIVATE KEY" ~/.ssh/id_rsa; then
-            echo "::error title=Master VPS deploy cannot run::MASTER_VPS_SSH_KEY is not valid private key material (no PEM 'PRIVATE KEY' header found). Store the full private key (multiline, or single-line with \\n escapes) in the Actions secret or in Occultation .env/production.env."
+            printf '%s\n' "::error title=Master VPS deploy cannot run::MASTER_VPS_SSH_KEY is not valid private key material (no PEM 'PRIVATE KEY' header found). Store the full private key (multiline, or single-line with \\n escapes) in the Actions secret or in Occultation .env/production.env."
             exit 1
           fi
           if ! ssh-keygen -y -f ~/.ssh/id_rsa >/dev/null 2>&1; then
