@@ -13,8 +13,10 @@ RUN echo "CREATE EXTENSION IF NOT EXISTS earthdistance;" >> /docker-entrypoint-i
 
 FROM base AS final
 
-# Add our hands-free automated version upgrade entrypoint wrapper
-COPY scripts/db_upgrade_entrypoint.sh /usr/local/bin/db_upgrade_entrypoint.sh
+# Add our hands-free automated version upgrade entrypoint wrapper.
+# NOTE: the CI build context is the repository root (build.yml passes
+# context: docker-context), so this path must be relative to the repo root.
+COPY platform/scripts/db_upgrade_entrypoint.sh /usr/local/bin/db_upgrade_entrypoint.sh
 RUN chmod +x /usr/local/bin/db_upgrade_entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/db_upgrade_entrypoint.sh"]
