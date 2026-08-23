@@ -7,6 +7,6 @@ on:
 
 jobs:
   label:
-    uses: RokctAI/shared-workflows/.github/workflows/universal-labeler.yml@0baa82d350e5ad1bc8d3950c1417c320fd347c7b # main
+    uses: RokctAI/shared-workflows/.github/workflows/universal-labeler.yml@dd18f9dee1976728aea6156fc6efbf2951d1bc75 # main
     permissions: write-all
     secrets: inherit
