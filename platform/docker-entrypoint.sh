@@ -292,6 +292,11 @@ for f_path in files:
     ;;
   "api")
     echo "🔌 API Mode (Headless Spoke): Starting Gunicorn + Workers..."
+    # Custom backend domains need no dns_multitenant here: `bench use` above
+    # pins the served site, so frappe.app resolves every request to it
+    # regardless of the Host header (the hub proxy also sends
+    # X-Frappe-Site-Name). The hub adds the domain itself post-provision with
+    # `bench setup add-domain <domain> --site <site>` + `set-config host_name`.
     bench worker &
     WORKER_PID=$!
     bench schedule &

@@ -33,6 +33,9 @@ services:
 
   app:
     image: ghcr.io/rokctai/occultation/rpanel-tenant:latest
+    # Stable name so the hub can address this tenant without knowing the
+    # compose project name (`docker exec <site>-app ...`).
+    container_name: ${SITE_NAME}-app
     restart: unless-stopped
     environment:
       - MODE=api
@@ -58,8 +61,24 @@ services:
       resources:
         limits:
           memory: 2G # Limits the tenant to mimic a small VPS environment
+    networks:
+      default: {}
+      # Joined to the hub's shared bridge under a stable alias so the hub nginx
+      # can proxy_pass a tenant's custom backend domain to
+      # http://<site_name>-app:8000. No port is published to the host: the
+      # tenant stays reachable only from containers on rokct_tenants and from
+      # its own project network.
+      rokct_tenants:
+        aliases:
+          - ${SITE_NAME}-app
 
 volumes:
   tenant-db-data:
   tenant-redis-data:
   tenant-sites:
+
+networks:
+  # Created once per host by the hub bring-up (`docker network create
+  # rokct_tenants`); external so tenant `up`/`down` never creates or removes it.
+  rokct_tenants:
+    external: true

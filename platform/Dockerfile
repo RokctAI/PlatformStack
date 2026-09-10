@@ -94,8 +94,16 @@ RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
 # Stage 3: Control Hub (Full Image)
 FROM builder AS full
 USER root
-RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools openssl && apt-get clean && rm -rf /var/lib/apt/lists/*
-VOLUME ["/etc/exim4", "/var/spool/exim4", "/var/log/exim4", "/etc/opendkim", "/etc/nginx", "/var/log/nginx", "/etc/cron.d"]
+# certbot (+ the nginx plugin rpanel's provisioner expects alongside it) so
+# rpanel's certificate issuance works inside this container: rpanel runs
+# `sudo certbot certonly --webroot -w <webroot> -d <domain>` for a tenant's
+# custom backend domain (rpanel/hosting/utils.py run_certbot). The ACME webroot
+# for proxy vhosts is /var/www/letsencrypt (served by nginx at
+# /.well-known/acme-challenge/ before the certificate exists); certbot's state
+# lives in /etc/letsencrypt, persisted by the control-letsencrypt volume.
+RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools openssl certbot python3-certbot-nginx && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/www/letsencrypt && chown frappe:www-data /var/www/letsencrypt && chmod 755 /var/www/letsencrypt
+VOLUME ["/etc/exim4", "/var/spool/exim4", "/var/log/exim4", "/etc/opendkim", "/etc/nginx", "/var/log/nginx", "/etc/cron.d", "/etc/letsencrypt"]
 RUN chmod -R 777 /var/log/nginx /var/lib/nginx
 WORKDIR /home/frappe/frappe-bench
 COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

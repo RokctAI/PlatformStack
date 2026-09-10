@@ -74,6 +74,8 @@ rokctPlatformStack/
 │   ├── docker-compose.yml      # Control Hub Production Stack
 │   ├── docker-compose.tenant.yml
 │   ├── docker-compose.iot.yml  # Official Drone Brain
+│   ├── juvo-shell/Dockerfile   # Generic VPS-hosted Next.js shell image
+│   ├── juvo-shell.env.example  # Runtime env NAMES for the juvo shell
 │   └── scripts/
 │       ├── build_ecosystem.sh  # Build Orchestrator
 │       └── exim4_bootstrap.sh  # Production Mail Setup
@@ -97,12 +99,63 @@ DEPLOY_MODE=bench ./install.sh
 
 ### 2. Dockerized Deployment
 ```bash
-# Cloud Control Hub
+# Cloud Control Hub (the shared tenant bridge must exist first; idempotent)
+docker network create rokct_tenants || true
 cd platform && docker compose up -d
 
 # Drone Mission Brain (IoT)
 cd platform && docker compose -f docker-compose.iot.yml up -d
 ```
+
+### 3. Tenant backend domains (shared `rokct_tenants` network)
+
+A tenant's backend Frappe site gets a custom domain automatically: the hub
+nginx (rpanel, co-installed in the hub container) terminates
+`https://<custom domain>` and proxies it to the tenant's `app` container. For
+that to work the two containers have to share a network, and the hub has to
+be able to issue certificates. This is what `platform/` provides:
+
+| Piece | Where | Why |
+| :--- | :--- | :--- |
+| `rokct_tenants` external bridge | `docker-compose.yml`, `docker-compose.tenant.yml` | The hub `app` and every tenant `app` join it. Declared `external: true` so no project creates or removes it; create it once per host with `docker network create rokct_tenants` (the Master VPS deploy step does this before `docker compose up`). |
+| `<site_name>-app` alias + container name | `docker-compose.tenant.yml` | Stable upstream for the vhost: `proxy_pass http://<site_name>-app:8000`. Tenants publish **no** host port; they are reachable only from containers on `rokct_tenants` and their own project network. |
+| `certbot` + `python3-certbot-nginx` | `Dockerfile` (`full` stage) | rpanel issues certs with `sudo certbot certonly --webroot -w <webroot> -d <domain>` (`rpanel/hosting/utils.py`). The ACME webroot for proxy vhosts is `/var/www/letsencrypt` (owned by `frappe`, served at `/.well-known/acme-challenge/` before the cert exists). |
+| `control-letsencrypt` volume | `docker-compose.yml` | `/etc/letsencrypt` (certs, renewal configs, account keys) survives container recreation. |
+| No `dns_multitenant` | `docker-entrypoint.sh` (`api` mode) | `bench use` pins the served site, so any Host header reaches it; the hub adds the domain post-provision with `bench setup add-domain` + `set-config host_name`. |
+
+Notes for the vhost writer (rpanel): nginx inside the hub runs as
+`nginx -g 'daemon off;'`, so reload with `nginx -s reload`, not `systemctl`.
+Docker's embedded DNS (`127.0.0.11`) resolves the alias; use
+`resolver 127.0.0.11 valid=10s;` with a variable upstream if a tenant
+container's IP may change between reloads. Tenants provisioned on a remote
+VPS (`target_vps_ip`) are outside this network; create `rokct_tenants` on
+that host too before bringing a tenant up there, since the template declares
+it external.
+
+### 4. VPS-hosted shell (`juvo-shell`)
+
+The juvo (delivery platform) Next.js shell runs on this VPS behind the hub
+nginx instead of Vercel; other shells stay on Vercel. `docker-compose.yml`
+builds it from `RokctAI/delivery-frontend` at the pinned ref
+(`JUVO_SHELL_REF`, default `main`; set a commit SHA for reproducible images)
+with `platform/juvo-shell/Dockerfile`, which mirrors the shell's own build
+(`npm ci && bash scripts/compose.sh && npm run build`, composing offline
+from the committed SDK cache) and then runs `next start` on port 3000. The
+image is generic: any shell that follows that model can reuse it via the
+`SHELL_REPO` / `SHELL_REF` build args.
+
+- The service joins `rokct_tenants` under the alias `juvo-shell` and is
+  **not** published to the host. rpanel proxies a tenant's shell domain the
+  same way it proxies a backend domain, with `http://juvo-shell:3000` as
+  the upstream (plus `Host`, `X-Forwarded-For` and `X-Forwarded-Proto`
+  headers and the ACME location for the certificate).
+- Runtime environment is declared by name only in
+  `platform/juvo-shell.env.example`; copy it to `platform/juvo-shell.env`
+  (gitignored, optional for `docker compose config`) on the VPS and fill the
+  values there. `NEXT_PUBLIC_*` values are inlined at build time, so pass
+  `NEXT_PUBLIC_SITE_URL` as a build arg as well.
+- Private shell repos: pass a BuildKit secret named `git_token` to the
+  build; it is used for the fetch only and never written to a layer.
 
 ---
 
