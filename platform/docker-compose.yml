@@ -61,7 +61,15 @@ services:
       - control-nginx-config:/etc/nginx
       - control-nginx-logs:/var/log/nginx
       - control-cron:/etc/cron.d
+      # Let's Encrypt state (certs, renewal configs, account keys) issued by
+      # rpanel's certbot for tenant backend domains. Must outlive the container.
+      - control-letsencrypt:/etc/letsencrypt
       - ../..:/workspace
+    networks:
+      - default
+      # Shared bridge with every tenant compose project so the hub nginx can
+      # proxy_pass https://<custom domain> -> http://<site_name>-app:8000.
+      - rokct_tenants
     depends_on:
       db:
         condition: service_healthy
@@ -73,6 +81,43 @@ services:
       # Raw bench/gunicorn port: bound to localhost only (in-cluster peers reach
       # it as http://app:8000 over the compose network, not via the host).
       - "127.0.0.1:8000:8000"
+
+  juvo-shell:
+    # The juvo (delivery platform) Next.js shell, hosted on this VPS behind the
+    # hub nginx instead of Vercel. Built from RokctAI/delivery-frontend at the
+    # pinned ref (see platform/juvo-shell/Dockerfile; generic for any shell that
+    # composes from its committed SDK cache). Listens on 3000 on the shared
+    # rokct_tenants bridge only - never published to the host; rpanel writes
+    # the vhost that proxies a tenant's shell domain to http://juvo-shell:3000.
+    build:
+      context: ./juvo-shell
+      args:
+        SHELL_REPO: ${JUVO_SHELL_REPO:-https://github.com/RokctAI/delivery-frontend.git}
+        SHELL_REF: ${JUVO_SHELL_REF:-main}
+    image: rokct/juvo-shell:${JUVO_SHELL_REF:-main}
+    restart: unless-stopped
+    env_file:
+      # Names only in juvo-shell.env.example; copy it to juvo-shell.env (gitignored)
+      # and fill the values on the VPS. Optional so `docker compose config`
+      # works on a clean checkout.
+      - path: ./juvo-shell.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      default: {}
+      rokct_tenants:
+        aliases:
+          - juvo-shell
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    depends_on:
+      app:
+        condition: service_started
 
   gravity:
     image: ghcr.io/rokctai/occultation/gravity:latest
@@ -107,3 +152,12 @@ volumes:
   control-nginx-config:
   control-nginx-logs:
   control-cron:
+  control-letsencrypt:
+
+networks:
+  # Externally managed so it survives `docker compose down` of any single
+  # project and can be joined by tenant projects brought up from other
+  # directories. Create once per host: `docker network create rokct_tenants`
+  # (the Master VPS deploy step in .github/workflows/build.yml does this).
+  rokct_tenants:
+    external: true

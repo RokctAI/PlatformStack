@@ -105,3 +105,6 @@ yarn-error.log*
 .svn/
 .swiftpm/
 migrate_working_dir/
+
+# Filled runtime env for the VPS-hosted shell (names only live in juvo-shell.env.example)
+platform/juvo-shell.env

@@ -588,8 +588,11 @@ jobs:
           fi
 
           echo "🚀 Deploying latest Control Plane container to Master VPS..."
+          # rokct_tenants is declared external in docker-compose.yml and every
+          # tenant compose project, so it must exist before any `up` (idempotent).
           ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
+            (docker network create rokct_tenants 2>/dev/null || true) &&
             docker compose pull &&
             docker compose up -d
           "
