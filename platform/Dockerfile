@@ -81,11 +81,19 @@ RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-
     npm install && \
     npm run build
 
-# Clone Paperclip Host and link rok-paperclip-adapter
-RUN git clone --depth 1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip && \
+# Clone Paperclip Host and link rok-paperclip-adapter.
+# Pinned to an upstream release tag (v2026.831.1 = 65ec059b) so main stops
+# breaking on upstream drift; bump the tag deliberately.
+# --legacy-peer-deps: upstream is a pnpm workspace with no package-lock, and
+# npm 10.9 (nodesource node 22) crashes in arborist's peer-set resolution with
+# "Cannot read properties of null (reading 'edgesOut')" on vitest 4.x's
+# optional peer cycle (vitest <-> @vitest/browser-playwright, since
+# @vitest/browser-playwright@5.0.0 was published on 2026-09-03). Skipping
+# auto-peer resolution installs the same root devDependencies as before.
+RUN git clone --depth 1 --branch v2026.831.1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip && \
     cd /home/frappe/paperclip && \
-    npm install && \
-    npm install /home/frappe/rok-paperclip-adapter
+    npm install --legacy-peer-deps && \
+    npm install --legacy-peer-deps /home/frappe/rok-paperclip-adapter
 
 # Preserve the baked site so the entrypoint can seed an empty volume on first boot
 # (Named volume mounts shadow the image layers, so we keep a backup outside /sites)
