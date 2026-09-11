@@ -71,17 +71,17 @@ Here is the exact step-by-step setup procedure that gets baked inside the Contro
 ### 1. Clone the Paperclip Host
 Inside the Control Plane's builder phase, clone the main Paperclip repository into `/home/frappe/paperclip`:
 ```bash
-git clone --depth 1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip
+git clone --depth 1 --branch v2026.831.1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip
 ```
 
 ### 2. Link the Rebranded `rok-paperclip-adapter`
 During the dependency installation phase, instead of fetching the upstream adapter from NPM, register your customized local adapter branch (`rokct`):
 ```bash
 cd /home/frappe/paperclip
-npm install
+npm install --legacy-peer-deps
 
 # Install the locally compiled ROK Paperclip Adapter directly into Paperclip
-npm install /home/frappe/rok-paperclip-adapter
+npm install --legacy-peer-deps /home/frappe/rok-paperclip-adapter
 ```
 
 ### 3. Configure the Paperclip Environment (`/home/frappe/paperclip/.env`)
@@ -121,7 +121,7 @@ Clone the following core platform repositories, checking out their correct targe
 - The-Rokct-Protocol: https://github.com/RokctAI/The-Rokct-Protocol.git (branch: main)
 - ROK Core: https://github.com/RokctAI/ROK.git (branch: rokct)
 - ROK Paperclip Adapter: https://github.com/RokctAI/rok-paperclip-adapter.git (branch: rokct)
-- Paperclip Host: https://github.com/paperclipai/paperclip.git (branch: main)
+- Paperclip Host: https://github.com/paperclipai/paperclip.git (tag: v2026.831.1, pinned in platform/Dockerfile)
 
 Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
 - frappe (branch: rokct), rcore (branch: main).
