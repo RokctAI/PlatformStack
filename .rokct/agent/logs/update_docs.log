@@ -3036,3 +3036,124 @@
 2026-09-19 01:06:10,440 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_compose_product.md <- platform/scripts/compose_product.py
 2026-09-19 01:06:10,442 - INFO - Auto-creating missing documentation for: platform/scripts/log_evidence.py
 2026-09-19 01:06:10,447 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_log_evidence.md <- platform/scripts/log_evidence.py
+2026-09-20 07:29:56,517 - INFO - Detected stacks: dart, frappe for /home/runner/work/PlatformStack/PlatformStack
+2026-09-20 07:29:56,523 - INFO - Auto-creating missing documentation for: .shared-workflows/templates/render-harness/render_screen_test.dart
+2026-09-20 07:29:56,715 - DEBUG - Sending Groq groq/compound request for load (Payload: 318 bytes)
+2026-09-20 07:29:57,834 - INFO - ✅ Successfully generated AI doc for load using groq/compound.
+2026-09-20 07:29:57,835 - DEBUG - Sending Groq groq/compound request for main (Payload: 242 bytes)
+2026-09-20 07:29:59,430 - INFO - ✅ Successfully generated AI doc for main using groq/compound.
+2026-09-20 07:29:59,431 - INFO - Auto-created missing doc: dart/docs/api/.shared-workflows_templates_render-harness_render_screen_test.md <- .shared-workflows/templates/render-harness/render_screen_test.dart
+2026-09-20 07:29:59,432 - INFO - Auto-creating missing documentation for: .shared-workflows/templates/tour-app/guided_tour_test.dart
+2026-09-20 07:29:59,433 - DEBUG - Sending Groq groq/compound request for main (Payload: 242 bytes)
+2026-09-20 07:30:00,610 - INFO - ✅ Successfully generated AI doc for main using groq/compound.
+2026-09-20 07:30:00,610 - INFO - Auto-created missing doc: dart/docs/api/.shared-workflows_templates_tour-app_guided_tour_test.md <- .shared-workflows/templates/tour-app/guided_tour_test.dart
+2026-09-20 07:30:00,620 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/audit_inputs_and_drift.py
+2026-09-20 07:30:00,670 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_audit_inputs_and_drift.md <- .shared-workflows/scripts/audit_inputs_and_drift.py
+2026-09-20 07:30:00,673 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_usage_badge.py
+2026-09-20 07:30:00,673 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_usage_badge.md <- .shared-workflows/scripts/update_usage_badge.py
+2026-09-20 07:30:00,696 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/standardize_fleet.py
+2026-09-20 07:30:00,793 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_standardize_fleet.md <- .shared-workflows/scripts/standardize_fleet.py
+2026-09-20 07:30:00,797 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/pr_auto_labeler.py
+2026-09-20 07:30:00,881 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_pr_auto_labeler.md <- .shared-workflows/scripts/pr_auto_labeler.py
+2026-09-20 07:30:00,884 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/pr_footer_cleanup.py
+2026-09-20 07:30:00,926 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_pr_footer_cleanup.md <- .shared-workflows/scripts/pr_footer_cleanup.py
+2026-09-20 07:30:00,951 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/sdk_validator.py
+2026-09-20 07:30:01,048 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_sdk_validator.md <- .shared-workflows/scripts/sdk_validator.py
+2026-09-20 07:30:01,053 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_readme_badges.py
+2026-09-20 07:30:01,053 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_readme_badges.md <- .shared-workflows/scripts/update_readme_badges.py
+2026-09-20 07:30:01,126 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_docs.py
+2026-09-20 07:30:01,643 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_docs.md <- .shared-workflows/scripts/update_docs.py
+2026-09-20 07:30:01,647 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/fleet_compliance.py
+2026-09-20 07:30:01,647 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_fleet_compliance.md <- .shared-workflows/scripts/fleet_compliance.py
+2026-09-20 07:30:01,662 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance_scanner.py
+2026-09-20 07:30:01,695 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_scanner.md <- .shared-workflows/scripts/compliance_scanner.py
+2026-09-20 07:30:01,704 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_18.py
+2026-09-20 07:30:01,803 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_18.md <- .shared-workflows/scripts/compliance/layer_18.py
+2026-09-20 07:30:01,804 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_17.py
+2026-09-20 07:30:01,804 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_17.md <- .shared-workflows/scripts/compliance/layer_17.py
+2026-09-20 07:30:01,805 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_16.py
+2026-09-20 07:30:01,806 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_16.md <- .shared-workflows/scripts/compliance/layer_16.py
+2026-09-20 07:30:01,809 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_11.py
+2026-09-20 07:30:01,810 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_11.md <- .shared-workflows/scripts/compliance/layer_11.py
+2026-09-20 07:30:01,811 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/__init__.py
+2026-09-20 07:30:01,822 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance___init__.md <- .shared-workflows/scripts/compliance/__init__.py
+2026-09-20 07:30:01,825 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/config.py
+2026-09-20 07:30:01,855 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_config.md <- .shared-workflows/scripts/compliance/config.py
+2026-09-20 07:30:01,857 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_15.py
+2026-09-20 07:30:01,864 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_15.md <- .shared-workflows/scripts/compliance/layer_15.py
+2026-09-20 07:30:01,867 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_10.py
+2026-09-20 07:30:01,867 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_10.md <- .shared-workflows/scripts/compliance/layer_10.py
+2026-09-20 07:30:01,868 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_14.py
+2026-09-20 07:30:01,868 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_14.md <- .shared-workflows/scripts/compliance/layer_14.py
+2026-09-20 07:30:01,870 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_13.py
+2026-09-20 07:30:01,870 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_13.md <- .shared-workflows/scripts/compliance/layer_13.py
+2026-09-20 07:30:01,889 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_12.py
+2026-09-20 07:30:02,018 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_12.md <- .shared-workflows/scripts/compliance/layer_12.py
+2026-09-20 07:30:02,019 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_8.py
+2026-09-20 07:30:02,019 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_8.md <- .shared-workflows/scripts/compliance/layer_8.py
+2026-09-20 07:30:02,020 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_6.py
+2026-09-20 07:30:02,020 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_6.md <- .shared-workflows/scripts/compliance/layer_6.py
+2026-09-20 07:30:02,024 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_4_5.py
+2026-09-20 07:30:02,024 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_4_5.md <- .shared-workflows/scripts/compliance/layer_4_5.py
+2026-09-20 07:30:02,026 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_2.py
+2026-09-20 07:30:02,026 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_2.md <- .shared-workflows/scripts/compliance/layer_2.py
+2026-09-20 07:30:02,027 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_19.py
+2026-09-20 07:30:02,028 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_19.md <- .shared-workflows/scripts/compliance/layer_19.py
+2026-09-20 07:30:02,029 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_7.py
+2026-09-20 07:30:02,029 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_7.md <- .shared-workflows/scripts/compliance/layer_7.py
+2026-09-20 07:30:02,034 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/controls.py
+2026-09-20 07:30:02,039 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_controls.md <- .shared-workflows/scripts/compliance/controls.py
+2026-09-20 07:30:02,044 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/base.py
+2026-09-20 07:30:02,067 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_base.md <- .shared-workflows/scripts/compliance/base.py
+2026-09-20 07:30:02,068 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_9.py
+2026-09-20 07:30:02,068 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_9.md <- .shared-workflows/scripts/compliance/layer_9.py
+2026-09-20 07:30:02,070 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_3.py
+2026-09-20 07:30:02,074 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_3.md <- .shared-workflows/scripts/compliance/layer_3.py
+2026-09-20 07:30:02,098 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/play/upload_listing_assets.py
+2026-09-20 07:30:02,242 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_play_upload_listing_assets.md <- .shared-workflows/scripts/play/upload_listing_assets.py
+2026-09-20 07:30:02,319 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_render_strip_compose.py
+2026-09-20 07:30:02,690 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_render_strip_compose.md <- .shared-workflows/scripts/tests/test_render_strip_compose.py
+2026-09-20 07:30:02,695 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_pr_footer_cleanup.py
+2026-09-20 07:30:02,696 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_pr_footer_cleanup.md <- .shared-workflows/scripts/tests/test_pr_footer_cleanup.py
+2026-09-20 07:30:02,699 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_immersive_dialog.py
+2026-09-20 07:30:02,778 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_immersive_dialog.md <- .shared-workflows/scripts/tests/test_tour_immersive_dialog.py
+2026-09-20 07:30:02,781 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_caption_fit.py
+2026-09-20 07:30:02,782 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_caption_fit.md <- .shared-workflows/scripts/tests/test_tour_caption_fit.py
+2026-09-20 07:30:02,787 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_tablet_gesture_nav.py
+2026-09-20 07:30:02,806 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_tablet_gesture_nav.md <- .shared-workflows/scripts/tests/test_tour_tablet_gesture_nav.py
+2026-09-20 07:30:02,812 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_play_tablet_curation.py
+2026-09-20 07:30:02,829 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_play_tablet_curation.md <- .shared-workflows/scripts/tests/test_play_tablet_curation.py
+2026-09-20 07:30:02,832 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_deadline_radar_boundary.py
+2026-09-20 07:30:02,832 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_deadline_radar_boundary.md <- .shared-workflows/scripts/tests/test_deadline_radar_boundary.py
+2026-09-20 07:30:02,844 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_tablet_landscape.py
+2026-09-20 07:30:02,877 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_tablet_landscape.md <- .shared-workflows/scripts/tests/test_tour_tablet_landscape.py
+2026-09-20 07:30:02,884 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_duplicate_shots.py
+2026-09-20 07:30:02,947 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_duplicate_shots.md <- .shared-workflows/scripts/tests/test_tour_duplicate_shots.py
+2026-09-20 07:30:02,961 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_play_deploy_guards.py
+2026-09-20 07:30:03,004 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_play_deploy_guards.md <- .shared-workflows/scripts/tests/test_play_deploy_guards.py
+2026-09-20 07:30:03,014 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_template_placeholders_and_prune.py
+2026-09-20 07:30:03,114 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_template_placeholders_and_prune.md <- .shared-workflows/scripts/tests/test_template_placeholders_and_prune.py
+2026-09-20 07:30:03,119 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_readme_render_strip.py
+2026-09-20 07:30:03,136 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_readme_render_strip.md <- .shared-workflows/scripts/tests/test_tour_readme_render_strip.py
+2026-09-20 07:30:03,258 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_compliance_layers.py
+2026-09-20 07:30:03,498 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_compliance_layers.md <- .shared-workflows/scripts/tests/test_compliance_layers.py
+2026-09-20 07:30:03,501 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_demo_email.py
+2026-09-20 07:30:03,502 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_demo_email.md <- .shared-workflows/scripts/tests/test_tour_demo_email.py
+2026-09-20 07:30:03,508 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_sdk_validator_discovery.py
+2026-09-20 07:30:03,542 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_sdk_validator_discovery.md <- .shared-workflows/scripts/tests/test_sdk_validator_discovery.py
+2026-09-20 07:30:03,577 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/render/compose_strip.py
+2026-09-20 07:30:03,840 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_render_compose_strip.md <- .shared-workflows/scripts/render/compose_strip.py
+2026-09-20 07:30:03,865 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/deadline-radar/check_deadlines.py
+2026-09-20 07:30:03,983 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_deadline-radar_check_deadlines.md <- .shared-workflows/scripts/deadline-radar/check_deadlines.py
+2026-09-20 07:30:04,094 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/assemble.py
+2026-09-20 07:30:04,608 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_assemble.md <- .shared-workflows/scripts/tour/assemble.py
+2026-09-20 07:30:04,629 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/merge_fragments.py
+2026-09-20 07:30:04,747 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_merge_fragments.md <- .shared-workflows/scripts/tour/merge_fragments.py
+2026-09-20 07:30:04,766 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/capture_screenshots.py
+2026-09-20 07:30:04,897 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_capture_screenshots.md <- .shared-workflows/scripts/tour/capture_screenshots.py
+2026-09-20 07:30:04,910 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/readme_sections.py
+2026-09-20 07:30:05,054 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_readme_sections.md <- .shared-workflows/scripts/tour/readme_sections.py
+2026-09-20 07:30:05,063 - INFO - Auto-creating missing documentation for: platform/scripts/compose_product.py
+2026-09-20 07:30:05,149 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_compose_product.md <- platform/scripts/compose_product.py
+2026-09-20 07:30:05,151 - INFO - Auto-creating missing documentation for: platform/scripts/log_evidence.py
+2026-09-20 07:30:05,155 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_log_evidence.md <- platform/scripts/log_evidence.py
