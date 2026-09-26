@@ -433,10 +433,11 @@ jobs:
 
   upgrade-test:
     needs: [pipeline, docker-release]
-    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@09494edd4824cc6fca95ea96a2db4d238c4561b3 # shared-workflows main @ 2026-08-26
+    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@a343bc307ab7de001b3a6ef4220786528b33b2bc # shared-workflows main @ 2026-09-26 (#542)
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
       min_legacy_version: '2.4.8'
+      pre_deploy_command: 'docker network create rokct_tenants 2>/dev/null || true'
     secrets: inherit
 
   rollback-images:
