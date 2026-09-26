@@ -95,6 +95,9 @@ services:
         SHELL_REPO: ${JUVO_SHELL_REPO:-https://github.com/RokctAI/delivery-frontend.git}
         SHELL_REF: ${JUVO_SHELL_REF:-main}
     image: rokct/juvo-shell:${JUVO_SHELL_REF:-main}
+    # Locally built only (no registry image): stop `docker compose pull` from
+    # trying to pull it; `up` builds it from ./juvo-shell instead.
+    pull_policy: build
     restart: unless-stopped
     env_file:
       # Names only in juvo-shell.env.example; copy it to juvo-shell.env (gitignored)
