@@ -347,7 +347,9 @@ DOMAIN_LIST=$(echo "${MAIL_DOMAINS}" | tr ' ' ':')
 
 # Matches the live mail host: one router at 150, forwarding only addresses
 # without a local mailbox. Drop the old 850 copy so a re-run never leaves two
-# routers named catch_all_forward (Exim refuses that config).
+# routers named catch_all_forward (Exim refuses that config). No no_verify:
+# recipient verification at RCPT must see this router, or catch-all addresses
+# are rejected as "Unrouteable address".
 rm -f /etc/exim4/conf.d/router/850_exim4-config_catch_all_forward
 cat >/etc/exim4/conf.d/router/150_exim4-config_catch_all_forward <<EOF
 catch_all_forward:
@@ -355,7 +357,6 @@ catch_all_forward:
   domains = ${DOMAIN_LIST}
   condition = \${if !exists{/var/mail/\${local_part}}}
   data = ${FORWARD_TO}
-  no_verify
 EOF
 
 done_ok
