@@ -38,7 +38,7 @@ fail() {
 PRIMARY_HOSTNAME="${PRIMARY_HOSTNAME:-mail.juvo.app}"
 FORCE_REGEN_DKIM="${FORCE_REGEN_DKIM:-0}"
 
-MAIL_DOMAINS="${MAIL_DOMAINS:-juvo.app rokct.ai}"
+MAIL_DOMAINS="${MAIL_DOMAINS:-juvo.app rokct.ai supacharge.school}"
 
 FORWARD_TO="${FORWARD_TO:-sinyage@gmail.com}"
 
