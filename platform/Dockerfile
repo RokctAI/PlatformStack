@@ -100,6 +100,8 @@ RUN git clone --depth 1 --branch v2026.831.1 https://github.com/paperclipai/pape
 RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
 
 # Stage 3: Control Hub (Full Image)
+# DEPRECATED for release: the hub now ships from `full_composed` (Stage 7,
+# PRODUCT=rokctapp). Kept for rollback/local builds.
 FROM builder AS full
 USER root
 # certbot (+ the nginx plugin rpanel's provisioner expects alongside it) so
@@ -247,6 +249,7 @@ ARG DB_HOST=127.0.0.1
 # Which product template to compose (core/utils/frappe/composer/<PRODUCT>.json).
 # PRODUCT=rcore composes the full 26-module manifest — the closest parity to
 # what rcore's own composer.json declares.
+# The hub passes PRODUCT=rokctapp (target full_composed, see Stage 7).
 ARG PRODUCT=rcore
 # Pin PROTOCOL_REF to a commit SHA for reproducible builds; "main" works but
 # floats (the resolved SHA is logged either way).
@@ -320,6 +323,45 @@ WORKDIR /home/frappe/frappe-bench
 USER root
 COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+USER frappe
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["bench", "start"]
+
+# =============================================================================
+# Composed Control Hub (MODE=full) — decided 2026-10-24
+# =============================================================================
+# The hub's rcore app is composed from The-Rokct-Protocol template
+# core/utils/frappe/composer/rokctapp.json. The hub release job in
+# .github/workflows/build.yml builds target `full_composed` with
+# PRODUCT=rokctapp. The ARG PRODUCT default in composed_builder stays `rcore`
+# because tenant_composed shares that stage and passes its own PRODUCT
+# (workflow input `composed-product`). The legacy `full` target (bench get-app
+# rcore) is kept, deprecated, for rollback; removal needs explicit sign-off.
+
+# --- Stage 7A: Composed Hub Builder ---
+# composed_builder plus the paperclip pieces the hub carries (same as builder).
+FROM composed_builder AS hub_composed_builder
+RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter && \
+    cd /home/frappe/rok-paperclip-adapter && \
+    npm install && \
+    npm run build
+RUN git clone --depth 1 --branch v2026.831.1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip && \
+    cd /home/frappe/paperclip && \
+    npm install --legacy-peer-deps && \
+    npm install --legacy-peer-deps /home/frappe/rok-paperclip-adapter
+
+# --- Stage 7: Composed Control Hub (Full Image) ---
+# Identical runtime layer to Stage 3 (full); only the bench underneath differs.
+FROM hub_composed_builder AS full_composed
+USER root
+RUN apt-get update && apt-get install -y nginx exim4-daemon-heavy opendkim opendkim-tools openssl certbot python3-certbot-nginx && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/www/letsencrypt && chown frappe:www-data /var/www/letsencrypt && chmod 755 /var/www/letsencrypt
+VOLUME ["/etc/exim4", "/var/spool/exim4", "/var/log/exim4", "/etc/opendkim", "/etc/nginx", "/var/log/nginx", "/etc/cron.d", "/etc/letsencrypt"]
+RUN chmod -R 777 /var/log/nginx /var/lib/nginx
+WORKDIR /home/frappe/frappe-bench
+COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY --chown=root:root platform/scripts/exim4_bootstrap.sh /usr/local/bin/exim4_bootstrap.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/exim4_bootstrap.sh
 USER frappe
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["bench", "start"]
