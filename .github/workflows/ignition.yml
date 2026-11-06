@@ -10,9 +10,23 @@ on:
         type: string
         default: main
         description: "RokctAI/core ref that holds Ignition"
+      protocol-ref:
+        type: string
+        default: main
+        description: "The-Rokct-Protocol ref for the rokctapp compose (pin a SHA for a release)"
+      rcore-ref:
+        type: string
+        default: main
+        description: "rcore shell ref for the rokctapp compose"
   pull_request:
     paths:
       - ".github/workflows/ignition.yml"
+      - "platform/ignition.Dockerfile"
+      - "platform/ignition/**"
+      - "platform/scripts/build_ignition_root.sh"
+      - "platform/scripts/build_ignition_image.sh"
+      - "platform/scripts/compose_product.py"
+      - "platform/scripts/patch_frappe_v16.py"
 
 permissions:
   contents: read
@@ -117,3 +131,34 @@ jobs:
           ign restore "$SITE" "$(basename "$STAMP")" --persona it-persona --force
           ign migrate "$SITE"
           ign prune "$SITE" --keep 1
+
+  # Ignition + Frappe v16 + composed rokctapp (rcore, 12 modules) in one image
+  # (platform/ignition.Dockerfile). Build and smoke test only: no DB or Redis
+  # here; the stack file and the real-stack run are later steps.
+  rokctapp-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: RokctAI/core
+          ref: ${{ inputs.core-ref || 'main' }}
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+          path: .ignition-core
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - name: Build and smoke test ignition_rokctapp
+        env:
+          MONOREPO_PAT: ${{ secrets.MONOREPO_PAT }}
+          PROTOCOL_REF: ${{ inputs.protocol-ref || 'main' }}
+          RCORE_REF: ${{ inputs.rcore-ref || 'main' }}
+        run: |
+          platform/scripts/build_ignition_image.sh \
+            --core .ignition-core \
+            --tag ignition-rokctapp:ci \
+            --protocol-ref "$PROTOCOL_REF" \
+            --rcore-ref "$RCORE_REF"
+      - name: Build provenance
+        run: docker run --rm --entrypoint cat ignition-rokctapp:ci /opt/ignition/ignition_build.json
