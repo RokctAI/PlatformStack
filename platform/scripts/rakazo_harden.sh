@@ -12,41 +12,79 @@ SIGNUP_ALLOWLIST_VALUE="${SIGNUP_ALLOWLIST:-}"
 
 [ -f "${ENV_FILE}" ] || { echo "ERROR: env file not found: ${ENV_FILE}" >&2; exit 1; }
 
-# set_kv KEY VALUE: replace an active or commented line, else append.
+# set_kv KEY VALUE: replace ALL active lines; else uncomment the first
+# commented one; else append. Value is passed via the environment (no escaping).
 set_kv() {
-  local key="$1" val="$2"
-  if grep -qE "^#?[[:space:]]*${key}=" "${ENV_FILE}"; then
-    sed -i -E "0,/^#?[[:space:]]*${key}=.*/s||${key}=${val}|" "${ENV_FILE}"
-  else
-    printf '%s=%s\n' "${key}" "${val}" >>"${ENV_FILE}"
-  fi
+  KV_KEY="$1" KV_VAL="$2" python3 - "${ENV_FILE}" <<'PY'
+import os, re, sys
+p = sys.argv[1]; k = os.environ["KV_KEY"]; v = os.environ["KV_VAL"]
+lines = open(p).read().split("\n")
+act = [i for i, l in enumerate(lines) if re.match(rf"^\s*{re.escape(k)}=", l)]
+if act:
+    for n, i in enumerate(act):
+        lines[i] = f"{k}={v}" if n == 0 else None
+    lines = [l for l in lines if l is not None]
+else:
+    com = [i for i, l in enumerate(lines) if re.match(rf"^#\s*{re.escape(k)}=", l)]
+    if com:
+        lines[com[0]] = f"{k}={v}"
+    else:
+        if lines and lines[-1] == "":
+            lines.pop()
+        lines.append(f"{k}={v}"); lines.append("")
+open(p, "w").write("\n".join(lines))
+PY
+}
+
+# has_value KEY: true when the last active assignment is non-empty (not "" or '').
+has_value() {
+  local v
+  v=$(grep -E "^[[:space:]]*$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
+  v="${v%\"}"; v="${v#\"}"; v="${v%\'}"; v="${v#\'}"
+  [ -n "${v}" ]
+}
+
+# verify KEY VALUE: the file must now end with exactly this assignment.
+FAILED=0
+verify() {
+  local got
+  got=$(grep -E "^[[:space:]]*$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
+  if [ "${got}" != "$2" ]; then echo "ERROR: $1 is not '$2' after edit" >&2; FAILED=1; fi
 }
 
 # 1. Sign-ups: closed unless an allowlist is given.
 if [ -n "${SIGNUP_ALLOWLIST_VALUE}" ]; then
   set_kv SIGNUPS_ENABLED true
   set_kv SIGNUP_ALLOWLIST "${SIGNUP_ALLOWLIST_VALUE}"
+  verify SIGNUPS_ENABLED true; verify SIGNUP_ALLOWLIST "${SIGNUP_ALLOWLIST_VALUE}"
   echo "signups: allowlist only"
 else
   set_kv SIGNUPS_ENABLED false
+  verify SIGNUPS_ENABLED false
   echo "signups: closed"
 fi
 
 # 2. Sandbox computers: public-internet egress only (no host/LAN/metadata).
 set_kv SANDBOX_COMPUTER_EGRESS restricted
+verify SANDBOX_COMPUTER_EGRESS restricted
 echo "sandbox egress: restricted"
 
 # 3. Never allow plain-http secrets to private hosts.
 set_kv RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP 0
+verify RAKAZO_SECRETS_ALLOW_PRIVATE_HTTP 0
 echo "private-http secrets: off"
 
-# 4. Required secrets must exist (shape only, values never printed).
-for k in BETTER_AUTH_SECRET ENCRYPTION_KEY SANDBOX_SUPERVISOR_TOKEN; do
-  if ! grep -qE "^${k}=.+" "${ENV_FILE}"; then
+# 4. Required secrets (shape only, values never printed). ENCRYPTION_KEY is
+#    only generated on request: a new key makes stored secrets unreadable.
+for k in BETTER_AUTH_SECRET SANDBOX_SUPERVISOR_TOKEN ENCRYPTION_KEY; do
+  if has_value "${k}"; then
+    echo "${k}: set"
+  elif [ "${k}" = "ENCRYPTION_KEY" ] && [ "${RAKAZO_GENERATE_ENCRYPTION_KEY:-0}" != "1" ]; then
+    echo "ERROR: ENCRYPTION_KEY is empty. Set it from the key store, or RAKAZO_GENERATE_ENCRYPTION_KEY=1 on a brand-new install only." >&2
+    FAILED=1
+  else
     set_kv "${k}" "$(openssl rand -hex 32)"
     echo "${k}: generated"
-  else
-    echo "${k}: set"
   fi
 done
 chmod 600 "${ENV_FILE}"
@@ -112,4 +150,6 @@ echo "docker socket: proxy override written to ${OVERRIDE} (apply it with docker
 # 6. Approvals are a per-user setting (not env): remind, cannot force.
 echo "RESIDUAL RISK: the proxy blocks most Docker calls, but the supervisor can still create containers, so a compromised supervisor can still start a privileged container and reach the host (and Frappe). Keep the supervisor image current."
 echo "NOTE: keep each user's Approvals mode on Ask or Auto, never 'Never ask'; avoid 'Always allow' on our own backend for bots that browse the web."
+[ "${FAILED}" = "0" ] || { echo "FAILED: see errors above" >&2; exit 1; }
+echo "Restart the Rakazo stack for these changes to apply."
 echo "done"
