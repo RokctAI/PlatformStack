@@ -211,7 +211,10 @@ def pin_manifest(manifest, token):
     return pins
 
 
-def git_commit_all(repo_dir, message):
+def git_commit_all(repo_dir, message, force_paths=()):
+    """Stage everything (plus force_paths, even when .gitignore lists them)
+    and commit. A no-op when nothing changed, so an unchanged manifest does
+    not fail the build with git's "nothing to commit"."""
     env = dict(
         os.environ,
         GIT_AUTHOR_NAME="compose_product",
@@ -220,6 +223,14 @@ def git_commit_all(repo_dir, message):
         GIT_COMMITTER_EMAIL="compose_product@rokct.ai",
     )
     run(["git", "-C", repo_dir, "add", "-A"], env=env)
+    for path in force_paths:
+        run(["git", "-C", repo_dir, "add", "-f", "--", path], env=env)
+    staged = subprocess.run(
+        ["git", "-C", repo_dir, "diff", "--cached", "--quiet"], env=env
+    )
+    if staged.returncode == 0:
+        log("nothing new to commit in the shell clone")
+        return
     run(["git", "-C", repo_dir, "commit", "-m", message, "--no-verify"], env=env)
 
 
@@ -327,13 +338,17 @@ def main():
 
         # The manifest must be COMMITTED into the shell clone: the composer's
         # main() starts with `git restore . && git clean -fd`, which would
-        # wipe an uncommitted working-copy manifest.
+        # wipe an uncommitted working-copy manifest. Shells that resolve
+        # their template from the registry list /composer.json in
+        # .gitignore, so it is force-added; without that, `git add -A`
+        # stages nothing and the commit fails ("nothing to commit").
         with open(os.path.join(shell_dir, "composer.json"), "w", encoding="utf-8") as fh:
             json.dump(manifest, fh, indent=2)
             fh.write("\n")
         git_commit_all(
             shell_dir,
             f"compose_product: pin '{args.product}' template refs for image build",
+            force_paths=("composer.json",),
         )
 
         env = dict(os.environ)
