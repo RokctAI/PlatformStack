@@ -101,7 +101,7 @@ RUN cp -a /home/frappe/frappe-bench/sites /home/frappe/frappe-bench-image-sites
 
 # Stage 3: Control Hub (Full Image)
 # DEPRECATED for release: the hub now ships from `full_composed` (Stage 7,
-# PRODUCT=rokctapp). Kept for rollback/local builds.
+# PRODUCT=rokcthub). Kept for rollback/local builds.
 FROM builder AS full
 USER root
 # certbot (+ the nginx plugin rpanel's provisioner expects alongside it) so
@@ -249,7 +249,7 @@ ARG DB_HOST=127.0.0.1
 # Which product template to compose (core/utils/frappe/composer/<PRODUCT>.json).
 # PRODUCT=rcore composes the full 26-module manifest — the closest parity to
 # what rcore's own composer.json declares.
-# The hub passes PRODUCT=rokctapp (target full_composed, see Stage 7).
+# The hub passes PRODUCT=rokcthub (target full_composed, see Stage 7).
 ARG PRODUCT=rcore
 # Pin PROTOCOL_REF to a commit SHA for reproducible builds; "main" works but
 # floats (the resolved SHA is logged either way).
@@ -331,9 +331,9 @@ CMD ["bench", "start"]
 # Composed Control Hub (MODE=full) — decided 2026-10-24
 # =============================================================================
 # The hub's rcore app is composed from The-Rokct-Protocol template
-# core/utils/frappe/composer/rokctapp.json. The hub release job in
-# .github/workflows/build.yml builds target `full_composed` with
-# PRODUCT=rokctapp. The ARG PRODUCT default in composed_builder stays `rcore`
+# core/utils/frappe/composer/rokcthub.json (rokctapp.json until 2026-11-06).
+# The hub release job in .github/workflows/build.yml builds target
+# `full_composed` with PRODUCT=rokcthub. The ARG PRODUCT default in composed_builder stays `rcore`
 # because tenant_composed shares that stage and passes its own PRODUCT
 # (workflow input `composed-product`). The legacy `full` target (bench get-app
 # rcore) is kept, deprecated, for rollback; removal needs explicit sign-off.

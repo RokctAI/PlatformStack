@@ -62,7 +62,7 @@ on:
       protocol-ref:
         type: string
         default: 'main'
-        description: "The-Rokct-Protocol ref for the composed hub (rokctapp) and composed tenant builds (pin a commit SHA for reproducible builds)"
+        description: "The-Rokct-Protocol ref for the composed hub (rokcthub) and composed tenant builds (pin a commit SHA for reproducible builds)"
 
 jobs:
   # --- 1. DETECT PROJECT TYPE & UPSTREAM UPDATES ---
@@ -298,8 +298,10 @@ jobs:
         with:
           context: docker-context
           file: docker-context/platform/Dockerfile
-          # Hub rcore is composed from The-Rokct-Protocol rokctapp.json
-          # (decided 2026-10-24). Tenant targets below keep their own PRODUCT.
+          # Hub rcore is composed from The-Rokct-Protocol rokcthub.json: the
+          # rokctapp module set plus fleet, provisioning and the control
+          # personas of subscriptions/wallet (hub-only), with control cohosted.
+          # Tenant targets below keep their own PRODUCT.
           target: full_composed
           network: host
           push: true
@@ -311,7 +313,7 @@ jobs:
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
             DB_HOST=127.0.0.1
-            PRODUCT=rokctapp
+            PRODUCT=rokcthub
             PROTOCOL_REF=${{ inputs.protocol-ref || 'main' }}
 
       - name: Build and Push Tenant Spoke (Tenant)
