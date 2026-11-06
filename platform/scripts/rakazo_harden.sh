@@ -91,6 +91,9 @@ chmod 600 "${ENV_FILE}"
 
 # 5. Shared host (Rakazo runs beside Frappe): replace the raw Docker socket
 #    mount with a filtering socket proxy, on an internal-only network.
+#    NOTE: this proxy limits Docker endpoints only. It does NOT stop a compromised
+#    supervisor creating a privileged container or exec-ing into any container
+#    (including Frappe). Needs Docker Compose >= 2.24 (uses !override).
 #    Writes an override file; start with: docker compose -f <base> -f docker-compose.hardening.yml up -d
 OVERRIDE="${RAKAZO_OVERRIDE_FILE:-$(dirname "${ENV_FILE}")/docker-compose.hardening.yml}"
 cat >"${OVERRIDE}" <<'YML'
@@ -148,7 +151,7 @@ chmod 600 "${OVERRIDE}"
 echo "docker socket: proxy override written to ${OVERRIDE} (apply it with docker compose -f ... -f ${OVERRIDE})"
 
 # 6. Approvals are a per-user setting (not env): remind, cannot force.
-echo "RESIDUAL RISK: the proxy blocks most Docker calls, but the supervisor can still create containers, so a compromised supervisor can still start a privileged container and reach the host (and Frappe). Keep the supervisor image current."
+echo "RESIDUAL RISK: the proxy only removes volume/system/build/swarm endpoints. It does NOT stop a compromised supervisor from creating a privileged container or running commands in ANY container on this host, including Frappe. Keep the supervisor image current."
 echo "NOTE: keep each user's Approvals mode on Ask or Auto, never 'Never ask'; avoid 'Always allow' on our own backend for bots that browse the web."
 [ "${FAILED}" = "0" ] || { echo "FAILED: see errors above" >&2; exit 1; }
 echo "Restart the Rakazo stack for these changes to apply."
