@@ -81,3 +81,28 @@ jobs:
       - name: Real Frappe integration test
         working-directory: core/pulsar
         run: python -m unittest tests.test_ignition_integration -v
+      - name: Drive the real CLI, as a person would
+        working-directory: core/pulsar
+        env:
+          IGNITION_ROOT: ${{ github.workspace }}/it-root
+        run: |
+          set -eux
+          ign() { python -m pulsar.ignition "$@"; }
+          SITE=cli-site.localhost
+          ign new-site "$SITE" --persona it-persona
+          ign migrate "$SITE"
+          STAMP=$(ign backup "$SITE" | tail -n 1)
+          echo "backup set: $STAMP"
+          ign serve --detach --port 8000
+          ign worker --detach
+          ign scheduler --detach
+          sleep 15
+          ign status
+          curl -fsS -H "Host: $SITE" http://127.0.0.1:8000/api/method/ping
+          ign stop web
+          ign stop worker
+          ign stop scheduler
+          ign status
+          ign restore "$SITE" "$(basename "$STAMP")" --persona it-persona --force
+          ign migrate "$SITE"
+          ign prune "$SITE" --keep 1
