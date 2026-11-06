@@ -97,6 +97,8 @@ apps = open("/opt/ignition/sites/apps.txt").read().split()
 assert apps[:2] == ["frappe", "rcore"], apps
 assert frappe.__version__.startswith("16."), frappe.__version__
 b = json.load(open("/opt/ignition/ignition_build.json"))
+assert b["frappe"]["patches"] == ["fixtures-duplicate-key", "link-filters-json-list"], b["frappe"]
+assert json.load(open("/opt/ignition/sites/common_site_config.json"))["db_type"] == "postgres"
 print("frappe", frappe.__version__, b["frappe"]["sha"][:12], "| rcore modules:", " ".join(b["rcore_modules"]))
 '
 echo "--- smoke: no token in the image"

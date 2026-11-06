@@ -26,6 +26,7 @@ on:
       - "platform/scripts/build_ignition_root.sh"
       - "platform/scripts/build_ignition_image.sh"
       - "platform/scripts/compose_product.py"
+      - "platform/scripts/patch_frappe_v16.py"
 
 permissions:
   contents: read

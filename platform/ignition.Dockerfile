@@ -50,20 +50,26 @@ ARG PROTOCOL_REF=main
 ARG RCORE_REF=main
 ARG FRAPPE_REPO=https://github.com/frappe/frappe
 ARG FRAPPE_REF=version-16-hotfix
+# rokctapp needs Postgres: on MariaDB rcore's `users` module collides with
+# Frappe v16's `Users` (case-insensitive Module Def key).
+ARG DB_TYPE=postgres
 
 COPY platform/scripts/compose_product.py /usr/local/lib/ignition-build/compose_product.py
 COPY platform/scripts/build_ignition_root.sh /usr/local/lib/ignition-build/build_ignition_root.sh
+COPY platform/scripts/patch_frappe_v16.py /usr/local/lib/ignition-build/patch_frappe_v16.py
 
-# Compose (ROKCT_COMPOSE_STRICT=1), clone Frappe, create /opt/ignition/env and
-# pip install frappe + the composed app + its requirements.
+# Compose (ROKCT_COMPOSE_STRICT=1), clone and patch Frappe, create
+# /opt/ignition/env and pip install frappe + the composed app + its requirements.
 RUN --mount=type=secret,id=git_token,required=false \
     COMPOSE_PY=/usr/local/lib/ignition-build/compose_product.py \
+    PATCH_FRAPPE_PY=/usr/local/lib/ignition-build/patch_frappe_v16.py \
     bash /usr/local/lib/ignition-build/build_ignition_root.sh \
         --root /opt/ignition \
         --product "${PRODUCT}" \
         --protocol-ref "${PROTOCOL_REF}" \
         --rcore-ref "${RCORE_REF}" \
         --frappe-ref "${FRAPPE_REF}" \
+        --db-type "${DB_TYPE}" \
         --python python3 \
         --token-file /run/secrets/git_token
 
@@ -83,6 +89,7 @@ RUN /opt/ignition/env/bin/pip install \
 
 # --- Stage 2: runtime ----------------------------------------------------------
 FROM ${PYTHON_IMAGE} AS ignition_rokctapp
+ARG DB_TYPE=postgres
 ENV DEBIAN_FRONTEND=noninteractive
 # Runtime libraries for mysqlclient/psycopg/Pillow, DB clients for Ignition's
 # backup/restore (mysqldump/mysql, pg_dump/psql), git for Frappe's version info.
@@ -116,7 +123,8 @@ ENV PATH="/opt/ignition/env/bin:${PATH}" \
     PYTHONPATH=/opt/pulsar \
     PYTHONUNBUFFERED=1 \
     IGNITION_ROOT=/opt/ignition \
-    IGNITION_HOST=0.0.0.0
+    IGNITION_HOST=0.0.0.0 \
+    IGNITION_DB_TYPE=${DB_TYPE}
 
 # sites/ holds site data and the stack-written common_site_config.json;
 # backups/ holds Ignition backup sets. Code is not in a volume, so a new

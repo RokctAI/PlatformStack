@@ -40,9 +40,11 @@ PROTOCOL_REPO="${PROTOCOL_REPO:-https://github.com/RokctAI/The-Rokct-Protocol}"
 RCORE_REF="${RCORE_REF:-main}"
 FRAPPE_REPO="${FRAPPE_REPO:-https://github.com/frappe/frappe}"
 FRAPPE_REF="${FRAPPE_REF:-version-16-hotfix}"
+DB_TYPE="${DB_TYPE:-postgres}"
 PYTHON_BIN=""
 TOKEN_FILE=""
 COMPOSE_PY="${COMPOSE_PY:-$SCRIPT_DIR/compose_product.py}"
+PATCH_FRAPPE_PY="${PATCH_FRAPPE_PY:-$SCRIPT_DIR/patch_frappe_v16.py}"
 
 usage() {
   cat <<'EOF'
@@ -55,11 +57,15 @@ Usage: build_ignition_root.sh --root DIR [options]
                         a file:// clone lets you test a template change)
   --rcore-ref REF       rcore shell ref (default main)
   --frappe-ref REF      frappe/frappe ref (default version-16-hotfix)
+  --db-type TYPE        db_type written to sites/common_site_config.json
+                        (default postgres; mariadb cannot host rokctapp)
   --python BIN          also create DIR/env with BIN (Python 3.14 for Frappe v16)
                         and pip install frappe, the composed app and its deps
   --token-file FILE     read the git token from FILE instead of the environment
 
-The compose always runs with ROKCT_COMPOSE_STRICT=1.
+The compose always runs with ROKCT_COMPOSE_STRICT=1. Frappe gets the build-time
+patches of patch_frappe_v16.py (see platform/ignition/README.md); the build
+fails if one no longer applies.
 EOF
 }
 
@@ -71,6 +77,7 @@ while [ $# -gt 0 ]; do
     --protocol-repo) PROTOCOL_REPO="$2"; shift 2 ;;
     --rcore-ref) RCORE_REF="$2"; shift 2 ;;
     --frappe-ref) FRAPPE_REF="$2"; shift 2 ;;
+    --db-type) DB_TYPE="$2"; shift 2 ;;
     --python) PYTHON_BIN="$2"; shift 2 ;;
     --token-file) TOKEN_FILE="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -79,6 +86,10 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$ROOT" ] || { usage >&2; exit 2; }
+case "$DB_TYPE" in
+  postgres|mariadb) ;;
+  *) echo "--db-type must be postgres or mariadb, not: $DB_TYPE" >&2; exit 2 ;;
+esac
 
 log() { echo "[ignition-root] $*"; }
 die() { echo "[ignition-root] ERROR: $*" >&2; exit 1; }
@@ -142,20 +153,30 @@ git clone --quiet --depth 1 --branch "$FRAPPE_REF" "$FRAPPE_REPO" "$APPS/frappe"
 FRAPPE_SHA="$(git -C "$APPS/frappe" rev-parse HEAD)"
 log "frappe resolved to $FRAPPE_SHA"
 
+# Stock Frappe v16 plus small build-time patches (no fork). Each one must
+# match its exact target text or the build stops here.
+log "patching frappe (platform/scripts/patch_frappe_v16.py)"
+FRAPPE_PATCHES="$(python3 "$PATCH_FRAPPE_PY" "$APPS/frappe" | paste -sd, -)"
+[ -n "$FRAPPE_PATCHES" ] || die "frappe patch step reported no patches"
+log "frappe patches: $FRAPPE_PATCHES"
+
 # --- 3. apps.txt (frappe first) and build provenance --------------------------
 printf 'frappe\nrcore\n' > "$SITES/apps.txt"
-[ -f "$SITES/common_site_config.json" ] || echo '{}' > "$SITES/common_site_config.json"
+[ -f "$SITES/common_site_config.json" ] || \
+  printf '{\n "db_type": "%s"\n}\n' "$DB_TYPE" > "$SITES/common_site_config.json"
 
-python3 - "$ROOT" "$PRODUCT" "$FRAPPE_REPO" "$FRAPPE_REF" "$FRAPPE_SHA" <<'PY'
+python3 - "$ROOT" "$PRODUCT" "$FRAPPE_REPO" "$FRAPPE_REF" "$FRAPPE_SHA" "$FRAPPE_PATCHES" "$DB_TYPE" <<'PY'
 import json, os, sys, time
-root, product, frepo, fref, fsha = sys.argv[1:6]
+root, product, frepo, fref, fsha, fpatches, db_type = sys.argv[1:8]
 with open(os.path.join(root, "apps", "rcore", "composed_provenance.json")) as f:
     composed = json.load(f)
 with open(os.path.join(root, "apps", "rcore", "rcore", "modules.txt")) as f:
     modules = [line.strip() for line in f if line.strip()]
 out = {
     "product": product,
-    "frappe": {"repo": frepo, "ref_requested": fref, "sha": fsha},
+    "frappe": {"repo": frepo, "ref_requested": fref, "sha": fsha,
+               "patches": fpatches.split(",")},
+    "db_type": db_type,
     "rcore": composed,
     "rcore_modules": modules,
     "apps_txt": ["frappe", "rcore"],

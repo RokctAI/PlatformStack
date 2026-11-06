@@ -17,6 +17,8 @@
 # (platform/ignition.Dockerfile). sites/ is a volume, so the app list baked
 # into the image is put back into sites/apps.txt on every start: baked apps
 # first, in baked order (frappe first), then any other app already listed.
+# A sites volume without common_site_config.json gets one with db_type
+# IGNITION_DB_TYPE (default postgres).
 # Then the Ignition runner runs with the given arguments (serve, worker,
 # scheduler, new-site, migrate, backup, restore, ...).
 set -eu
@@ -24,6 +26,7 @@ umask 027
 
 IGNITION_ROOT="${IGNITION_ROOT:-/opt/ignition}"
 IGNITION_HOST="${IGNITION_HOST:-0.0.0.0}"
+IGNITION_DB_TYPE="${IGNITION_DB_TYPE:-postgres}"
 export IGNITION_ROOT IGNITION_HOST
 
 SITES="$IGNITION_ROOT/sites"
@@ -39,7 +42,9 @@ if [ -f "$BAKED" ] && [ -d "$SITES" ] && [ -w "$SITES" ]; then
     fi
   } > "$tmp"
   mv "$tmp" "$APPS_TXT"
-  [ -f "$SITES/common_site_config.json" ] || printf '{}\n' > "$SITES/common_site_config.json"
+  # A fresh sites volume defaults to Postgres; a config the stack wrote is kept.
+  [ -f "$SITES/common_site_config.json" ] || \
+    printf '{\n "db_type": "%s"\n}\n' "$IGNITION_DB_TYPE" > "$SITES/common_site_config.json"
 fi
 
 exec python -m pulsar.ignition "$@"
