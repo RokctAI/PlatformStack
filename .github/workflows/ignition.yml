@@ -27,6 +27,7 @@ jobs:
           ref: ${{ inputs.core-ref || 'main' }}
           token: ${{ secrets.MONOREPO_PAT || github.token }}
           path: core
+          persist-credentials: false
       - run: cd core && docker build -f docker/ignition/Dockerfile -t ignition .
       - name: Image starts and reports status
         run: docker run --rm ignition --help
@@ -56,6 +57,7 @@ jobs:
           ref: ${{ inputs.core-ref || 'main' }}
           token: ${{ secrets.MONOREPO_PAT || github.token }}
           path: core
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
