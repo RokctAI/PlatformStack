@@ -40,11 +40,11 @@ if [ -f "$BAKED" ] && [ -d "$SITES" ] && [ -w "$SITES" ]; then
     if [ -f "$APPS_TXT" ]; then
       grep -vxF -f "$BAKED" "$APPS_TXT" | grep -v '^[[:space:]]*$' || true
     fi
-  } > "$tmp"
+  } >"$tmp"
   mv "$tmp" "$APPS_TXT"
   # A fresh sites volume defaults to Postgres; a config the stack wrote is kept.
-  [ -f "$SITES/common_site_config.json" ] || \
-    printf '{\n "db_type": "%s"\n}\n' "$IGNITION_DB_TYPE" > "$SITES/common_site_config.json"
+  [ -f "$SITES/common_site_config.json" ] ||
+    printf '{\n "db_type": "%s"\n}\n' "$IGNITION_DB_TYPE" >"$SITES/common_site_config.json"
 fi
 
 exec python -m pulsar.ignition "$@"

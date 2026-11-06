@@ -71,34 +71,77 @@ EOF
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --root) ROOT="$2"; shift 2 ;;
-    --product) PRODUCT="$2"; shift 2 ;;
-    --protocol-ref) PROTOCOL_REF="$2"; shift 2 ;;
-    --protocol-repo) PROTOCOL_REPO="$2"; shift 2 ;;
-    --rcore-ref) RCORE_REF="$2"; shift 2 ;;
-    --frappe-ref) FRAPPE_REF="$2"; shift 2 ;;
-    --db-type) DB_TYPE="$2"; shift 2 ;;
-    --python) PYTHON_BIN="$2"; shift 2 ;;
-    --token-file) TOKEN_FILE="$2"; shift 2 ;;
-    -h|--help) usage; exit 0 ;;
-    *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  --root)
+    ROOT="$2"
+    shift 2
+    ;;
+  --product)
+    PRODUCT="$2"
+    shift 2
+    ;;
+  --protocol-ref)
+    PROTOCOL_REF="$2"
+    shift 2
+    ;;
+  --protocol-repo)
+    PROTOCOL_REPO="$2"
+    shift 2
+    ;;
+  --rcore-ref)
+    RCORE_REF="$2"
+    shift 2
+    ;;
+  --frappe-ref)
+    FRAPPE_REF="$2"
+    shift 2
+    ;;
+  --db-type)
+    DB_TYPE="$2"
+    shift 2
+    ;;
+  --python)
+    PYTHON_BIN="$2"
+    shift 2
+    ;;
+  --token-file)
+    TOKEN_FILE="$2"
+    shift 2
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "unknown argument: $1" >&2
+    usage >&2
+    exit 2
+    ;;
   esac
 done
 
-[ -n "$ROOT" ] || { usage >&2; exit 2; }
+[ -n "$ROOT" ] || {
+  usage >&2
+  exit 2
+}
 case "$DB_TYPE" in
-  postgres|mariadb) ;;
-  *) echo "--db-type must be postgres or mariadb, not: $DB_TYPE" >&2; exit 2 ;;
+postgres | mariadb) ;;
+*)
+  echo "--db-type must be postgres or mariadb, not: $DB_TYPE" >&2
+  exit 2
+  ;;
 esac
 
 log() { echo "[ignition-root] $*"; }
-die() { echo "[ignition-root] ERROR: $*" >&2; exit 1; }
+die() {
+  echo "[ignition-root] ERROR: $*" >&2
+  exit 1
+}
 
 # --- git token (never echoed) -------------------------------------------------
 TOKEN=""
 if [ -n "$TOKEN_FILE" ]; then
   if [ -s "$TOKEN_FILE" ]; then
-    TOKEN="$(tr -d '\r\n' < "$TOKEN_FILE")"
+    TOKEN="$(tr -d '\r\n' <"$TOKEN_FILE")"
   fi
 else
   TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN:-}}"
@@ -114,9 +157,9 @@ fi
 with_git_auth() {
   if [ -n "$TOKEN" ]; then
     GIT_CONFIG_COUNT=1 \
-    GIT_CONFIG_KEY_0="url.https://x-access-token:${TOKEN}@github.com/.insteadOf" \
-    GIT_CONFIG_VALUE_0="https://github.com/" \
-    MONOREPO_PAT="$TOKEN" \
+      GIT_CONFIG_KEY_0="url.https://x-access-token:${TOKEN}@github.com/.insteadOf" \
+      GIT_CONFIG_VALUE_0="https://github.com/" \
+      MONOREPO_PAT="$TOKEN" \
       "$@"
   else
     env -u MONOREPO_PAT -u GITHUB_TOKEN "$@"
@@ -161,9 +204,9 @@ FRAPPE_PATCHES="$(python3 "$PATCH_FRAPPE_PY" "$APPS/frappe" | paste -sd, -)"
 log "frappe patches: $FRAPPE_PATCHES"
 
 # --- 3. apps.txt (frappe first) and build provenance --------------------------
-printf 'frappe\nrcore\n' > "$SITES/apps.txt"
-[ -f "$SITES/common_site_config.json" ] || \
-  printf '{\n "db_type": "%s"\n}\n' "$DB_TYPE" > "$SITES/common_site_config.json"
+printf 'frappe\nrcore\n' >"$SITES/apps.txt"
+[ -f "$SITES/common_site_config.json" ] ||
+  printf '{\n "db_type": "%s"\n}\n' "$DB_TYPE" >"$SITES/common_site_config.json"
 
 python3 - "$ROOT" "$PRODUCT" "$FRAPPE_REPO" "$FRAPPE_REF" "$FRAPPE_SHA" "$FRAPPE_PATCHES" "$DB_TYPE" <<'PY'
 import json, os, sys, time

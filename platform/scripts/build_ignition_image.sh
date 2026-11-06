@@ -47,23 +47,66 @@ EOF
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --core) CORE="$2"; shift 2 ;;
-    --tag) TAG="$2"; shift 2 ;;
-    --product) PRODUCT="$2"; shift 2 ;;
-    --protocol-ref) PROTOCOL_REF="$2"; shift 2 ;;
-    --rcore-ref) RCORE_REF="$2"; shift 2 ;;
-    --frappe-ref) FRAPPE_REF="$2"; shift 2 ;;
-    --no-smoke) SMOKE=0; shift ;;
-    -h|--help) usage; exit 0 ;;
-    *) echo "unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  --core)
+    CORE="$2"
+    shift 2
+    ;;
+  --tag)
+    TAG="$2"
+    shift 2
+    ;;
+  --product)
+    PRODUCT="$2"
+    shift 2
+    ;;
+  --protocol-ref)
+    PROTOCOL_REF="$2"
+    shift 2
+    ;;
+  --rcore-ref)
+    RCORE_REF="$2"
+    shift 2
+    ;;
+  --frappe-ref)
+    FRAPPE_REF="$2"
+    shift 2
+    ;;
+  --no-smoke)
+    SMOKE=0
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  *)
+    echo "unknown argument: $1" >&2
+    usage >&2
+    exit 2
+    ;;
   esac
 done
 
-[ -n "$CORE" ] || { usage >&2; exit 2; }
-[ -d "$CORE/pulsar/pulsar/ignition" ] || { echo "no Ignition under $CORE/pulsar/pulsar" >&2; exit 2; }
-[ -f "$CORE/docker/ignition/bench" ] || { echo "no $CORE/docker/ignition/bench" >&2; exit 2; }
-command -v docker >/dev/null || { echo "docker is not installed" >&2; exit 3; }
-docker info >/dev/null 2>&1 || { echo "docker daemon is not reachable" >&2; exit 3; }
+[ -n "$CORE" ] || {
+  usage >&2
+  exit 2
+}
+[ -d "$CORE/pulsar/pulsar/ignition" ] || {
+  echo "no Ignition under $CORE/pulsar/pulsar" >&2
+  exit 2
+}
+[ -f "$CORE/docker/ignition/bench" ] || {
+  echo "no $CORE/docker/ignition/bench" >&2
+  exit 2
+}
+command -v docker >/dev/null || {
+  echo "docker is not installed" >&2
+  exit 3
+}
+docker info >/dev/null 2>&1 || {
+  echo "docker daemon is not reachable" >&2
+  exit 3
+}
 
 SECRET_ARGS=()
 if [ -n "${MONOREPO_PAT:-}" ]; then
@@ -103,8 +146,8 @@ print("frappe", frappe.__version__, b["frappe"]["sha"][:12], "| rcore modules:",
 '
 echo "--- smoke: no token in the image"
 if docker run --rm --entrypoint sh "$TAG" -c \
-    'grep -rIlE "x-access-token:[A-Za-z0-9_]{20,}@" /opt/ignition /opt/pulsar /home/ignition 2>/dev/null | head -n 5' \
-    | grep -q .; then
+  'grep -rIlE "x-access-token:[A-Za-z0-9_]{20,}@" /opt/ignition /opt/pulsar /home/ignition 2>/dev/null | head -n 5' |
+  grep -q .; then
   echo "found x-access-token in the image" >&2
   exit 1
 fi
