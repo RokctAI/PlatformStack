@@ -19,7 +19,7 @@ set_kv() {
 import os, re, sys
 p = sys.argv[1]; k = os.environ["KV_KEY"]; v = os.environ["KV_VAL"]
 lines = open(p).read().split("\n")
-act = [i for i, l in enumerate(lines) if re.match(rf"^\s*{re.escape(k)}=", l)]
+act = [i for i, l in enumerate(lines) if re.match(rf"^\s*(?:export\s+)?{re.escape(k)}=", l)]
 if act:
     for n, i in enumerate(act):
         lines[i] = f"{k}={v}" if n == 0 else None
@@ -39,7 +39,7 @@ PY
 # has_value KEY: true when the last active assignment is non-empty (not "" or '').
 has_value() {
   local v
-  v=$(grep -E "^[[:space:]]*$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
+  v=$(grep -E "^[[:space:]]*(export[[:space:]]+)?$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
   v="${v%\"}"; v="${v#\"}"; v="${v%\'}"; v="${v#\'}"
   [ -n "${v}" ]
 }
@@ -48,7 +48,7 @@ has_value() {
 FAILED=0
 verify() {
   local got
-  got=$(grep -E "^[[:space:]]*$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
+  got=$(grep -E "^[[:space:]]*(export[[:space:]]+)?$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
   if [ "${got}" != "$2" ]; then echo "ERROR: $1 is not '$2' after edit" >&2; FAILED=1; fi
 }
 
