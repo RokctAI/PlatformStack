@@ -31,6 +31,17 @@ jobs:
       - run: cd core && docker build -f docker/ignition/Dockerfile -t ignition .
       - name: Image starts and reports status
         run: docker run --rm ignition --help
+      - name: bench wrapper works inside the image
+        run: |
+          set -eu
+          out=$(docker run --rm --entrypoint bench ignition status 2>&1)
+          echo "$out"
+          echo "$out" | grep -q "ran as: ignition status"
+          if docker run --rm --entrypoint bench ignition get-app x >/dev/null 2>refused.txt; then
+            echo "get-app should be refused"; exit 1
+          fi
+          cat refused.txt
+          grep -q "does not have" refused.txt
 
   real-frappe:
     runs-on: ubuntu-latest
