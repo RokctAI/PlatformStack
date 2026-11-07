@@ -10,7 +10,10 @@ umask 077
 ENV_FILE="${RAKAZO_ENV_FILE:-.env}"
 SIGNUP_ALLOWLIST_VALUE="${SIGNUP_ALLOWLIST:-}"
 
-[ -f "${ENV_FILE}" ] || { echo "ERROR: env file not found: ${ENV_FILE}" >&2; exit 1; }
+[ -f "${ENV_FILE}" ] || {
+  echo "ERROR: env file not found: ${ENV_FILE}" >&2
+  exit 1
+}
 
 # set_kv KEY VALUE: replace ALL active lines; else uncomment the first
 # commented one; else append. Value is passed via the environment (no escaping).
@@ -40,7 +43,10 @@ PY
 has_value() {
   local v
   v=$(grep -E "^[[:space:]]*(export[[:space:]]+)?$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
-  v="${v%\"}"; v="${v#\"}"; v="${v%\'}"; v="${v#\'}"
+  v="${v%\"}"
+  v="${v#\"}"
+  v="${v%\'}"
+  v="${v#\'}"
   [ -n "${v}" ]
 }
 
@@ -49,14 +55,18 @@ FAILED=0
 verify() {
   local got
   got=$(grep -E "^[[:space:]]*(export[[:space:]]+)?$1=" "${ENV_FILE}" | tail -n1 | cut -d= -f2-)
-  if [ "${got}" != "$2" ]; then echo "ERROR: $1 is not '$2' after edit" >&2; FAILED=1; fi
+  if [ "${got}" != "$2" ]; then
+    echo "ERROR: $1 is not '$2' after edit" >&2
+    FAILED=1
+  fi
 }
 
 # 1. Sign-ups: closed unless an allowlist is given.
 if [ -n "${SIGNUP_ALLOWLIST_VALUE}" ]; then
   set_kv SIGNUPS_ENABLED true
   set_kv SIGNUP_ALLOWLIST "${SIGNUP_ALLOWLIST_VALUE}"
-  verify SIGNUPS_ENABLED true; verify SIGNUP_ALLOWLIST "${SIGNUP_ALLOWLIST_VALUE}"
+  verify SIGNUPS_ENABLED true
+  verify SIGNUP_ALLOWLIST "${SIGNUP_ALLOWLIST_VALUE}"
   echo "signups: allowlist only"
 else
   set_kv SIGNUPS_ENABLED false
@@ -153,6 +163,9 @@ echo "docker socket: proxy override written to ${OVERRIDE} (apply it with docker
 # 6. Approvals are a per-user setting (not env): remind, cannot force.
 echo "RESIDUAL RISK: the proxy only removes volume/system/build/swarm endpoints. It does NOT stop a compromised supervisor from creating a privileged container or running commands in ANY container on this host, including Frappe. Keep the supervisor image current."
 echo "NOTE: keep each user's Approvals mode on Ask or Auto, never 'Never ask'; avoid 'Always allow' on our own backend for bots that browse the web."
-[ "${FAILED}" = "0" ] || { echo "FAILED: see errors above" >&2; exit 1; }
+[ "${FAILED}" = "0" ] || {
+  echo "FAILED: see errors above" >&2
+  exit 1
+}
 echo "Restart the Rakazo stack for these changes to apply."
 echo "done"
