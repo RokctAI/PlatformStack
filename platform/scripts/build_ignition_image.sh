@@ -18,12 +18,17 @@
 #
 #   MONOREPO_PAT=... platform/scripts/build_ignition_image.sh --core ../core
 #
+# The Pulsar modules that moved out of core come from the RokctAI/pay, productivity and
+# zones checkouts (named build contexts); they are expected beside the core checkout, or
+# under --sdk-root DIR.
+#
 # The token goes in as a BuildKit secret read from the environment
 # (MONOREPO_PAT, else GITHUB_TOKEN); it is never a build arg.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CORE=""
+SDK_ROOT=""
 TAG="ignition-rokctapp:local"
 PRODUCT="rokctapp"
 PROTOCOL_REF="main"
@@ -36,6 +41,8 @@ usage() {
 Usage: build_ignition_image.sh --core DIR [options]
 
   --core DIR            RokctAI/core checkout (holds pulsar/ and docker/ignition/bench)
+  --sdk-root DIR        folder holding the RokctAI/pay, productivity and zones checkouts
+                        (default: the folder that holds the core checkout)
   --tag TAG             image tag (default ignition-rokctapp:local)
   --product NAME        compose template (default rokctapp)
   --protocol-ref REF    The-Rokct-Protocol ref (default main)
@@ -49,6 +56,10 @@ while [ $# -gt 0 ]; do
   case "$1" in
   --core)
     CORE="$2"
+    shift 2
+    ;;
+  --sdk-root)
+    SDK_ROOT="$2"
     shift 2
     ;;
   --tag)
@@ -99,6 +110,13 @@ done
   echo "no $CORE/docker/ignition/bench" >&2
   exit 2
 }
+[ -n "$SDK_ROOT" ] || SDK_ROOT="$(cd "$CORE/.." && pwd)"
+for sdk_repo in pay productivity zones; do
+  [ -d "$SDK_ROOT/$sdk_repo" ] || {
+    echo "no $SDK_ROOT/$sdk_repo (RokctAI/$sdk_repo checkout; see --sdk-root)" >&2
+    exit 2
+  }
+done
 command -v docker >/dev/null || {
   echo "docker is not installed" >&2
   exit 3
@@ -120,6 +138,9 @@ fi
 DOCKER_BUILDKIT=1 docker build \
   -f "$REPO_ROOT/platform/ignition.Dockerfile" \
   --build-context "core=$(cd "$CORE" && pwd)" \
+  --build-context "pay=$(cd "$SDK_ROOT/pay" && pwd)" \
+  --build-context "productivity=$(cd "$SDK_ROOT/productivity" && pwd)" \
+  --build-context "zones=$(cd "$SDK_ROOT/zones" && pwd)" \
   "${SECRET_ARGS[@]}" \
   --build-arg "PRODUCT=$PRODUCT" \
   --build-arg "PROTOCOL_REF=$PROTOCOL_REF" \

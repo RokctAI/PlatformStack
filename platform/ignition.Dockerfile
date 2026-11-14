@@ -25,6 +25,9 @@
 #
 #   docker buildx build -f platform/ignition.Dockerfile \
 #     --build-context core=<path to RokctAI/core checkout> \
+#     --build-context pay=<RokctAI/pay checkout> \
+#     --build-context productivity=<RokctAI/productivity checkout> \
+#     --build-context zones=<RokctAI/zones checkout> \
 #     --secret id=git_token,env=MONOREPO_PAT \
 #     --target ignition_rokctapp -t ignition-rokctapp .
 #
@@ -77,10 +80,25 @@ RUN --mount=type=secret,id=git_token,required=false \
 # `core` (--build-context core=...; DL3022 cannot see named contexts).
 # hadolint ignore=DL3022
 COPY --from=core pulsar/pulsar /opt/pulsar/pulsar
+# The Pulsar modules that moved out of core live in the SDK repos (build contexts pay, productivity, zones);
+# the old pulsar.* paths in /opt/pulsar/pulsar are shims that load them from $PULSAR_SDK_ROOT/<repo>/<sdk>/pulsar/ported.
+# hadolint ignore=DL3022
+COPY --from=pay erp/pulsar/ported /opt/sdk/pay/erp/pulsar/ported
+# hadolint ignore=DL3022
+COPY --from=pay hrms/pulsar/ported /opt/sdk/pay/hrms/pulsar/ported
+# hadolint ignore=DL3022
+COPY --from=productivity crm/pulsar/ported /opt/sdk/productivity/crm/pulsar/ported
+# hadolint ignore=DL3022
+COPY --from=productivity projects/pulsar/ported /opt/sdk/productivity/projects/pulsar/ported
+# hadolint ignore=DL3022
+COPY --from=productivity support/pulsar/ported /opt/sdk/productivity/support/pulsar/ported
+# hadolint ignore=DL3022
+COPY --from=zones map/pulsar/ported /opt/sdk/zones/map/pulsar/ported
 RUN /opt/ignition/env/bin/pip install \
         -r /opt/pulsar/pulsar/requirements.txt \
         -r /opt/pulsar/pulsar/requirements-extras.txt \
-    && PYTHONPATH=/opt/pulsar /opt/ignition/env/bin/python -c "import pulsar.ignition" \
+    && PYTHONPATH=/opt/pulsar PULSAR_SDK_ROOT=/opt/sdk /opt/ignition/env/bin/python -c \
+        "import pulsar.ignition, pulsar.accounts.chart, pulsar.hr.leave, pulsar.crm.lead, pulsar.projects.task, pulsar.support.issue, pulsar.geo.country_info" \
     && /opt/ignition/env/bin/python -m compileall -q /opt/pulsar/pulsar /opt/ignition/apps/rcore/rcore \
     && (/opt/ignition/env/bin/python -m compileall -q -x '/boilerplate/' /opt/ignition/apps/frappe/frappe || true)
 # ^ The runtime user cannot write .pyc files into the root-owned code, so they
@@ -105,6 +123,7 @@ RUN useradd --create-home --uid 10001 ignition
 # only the data dirs below belong to it.
 COPY --from=ignition_root_builder /opt/ignition /opt/ignition
 COPY --from=ignition_root_builder /opt/pulsar /opt/pulsar
+COPY --from=ignition_root_builder /opt/sdk /opt/sdk
 # hadolint ignore=DL3022
 COPY --from=core docker/ignition/bench /usr/local/bin/bench
 COPY platform/ignition/entrypoint.sh /usr/local/bin/ignition-entrypoint
@@ -121,6 +140,7 @@ USER 10001:10001
 WORKDIR /opt/ignition
 ENV PATH="/opt/ignition/env/bin:${PATH}" \
     PYTHONPATH=/opt/pulsar \
+    PULSAR_SDK_ROOT=/opt/sdk \
     PYTHONUNBUFFERED=1 \
     IGNITION_ROOT=/opt/ignition \
     IGNITION_HOST=0.0.0.0 \

@@ -13,7 +13,8 @@ What is inside:
 | `/opt/ignition/apps/frappe` | stock Frappe at `FRAPPE_REF` (default `version-16-hotfix`) plus the build-time patches below |
 | `/opt/ignition/apps/rcore` | the composed app, from `compose_product.py` with `ROKCT_COMPOSE_STRICT=1` |
 | `/opt/ignition/env` | Python 3.14 venv: frappe and rcore (editable), rcore's `requirements.txt`, Pulsar's requirements |
-| `/opt/pulsar/pulsar` | Ignition (Pulsar) from a RokctAI/core checkout |
+| `/opt/pulsar/pulsar` | Ignition (Pulsar) from a RokctAI/core checkout; the moved modules are shims |
+| `/opt/sdk` | the SDK `pulsar/ported` folders from RokctAI/pay, productivity and zones; `PULSAR_SDK_ROOT=/opt/sdk` |
 | `/opt/ignition/sites/apps.txt` | `frappe`, then `rcore` |
 | `/opt/ignition/sites/common_site_config.json` | `{"db_type": "postgres"}` (build arg `DB_TYPE`) |
 | `/opt/ignition/ignition_build.json` | provenance: frappe SHA and patches applied, protocol and shell SHAs, every module's pinned SHA, `modules.txt`, `db_type` |
@@ -33,6 +34,9 @@ which runs
 
     docker build -f platform/ignition.Dockerfile \
       --build-context core=../core \
+      --build-context pay=../pay \
+      --build-context productivity=../productivity \
+      --build-context zones=../zones \
       --secret id=git_token,env=MONOREPO_PAT \
       --build-arg PRODUCT=rokctapp \
       --build-arg PROTOCOL_REF=main --build-arg RCORE_REF=main \
