@@ -1266,6 +1266,27 @@ fi
 
 mkdir -p "sites/$SITE_NAME/logs"
 
+# On PostgreSQL the DocField.link_filters json column is returned already
+# decoded (a list); stock Frappe json.loads() it and throws "Filters must be
+# valid JSON" when an app's fixtures add Custom Fields. Same patch as
+# platform/scripts/patch_frappe_v16.py (link-filters-json-list). Must run
+# before the first app install. Fails loudly if Frappe moved the code.
+run_step "[frappe] Patching link_filters json handling for PostgreSQL" env/bin/python -c '
+import pathlib
+p = pathlib.Path("apps/frappe/frappe/core/doctype/doctype/doctype.py")
+text = p.read_text(encoding="utf-8")
+old = "\t\ttry:\n\t\t\tlink_filters = json.loads(link_filters_value)\n\t\texcept (TypeError, ValueError):\n"
+new = "\t\ttry:\n\t\t\t# ignition patch: Postgres returns the json column already decoded\n\t\t\tlink_filters = (\n\t\t\t\tlink_filters_value\n\t\t\t\tif isinstance(link_filters_value, list)\n\t\t\t\telse json.loads(link_filters_value)\n\t\t\t)\n\t\texcept (TypeError, ValueError):\n"
+if text.count(new) == 1:
+    print("link_filters patch already applied")
+elif text.count(old) == 1:
+    p.write_text(text.replace(old, new), encoding="utf-8")
+    compile(p.read_text(encoding="utf-8"), str(p), "exec")
+    print("link_filters patched successfully")
+else:
+    raise SystemExit("link_filters block found %d times (need 1); Frappe changed" % text.count(old))
+'
+
 # Install the Target App
 safe_install_app "$APP_NAME"
 _log "Current apps directory: $(ls apps)"
