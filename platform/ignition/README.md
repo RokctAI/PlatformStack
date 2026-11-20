@@ -10,7 +10,7 @@ What is inside:
 
 | Path | What |
 |---|---|
-| `/opt/ignition/apps/frappe` | stock Frappe at `FRAPPE_REF` (default `version-16-hotfix`) plus the build-time patches below |
+| `/opt/ignition/apps/frappe` | stock Frappe at `FRAPPE_REF` (default `v16.56.0`, pinned: Frappe after it adds a `Studio` module that collides with rcore's composed `studio`) plus the build-time patches below |
 | `/opt/ignition/apps/rcore` | the composed app, from `compose_product.py` with `ROKCT_COMPOSE_STRICT=1` |
 | `/opt/ignition/env` | Python 3.14 venv: frappe and rcore (editable), rcore's `requirements.txt`, Pulsar's requirements |
 | `/opt/pulsar/pulsar` | Ignition (Pulsar) from a RokctAI/core checkout; the moved modules are shims |
@@ -40,7 +40,7 @@ which runs
       --secret id=git_token,env=MONOREPO_PAT \
       --build-arg PRODUCT=rokctapp \
       --build-arg PROTOCOL_REF=main --build-arg RCORE_REF=main \
-      --build-arg FRAPPE_REF=version-16-hotfix \
+      --build-arg FRAPPE_REF=v16.56.0 \
       --target ignition_rokctapp -t ignition-rokctapp:local .
 
 and then smoke-tests the image: the runner starts, `frappe` (16.x), `rcore`

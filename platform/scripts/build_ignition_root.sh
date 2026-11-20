@@ -39,7 +39,7 @@ PROTOCOL_REF="${PROTOCOL_REF:-main}"
 PROTOCOL_REPO="${PROTOCOL_REPO:-https://github.com/RokctAI/The-Rokct-Protocol}"
 RCORE_REF="${RCORE_REF:-main}"
 FRAPPE_REPO="${FRAPPE_REPO:-https://github.com/frappe/frappe}"
-FRAPPE_REF="${FRAPPE_REF:-version-16-hotfix}"
+FRAPPE_REF="${FRAPPE_REF:-v16.56.0}"
 DB_TYPE="${DB_TYPE:-postgres}"
 PYTHON_BIN=""
 TOKEN_FILE=""
@@ -56,7 +56,7 @@ Usage: build_ignition_root.sh --root DIR [options]
   --protocol-repo URL   protocol repository (default RokctAI/The-Rokct-Protocol;
                         a file:// clone lets you test a template change)
   --rcore-ref REF       rcore shell ref (default main)
-  --frappe-ref REF      frappe/frappe ref (default version-16-hotfix)
+  --frappe-ref REF      frappe/frappe ref (default v16.56.0)
   --db-type TYPE        db_type written to sites/common_site_config.json
                         (default postgres; mariadb cannot host rokctapp)
   --python BIN          also create DIR/env with BIN (Python 3.14 for Frappe v16)

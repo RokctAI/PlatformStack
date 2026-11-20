@@ -429,11 +429,14 @@ command -v bench >/dev/null || {
   exit 1
 }
 
+# Frappe is pinned to v16.56.0: later v16 adds a `Studio` module that collides
+# with rcore's composed `studio`, and the stack no longer follows Frappe releases.
+FRAPPE_REF="${FRAPPE_REF:-v16.56.0}"
 if [ "$BOOTSTRAP" = "false" ]; then
   if [ ! -d "frappe-bench" ]; then
     echo "  - Initializing frappe-bench (Verbose)..."
     BENCH_INIT_LOG=$(mktemp)
-    if ! bench init --skip-redis-config-generation --skip-assets --python "$PY_BIN" frappe-bench --verbose 2>&1 | tee "$BENCH_INIT_LOG"; then
+    if ! bench init --skip-redis-config-generation --skip-assets --frappe-branch "$FRAPPE_REF" --python "$PY_BIN" frappe-bench --verbose 2>&1 | tee "$BENCH_INIT_LOG"; then
       echo "Bench initialization failed"
       echo "---- BENCH INIT LOG START ----"
       cat "$BENCH_INIT_LOG"

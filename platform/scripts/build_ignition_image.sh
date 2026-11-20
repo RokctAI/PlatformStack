@@ -33,7 +33,7 @@ TAG="ignition-rokctapp:local"
 PRODUCT="rokctapp"
 PROTOCOL_REF="main"
 RCORE_REF="main"
-FRAPPE_REF="version-16-hotfix"
+FRAPPE_REF="v16.56.0"
 SMOKE=1
 
 usage() {
@@ -47,7 +47,7 @@ Usage: build_ignition_image.sh --core DIR [options]
   --product NAME        compose template (default rokctapp)
   --protocol-ref REF    The-Rokct-Protocol ref (default main)
   --rcore-ref REF       rcore shell ref (default main)
-  --frappe-ref REF      frappe ref (default version-16-hotfix)
+  --frappe-ref REF      frappe ref (default v16.56.0)
   --no-smoke            skip the post-build checks
 EOF
 }
