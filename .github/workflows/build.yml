@@ -333,6 +333,85 @@ jobs:
             IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
             DB_HOST=127.0.0.1
 
+      # --- Ignition tenant image (the DEFAULT tenant runtime) -------------------
+      # Ignition + Frappe v16 + composed rokctapp (platform/ignition.Dockerfile).
+      # The bench tenant image above is still built every release, so rolling
+      # tenants back is a variable change (see platform/docker-compose.tenant.yml),
+      # not a rebuild. continue-on-error: an Ignition failure must not block the
+      # hub release; it is reported as a warning below.
+      - name: Checkout core for Ignition
+        if: github.repository_owner == 'RokctAI'
+        continue-on-error: true
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: RokctAI/core
+          ref: main
+          path: ignition-ctx/core
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+          persist-credentials: false
+
+      - name: Checkout pay for Ignition
+        if: github.repository_owner == 'RokctAI'
+        continue-on-error: true
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: RokctAI/pay
+          ref: main
+          path: ignition-ctx/pay
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+          persist-credentials: false
+
+      - name: Checkout productivity for Ignition
+        if: github.repository_owner == 'RokctAI'
+        continue-on-error: true
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: RokctAI/productivity
+          ref: main
+          path: ignition-ctx/productivity
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+          persist-credentials: false
+
+      - name: Checkout zones for Ignition
+        if: github.repository_owner == 'RokctAI'
+        continue-on-error: true
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: RokctAI/zones
+          ref: main
+          path: ignition-ctx/zones
+          token: ${{ secrets.MONOREPO_PAT || github.token }}
+          persist-credentials: false
+
+      - name: Build and Push Ignition Tenant (rokctapp)
+        id: ignition_tenant
+        if: github.repository_owner == 'RokctAI'
+        continue-on-error: true
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: docker-context
+          file: docker-context/platform/ignition.Dockerfile
+          target: ignition_rokctapp
+          push: true
+          build-contexts: |
+            core=ignition-ctx/core
+            pay=ignition-ctx/pay
+            productivity=ignition-ctx/productivity
+            zones=ignition-ctx/zones
+          secrets: |
+            git_token=${{ secrets.MONOREPO_PAT }}
+          tags: |
+            ghcr.io/rokctai/occultation/ignition-tenant:latest
+            ghcr.io/rokctai/occultation/ignition-tenant:${{ steps.meta.outputs.version }}
+          build-args: |
+            PRODUCT=rokctapp
+            PROTOCOL_REF=${{ inputs.protocol-ref || 'main' }}
+
+      - name: Report Ignition Tenant Build Outcome
+        if: steps.ignition_tenant.outcome == 'failure'
+        run: |
+          echo "::warning title=Ignition tenant image not released::The Ignition tenant image build failed. ignition-tenant was NOT pushed this run. New tenants default to that image, so do not merge the Ignition switch until this builds, or set TENANT_IMAGE to the bench image."
+
       - name: Build and Push Supacharge (Tenant, keeps lms)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
@@ -463,7 +542,7 @@ jobs:
           # NOTE: rpanel-db is intentionally excluded — it is a shared infrastructure image
           # (Postgres + extensions). It does not change with app code and should never be
           # rolled back. Excluding it ensures rpanel-db:latest always stays valid.
-          PACKAGES=("occultation%2Frpanel-control" "occultation%2Frpanel-tenant" "occultation%2Frpanel-supacharge" "occultation%2Fdrone-brain" "occultation%2Fdrone-edge")
+          PACKAGES=("occultation%2Frpanel-control" "occultation%2Frpanel-tenant" "occultation%2Fignition-tenant" "occultation%2Frpanel-supacharge" "occultation%2Fdrone-brain" "occultation%2Fdrone-edge")
 
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
@@ -494,7 +573,7 @@ jobs:
           # does not reliably update GHCR tags — docker pull+retag+push is the safe method.
           #
           # NOTE: rpanel-db is intentionally excluded (see Delete step above).
-          PACKAGES=("rpanel-control" "rpanel-tenant" "rpanel-supacharge" "drone-brain" "drone-edge")
+          PACKAGES=("rpanel-control" "rpanel-tenant" "ignition-tenant" "rpanel-supacharge" "drone-brain" "drone-edge")
           REGISTRY="ghcr.io/rokctai/occultation"
           ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
 

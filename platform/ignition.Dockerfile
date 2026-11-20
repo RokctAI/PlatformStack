@@ -127,11 +127,12 @@ COPY --from=ignition_root_builder /opt/sdk /opt/sdk
 # hadolint ignore=DL3022
 COPY --from=core docker/ignition/bench /usr/local/bin/bench
 COPY platform/ignition/entrypoint.sh /usr/local/bin/ignition-entrypoint
+COPY platform/ignition/tenant.sh /usr/local/bin/ignition-tenant
 
 # The baked app list is kept outside sites/ (a volume) so the entrypoint can
 # put it back into sites/apps.txt on every start, frappe first.
 RUN cp /opt/ignition/sites/apps.txt /opt/ignition/apps.baked.txt \
-    && chmod 0755 /usr/local/bin/ignition-entrypoint /usr/local/bin/bench \
+    && chmod 0755 /usr/local/bin/ignition-entrypoint /usr/local/bin/ignition-tenant /usr/local/bin/bench \
     && mkdir -p /opt/ignition/run /opt/ignition/logs /opt/ignition/backups \
     && chown -R ignition:ignition /opt/ignition/sites /opt/ignition/run \
         /opt/ignition/logs /opt/ignition/backups /opt/ignition/.rokct
