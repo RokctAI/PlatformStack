@@ -183,6 +183,14 @@ FROM base AS tenant
 COPY --from=generic_tenant_stripper --chown=frappe:frappe /home/frappe/frappe-bench /home/frappe/frappe-bench
 WORKDIR /home/frappe/frappe-bench
 USER root
+# Engine: Ignition (RokctAI/core pulsar/pulsar, build context `core`) starts
+# serve/worker/scheduler on this same bench layout (docker-entrypoint.sh,
+# TENANT_ENGINE). It needs only pypika, which frappe already installs, so it
+# goes on the bench env's path with a .pth file and no pip install.
+# hadolint ignore=DL3022
+COPY --from=core --chown=root:root pulsar/pulsar /opt/pulsar/pulsar
+RUN echo /opt/pulsar > "$(env/bin/python -c 'import sysconfig; print(sysconfig.get_path("purelib"))')/pulsar-ignition.pth" \
+    && env/bin/python -c "import pulsar.ignition.cli"
 COPY --chown=root:root platform/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER frappe
