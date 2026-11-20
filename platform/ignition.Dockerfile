@@ -52,7 +52,7 @@ ARG PRODUCT=rokctapp
 ARG PROTOCOL_REF=main
 ARG RCORE_REF=main
 ARG FRAPPE_REPO=https://github.com/frappe/frappe
-ARG FRAPPE_REF=version-16-hotfix
+ARG FRAPPE_REF=v16.56.0
 # rokctapp needs Postgres: on MariaDB rcore's `users` module collides with
 # Frappe v16's `Users` (case-insensitive Module Def key).
 ARG DB_TYPE=postgres
