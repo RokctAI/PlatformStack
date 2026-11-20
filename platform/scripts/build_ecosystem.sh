@@ -611,6 +611,13 @@ fi
 
 # --- 4B. Tooling: Install ROK agent (Hermes-agent rebrand) ---
 # ROK is not a Frappe app; keep it out of apps/ and install as a Python tool.
+# ROK is replaced by Rakazo, which runs as its own service outside the images:
+# if the repo cannot be reached, warn and skip ROK instead of failing the build.
+if [ "$INSTALL_ROK" = "true" ] && [ ! -d "tools/rok/.git" ] \
+  && ! git ls-remote "https://x-access-token:${GITHUB_TOKEN:-}@github.com/RokctAI/ROK.git" HEAD >/dev/null 2>&1; then
+  _log "WARNING: ROK repo not reachable; skipping ROK tooling (INSTALL_ROK=false)"
+  INSTALL_ROK=false
+fi
 if [ "$INSTALL_ROK" = "true" ]; then
   _log "RokctAI: Installing ROK tooling..."
   mkdir -p tools
