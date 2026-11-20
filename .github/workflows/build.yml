@@ -184,7 +184,7 @@ jobs:
   pipeline:
     needs: detect
     if: needs.detect.outputs.should_build == 'true'
-    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@09494edd4824cc6fca95ea96a2db4d238c4561b3 # shared-workflows main @ 2026-08-26
+    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@fe8b06cce2d1f2f18b8f4d85efce869447ed8953 # shared-workflows main @ 2026-08-26
     with:
       backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
       project_type: ${{ needs.detect.outputs.is_flutter == 'true' && 'flutter' || (needs.detect.outputs.is_node == 'true' && 'node' || 'frappe') }}
@@ -439,7 +439,7 @@ jobs:
 
   upgrade-test:
     needs: [pipeline, docker-release]
-    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@a343bc307ab7de001b3a6ef4220786528b33b2bc # shared-workflows main @ 2026-09-26 (#542)
+    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@fe8b06cce2d1f2f18b8f4d85efce869447ed8953 # shared-workflows main @ 2026-09-26 (#542)
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
       min_legacy_version: '2.4.8'
