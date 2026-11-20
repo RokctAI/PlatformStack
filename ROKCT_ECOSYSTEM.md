@@ -8,7 +8,7 @@ This document serves as the absolute Source of Truth for all active repositories
 
 ### 1.1 [PlatformStack](https://github.com/RokctAI/PlatformStack.git)
 *   **Active Branch**: `main`
-*   **Role**: Docker orchestrations, base images baking (`rpanel-control`, `rpanel-tenant`, `drone-brain`, `rpanel-db`), global database migrations, and the authoritative `build_ecosystem.sh` pipeline.
+*   **Role**: Docker orchestrations, base images baking (`pulsar-hub`, `pulsar-tenant`, `drone-brain`, `rpanel-db`), global database migrations, and the authoritative `build_ecosystem.sh` pipeline.
 *   **Key Path**: [platform/Dockerfile](file:///C:/Users/sinya/Desktop/RokctAI/PlatformStack/platform/Dockerfile)
 
 ### 1.2 [Control Plane App (`control`)](https://github.com/RokctAI/control.git)

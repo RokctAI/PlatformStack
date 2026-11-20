@@ -306,8 +306,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/occultation/rpanel-control:latest
-            ghcr.io/rokctai/occultation/rpanel-control:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/pulsar-hub:latest
+            ghcr.io/rokctai/occultation/pulsar-hub:${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
@@ -325,8 +325,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/occultation/rpanel-tenant:latest
-            ghcr.io/rokctai/occultation/rpanel-tenant:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/pulsar-tenant:latest
+            ghcr.io/rokctai/occultation/pulsar-tenant:${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
@@ -342,8 +342,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/occultation/rpanel-supacharge:latest
-            ghcr.io/rokctai/occultation/rpanel-supacharge:${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/pulsar-supacharge:latest
+            ghcr.io/rokctai/occultation/pulsar-supacharge:${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
@@ -463,7 +463,7 @@ jobs:
           # NOTE: rpanel-db is intentionally excluded — it is a shared infrastructure image
           # (Postgres + extensions). It does not change with app code and should never be
           # rolled back. Excluding it ensures rpanel-db:latest always stays valid.
-          PACKAGES=("occultation%2Frpanel-control" "occultation%2Frpanel-tenant" "occultation%2Frpanel-supacharge" "occultation%2Fdrone-brain" "occultation%2Fdrone-edge")
+          PACKAGES=("occultation%2Fpulsar-hub" "occultation%2Fpulsar-tenant" "occultation%2Fpulsar-supacharge" "occultation%2Fdrone-brain" "occultation%2Fdrone-edge")
 
           for PKG in "${PACKAGES[@]}"; do
             echo "Looking up version ID for $PKG tag $VERSION..."
@@ -494,7 +494,7 @@ jobs:
           # does not reliably update GHCR tags — docker pull+retag+push is the safe method.
           #
           # NOTE: rpanel-db is intentionally excluded (see Delete step above).
-          PACKAGES=("rpanel-control" "rpanel-tenant" "rpanel-supacharge" "drone-brain" "drone-edge")
+          PACKAGES=("pulsar-hub" "pulsar-tenant" "pulsar-supacharge" "drone-brain" "drone-edge")
           REGISTRY="ghcr.io/rokctai/occultation"
           ORG_NAME=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
 
@@ -697,7 +697,7 @@ jobs:
   # `composed-product` input set (e.g. "rcore") triggers it. Completely
   # independent of docker-release — it neither gates nor alters the existing
   # release images, and pushes under its own distinct image name
-  # (rpanel-tenant-composed) so nothing existing can accidentally consume it.
+  # (pulsar-tenant-composed) so nothing existing can accidentally consume it.
   docker-composed:
     if: github.event_name == 'workflow_dispatch' && inputs.composed-product != '' && startsWith(github.repository, 'RokctAI/')
     runs-on: ubuntu-latest
@@ -778,8 +778,8 @@ jobs:
           network: host
           push: true
           tags: |
-            ghcr.io/rokctai/occultation/rpanel-tenant-composed:${{ inputs.composed-product }}
-            ghcr.io/rokctai/occultation/rpanel-tenant-composed:${{ inputs.composed-product }}-${{ steps.meta.outputs.version }}
+            ghcr.io/rokctai/occultation/pulsar-tenant-composed:${{ inputs.composed-product }}
+            ghcr.io/rokctai/occultation/pulsar-tenant-composed:${{ inputs.composed-product }}-${{ steps.meta.outputs.version }}
           build-args: |
             GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
             MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}

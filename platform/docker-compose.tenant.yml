@@ -32,7 +32,7 @@ services:
       - tenant-redis-data:/data
 
   app:
-    image: ghcr.io/rokctai/occultation/rpanel-tenant:latest
+    image: ghcr.io/rokctai/occultation/pulsar-tenant:latest
     # Stable name so the hub can address this tenant without knowing the
     # compose project name (`docker exec <site>-app ...`).
     container_name: ${SITE_NAME}-app
