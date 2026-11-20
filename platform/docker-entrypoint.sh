@@ -20,7 +20,9 @@ fi
 engine() {
   # engine serve|worker|scheduler [--port N]
   if [ "$TENANT_ENGINE" = "ignition" ]; then
-    IGNITION_ROOT=/home/frappe/frappe-bench env/bin/python -m pulsar.ignition "$@" --engine "$IGNITION_ENGINE"
+    # Ignition binds 127.0.0.1 by default; the hub reaches <site>-app:8000.
+    IGNITION_HOST="${IGNITION_HOST:-0.0.0.0}"
+    IGNITION_HOST="$IGNITION_HOST" IGNITION_ROOT=/home/frappe/frappe-bench env/bin/python -m pulsar.ignition "$@" --engine "$IGNITION_ENGINE"
   else
     case "$1" in
       scheduler) shift; bench schedule "$@" ;;
