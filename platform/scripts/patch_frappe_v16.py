@@ -77,8 +77,8 @@ PATCHES = (
 
 def apply(frappe_dir, name, rel, old, new):
     # Containment check: the target must stay inside the Frappe checkout.
-    base = os.path.realpath(frappe_dir)
-    path = os.path.realpath(os.path.join(base, rel))
+    base = os.path.abspath(frappe_dir)
+    path = os.path.abspath(os.path.join(base, rel))
     if os.path.commonpath([base, path]) != base:
         raise SystemExit("patch %s: %s escapes %s" % (name, rel, frappe_dir))
     with open(path, encoding="utf-8", newline="") as f:
