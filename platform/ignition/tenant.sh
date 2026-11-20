@@ -126,11 +126,12 @@ fi
 
 # 6. Processes. serve is PID-wise a child so one exit stops the container
 # (compose restarts it), as the bench api mode does.
+# worker and scheduler take --engine frappe once core#1561 lands.
 python -m pulsar.ignition worker &
 W=$!
 python -m pulsar.ignition scheduler &
 S=$!
-python -m pulsar.ignition serve --port 8000 &
+python -m pulsar.ignition serve --engine frappe --port 8000 &
 V=$!
 trap 'kill $W $S $V 2>/dev/null || true' TERM INT
 code=0
