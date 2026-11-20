@@ -142,7 +142,7 @@ jobs:
       - name: Prepare root with Frappe v16
         run: |
           mkdir -p "$IGNITION_IT_ROOT/apps" "$IGNITION_IT_ROOT/sites"
-          git clone --depth 1 --branch version-16-hotfix https://github.com/frappe/frappe "$IGNITION_IT_ROOT/apps/frappe"
+          git clone --depth 1 --branch v16.56.0 https://github.com/frappe/frappe "$IGNITION_IT_ROOT/apps/frappe"
           pip install -e "$IGNITION_IT_ROOT/apps/frappe"
           echo frappe > "$IGNITION_IT_ROOT/sites/apps.txt"
           cat > "$IGNITION_IT_ROOT/sites/common_site_config.json" <<'JSON'
