@@ -32,18 +32,7 @@ services:
       - tenant-redis-data:/data
 
   app:
-    # Runtime switch. Default is the Ignition image (Pulsar's runner + Frappe
-    # v16 + composed rokctapp). Rollback to bench is three variables, set in
-    # the tenant's project .env (a ready file: platform/tenant-runtime.bench.env):
-    #   TENANT_IMAGE=ghcr.io/rokctai/occultation/rpanel-tenant:latest
-    #   TENANT_COMMAND=bench start
-    #   TENANT_SITES_PATH=/home/frappe/frappe-bench/sites
-    # Pin a release with TENANT_IMAGE=...ignition-tenant:<version>.
-    image: ${TENANT_IMAGE:-ghcr.io/rokctai/occultation/ignition-tenant:latest}
-    # `tenant` = new-site/migrate, then serve + worker + scheduler in this one
-    # container (platform/ignition/tenant.sh). The bench image's own default
-    # command is `bench start`, which MODE=api turns into the same three processes.
-    command: ${TENANT_COMMAND:-tenant}
+    image: ghcr.io/rokctai/occultation/rpanel-tenant:latest
     # Stable name so the hub can address this tenant without knowing the
     # compose project name (`docker exec <site>-app ...`).
     container_name: ${SITE_NAME}-app
@@ -62,14 +51,8 @@ services:
       - REDIS_QUEUE=redis://redis:6379/1
       - REDIS_SOCKETIO=redis://redis:6379/2
       - ROK_API_URL=https://platform.rokct.ai/rok/v1/chat/completions
-      # Ignition image only (the bench image ignores these): superuser that
-      # new-site connects as, and its password (the db service's postgres
-      # password), plus the admin password.
-      - IGNITION_DB_ROOT_USER=postgres
-      - IGNITION_DB_ROOT_PASSWORD=${DB_PASSWORD}
-      - IGNITION_ADMIN_PASSWORD=${ADMIN_PASSWORD}
     volumes:
-      - tenant-sites:${TENANT_SITES_PATH:-/opt/ignition/sites}
+      - tenant-sites:/home/frappe/frappe-bench/sites
     depends_on:
       db:
         condition: service_healthy

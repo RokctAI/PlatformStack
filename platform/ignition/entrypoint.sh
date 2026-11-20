@@ -19,8 +19,7 @@
 # first, in baked order (frappe first), then any other app already listed.
 # A sites volume without common_site_config.json gets one with db_type
 # IGNITION_DB_TYPE (default postgres).
-# `tenant` runs ignition-tenant (new-site, migrate, serve + worker + scheduler).
-# Otherwise the Ignition runner runs with the given arguments (serve, worker,
+# Then the Ignition runner runs with the given arguments (serve, worker,
 # scheduler, new-site, migrate, backup, restore, ...).
 set -eu
 umask 027
@@ -46,11 +45,6 @@ if [ -f "$BAKED" ] && [ -d "$SITES" ] && [ -w "$SITES" ]; then
   # A fresh sites volume defaults to Postgres; a config the stack wrote is kept.
   [ -f "$SITES/common_site_config.json" ] ||
     printf '{\n "db_type": "%s"\n}\n' "$IGNITION_DB_TYPE" >"$SITES/common_site_config.json"
-fi
-
-# `tenant` is the tenant stack's single-container mode (platform/ignition/tenant.sh).
-if [ "${1:-}" = "tenant" ]; then
-  exec /usr/local/bin/ignition-tenant
 fi
 
 exec python -m pulsar.ignition "$@"

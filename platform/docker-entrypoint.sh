@@ -7,6 +7,28 @@ export PATH="/usr/local/bin:/home/frappe/.local/bin:$PATH"
 # Navigate to bench directory so all bench commands and relative site paths resolve correctly
 cd /home/frappe/frappe-bench || exit 1
 
+# Engine that serves the site. ignition (default): RokctAI/core Ignition on this
+# bench layout, Frappe engine (`--engine frappe`; Pulsar later). bench: the old
+# bench serve/worker/schedule. Images without Ignition fall back to bench.
+# Site setup (new-site, use, set-config, setup add-domain) stays on bench.
+TENANT_ENGINE="${TENANT_ENGINE:-ignition}"
+IGNITION_ENGINE="${IGNITION_ENGINE:-frappe}"
+if [ "$TENANT_ENGINE" = "ignition" ] && ! env/bin/python -c "import pulsar.ignition.cli" 2>/dev/null; then
+  echo "⚠️ TENANT_ENGINE=ignition but Ignition is not in this image -> bench"
+  TENANT_ENGINE=bench
+fi
+engine() {
+  # engine serve|worker|scheduler [--port N]
+  if [ "$TENANT_ENGINE" = "ignition" ]; then
+    IGNITION_ROOT=/home/frappe/frappe-bench env/bin/python -m pulsar.ignition "$@" --engine "$IGNITION_ENGINE"
+  else
+    case "$1" in
+      scheduler) shift; bench schedule "$@" ;;
+      *) bench "$@" ;;
+    esac
+  fi
+}
+
 step() {
   printf "  - %s... " "$1"
 }
@@ -297,12 +319,12 @@ for f_path in files:
     # regardless of the Host header (the hub proxy also sends
     # X-Frappe-Site-Name). The hub adds the domain itself post-provision with
     # `bench setup add-domain <domain> --site <site>` + `set-config host_name`.
-    bench worker &
+    engine worker &
     WORKER_PID=$!
-    bench schedule &
+    engine scheduler &
     SCHED_PID=$!
     # wait -n requires bash 4.3+ (Ubuntu 24.04 ships 5.2)
-    bench serve --port 8000 &
+    engine serve --port 8000 &
     SERVE_PID=$!
 
     wait -n
@@ -318,9 +340,9 @@ for f_path in files:
     ;;
   "iot")
     echo "🔋 IoT Mode (Edge Spoke): Starting Workers + Scheduler only..."
-    bench schedule &
+    engine scheduler &
     SCHED_PID=$!
-    bench worker &
+    engine worker &
     WORKER_PID=$!
     # wait -n requires bash 4.3+ (Ubuntu 24.04 ships 5.2)
     wait -n
