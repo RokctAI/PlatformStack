@@ -57,7 +57,8 @@ done
 # Pulsar never depends on frappe/: nothing named frappe/ is staged, and no staged module may import frappe.
 # refuse a stage that holds a frappe/ folder or really imports frappe (parsed, so a docstring that says
 # "from frappe.session" is not an import)
-if find "$STAGE" -type d -name frappe | grep -q . || ! python3 - "$STAGE" <<'PY'
+no_frappe_imports() {
+  python3 - "$1" <<'PY'
 import ast, pathlib, sys
 bad = []
 for f in pathlib.Path(sys.argv[1]).rglob("*.py"):
@@ -72,7 +73,8 @@ for f in pathlib.Path(sys.argv[1]).rglob("*.py"):
 print("\n".join(bad), file=sys.stderr)
 sys.exit(1 if bad else 0)
 PY
-then
+}
+if find "$STAGE" -type d -name frappe | grep -q . || ! no_frappe_imports "$STAGE"; then
   echo "pulsar stage contains frappe/ or a frappe import: refusing to build" >&2
   exit 1
 fi
