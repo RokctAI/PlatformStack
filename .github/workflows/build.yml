@@ -436,7 +436,7 @@ jobs:
   upgrade-test:
     needs: [pipeline, docker-release]
     # Pulsar blue-green job (needs the shared-workflows PR with the engine input merged first).
-    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@main
+    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@23792411d307757e25500d1869335f3442afc8c3 # shared-workflows#605
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
       engine: pulsar
@@ -599,6 +599,13 @@ jobs:
           # tenant compose project, so it must exist before any `up` (idempotent).
           ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
+            mkdir -p /etc/nginx/conf.d /etc/letsencrypt /var/www/acme /etc/rokct &&
+            printf '%s\\n' '# managed by PlatformStack deploy-master; rokct-ingress owns 80/443' \
+              'SERVER_AGENT_NGINX=docker exec rokct-ingress nginx' \
+              'SERVER_AGENT_CERTBOT=docker run --rm -v /etc/letsencrypt:/etc/letsencrypt -v /var/www/acme:/var/www/acme certbot/certbot:v2.11.0' \
+              > /etc/rokct/server-agent.env &&
+            chmod 0644 /etc/rokct/server-agent.env &&
+            (systemctl try-restart rokct-server-agent 2>/dev/null || true) &&
             (docker network create rokct_tenants 2>/dev/null || true) &&
             docker compose pull &&
             docker compose up -d

@@ -60,7 +60,7 @@ services:
       db:
         condition: service_healthy
     ports:
-      # Pulsar HTTP, localhost only; the public 80/443 go through ingress.
+      # Pulsar HTTP, localhost only; the public 80/443 go through ingress (nginx).
       - "127.0.0.1:8000:8000"
 
   app-worker:
@@ -92,16 +92,21 @@ services:
         condition: service_healthy
 
   ingress:
-    # Public 80/443 with automatic TLS for the hub domain (platform/pulsar/Caddyfile). Replaces the nginx and
-    # certbot that lived inside the old Frappe hub image.
-    image: caddy:2.8.4
+    # The one owner of public 80/443 (platform/pulsar/ingress/entrypoint.sh). Serves the hub domain, and every
+    # tenant / custom-domain vhost the server agent writes into the host's /etc/nginx/conf.d (the agent reloads it
+    # with SERVER_AGENT_NGINX="docker exec rokct-ingress nginx"). On rokct_tenants, so <site>-app:8000 resolves.
+    image: nginx:1.27.3-alpine
+    container_name: rokct-ingress
     restart: unless-stopped
+    entrypoint: ["/bin/sh", "/rokct/entrypoint.sh"]
     environment:
       SITE_NAME: ${SITE_NAME:-platform.rokct.ai}
+      HUB_UPSTREAM: http://app:8000
     volumes:
-      - ./pulsar/Caddyfile:/etc/caddy/Caddyfile:ro
-      - pulsar-caddy-data:/data
-      - pulsar-caddy-config:/config
+      - ./pulsar/ingress/entrypoint.sh:/rokct/entrypoint.sh:ro
+      - /etc/nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/acme:/var/www/acme:ro
     networks:
       - default
       - rokct_tenants
@@ -111,6 +116,22 @@ services:
     depends_on:
       app:
         condition: service_healthy
+
+  hub-cert:
+    # Let's Encrypt certificate of the hub domain (webroot through ingress), then renews twice a day. Tenant and
+    # custom-domain certificates are the server agent's (issue_cert), in the same /etc/letsencrypt.
+    image: certbot/certbot:v2.11.0
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/rokct/hub-cert.sh"]
+    environment:
+      SITE_NAME: ${SITE_NAME:-platform.rokct.ai}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-}
+    volumes:
+      - ./pulsar/ingress/hub-cert.sh:/rokct/hub-cert.sh:ro
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /var/www/acme:/var/www/acme
+    depends_on:
+      - ingress
 
   juvo-shell:
     # The juvo (delivery platform) Next.js shell, hosted on this VPS behind the
@@ -175,8 +196,6 @@ services:
 
 volumes:
   pulsar-hub-data:
-  pulsar-caddy-data:
-  pulsar-caddy-config:
   # Volumes of the old Frappe hub: no service mounts them now; kept so their data is not lost.
   control-db-data:
   control-redis-data:
