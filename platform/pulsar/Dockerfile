@@ -23,7 +23,7 @@
 #
 #   platform/scripts/build_pulsar_images.sh            # builds pulsar-hub and pulsar-tenant
 #
-# Targets: pulsar-hub (PULSAR_ROLE=hub: makes its control site on first start) and pulsar-tenant (PULSAR_ROLE=tenant:
+# Targets (also pulsar-supacharge, pulsar-tenant-composed, pulsar-drone below): pulsar-hub (PULSAR_ROLE=hub: makes its control site on first start) and pulsar-tenant (PULSAR_ROLE=tenant:
 # a tenant docker; the server agent adds sites to it with create_site engine "pulsar").
 
 FROM python:3.13-slim AS pulsar-base
@@ -67,3 +67,7 @@ ENV PULSAR_ROLE=tenant PULSAR_PRODUCT=supacharge
 FROM pulsar-base AS pulsar-tenant-composed
 ARG PULSAR_PRODUCT=rokctapp
 ENV PULSAR_ROLE=tenant PULSAR_PRODUCT=${PULSAR_PRODUCT}
+
+# Drone brain (platform/docker-compose.iot.yml, image drone-brain): a single-site tenant on a low-RAM edge device.
+FROM pulsar-base AS pulsar-drone
+ENV PULSAR_ROLE=tenant PULSAR_PRODUCT=drone

@@ -1,37 +1,53 @@
-﻿
 # RokctAI: IoT/Edge Spoke
-# Optimized for low-RAM devices (Drones/Sensors)
+# Optimized for low-RAM devices (Drones/Sensors). The brain runs on the Pulsar engine (image drone-brain, target
+# pulsar-drone in platform/pulsar/Dockerfile): no bench, no Frappe. Pulsar keeps a site in Postgres, so a small
+# Postgres runs beside it.
 
 services:
-  redis:
-    image: redis:7-alpine
+  postgres:
+    image: postgres:16-alpine
     restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    command: ["postgres", "-c", "shared_buffers=32MB", "-c", "max_connections=20"]
+    volumes:
+      - iot-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 30
     deploy:
       resources:
         limits:
-          memory: 64M
-    volumes:
-      - iot-redis-data:/data
+          memory: 256M
 
   app:
     image: ghcr.io/rokctai/occultation/drone-brain:latest
     restart: unless-stopped
     environment:
-      - MODE=iot
-      - DB_TYPE=sqlite
-      - SITE_NAME=${SITE_NAME:-drone.local}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
-      - EMAIL_ENCRYPTION_KEY=${EMAIL_ENCRYPTION_KEY}
+      IGNITION_DB_HOST: postgres
+      IGNITION_DB_PORT: "5432"
+      IGNITION_DB_ROOT_USER: postgres
+      IGNITION_DB_ROOT_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+      IGNITION_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      PULSAR_SITE: ${SITE_NAME:-drone.local}
+      PULSAR_SITE_EXTRA: '{"app_role": "iot"}'
+      EMAIL_ENCRYPTION_KEY: ${EMAIL_ENCRYPTION_KEY:-}
     volumes:
-      - iot-sites:/home/frappe/frappe-bench/sites
+      - iot-pulsar-data:/srv/pulsar
+    ports:
+      - "8000:8000"
     depends_on:
-      redis:
-        condition: service_started
+      postgres:
+        condition: service_healthy
     deploy:
       resources:
         limits:
           memory: 1G # Reserve for AI processing but skip web overhead
 
 volumes:
+  iot-db-data:
+  iot-pulsar-data:
+  # Volumes of the old Frappe drone brain: no service mounts them now; kept so their data is not lost.
   iot-redis-data:
   iot-sites:

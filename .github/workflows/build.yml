@@ -346,22 +346,16 @@ jobs:
             ghcr.io/rokctai/occultation/pulsar-supacharge:latest
             ghcr.io/rokctai/occultation/pulsar-supacharge:${{ steps.meta.outputs.version }}
 
-      - name: Build and Push Drone Brain (Frappe)
+      - name: Build and Push Drone Brain (Pulsar)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
-          context: docker-context
-          file: docker-context/platform/Dockerfile
-          target: iot
-          network: host
+          context: pulsar-stage
+          file: pulsar-stage/Dockerfile
+          target: pulsar-drone
           push: true
           tags: |
             ghcr.io/rokctai/occultation/drone-brain:latest
             ghcr.io/rokctai/occultation/drone-brain:${{ steps.meta.outputs.version }}
-          build-args: |
-            GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
-            MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
-            IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
-            DB_HOST=127.0.0.1
 
       # NOTE: continue-on-error keeps a broken vector/drone-edge build (an external
       # repo) from aborting the release of the hub/tenant/supacharge images above,
