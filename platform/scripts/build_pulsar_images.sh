@@ -26,26 +26,32 @@ TAG="${TAG:-local}"
 REPOS="${PULSAR_REPOS:-core control pay corporate zones agent hardware productivity commerce designer Users}"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
-[ -d "$SRC/core/pulsar/pulsar" ] || { echo "no core checkout at $SRC/core" >&2; exit 1; }
+[ -d "$SRC/core/pulsar/pulsar" ] || {
+  echo "no core checkout at $SRC/core" >&2
+  exit 1
+}
 mkdir -p "$STAGE/framework" "$STAGE/sdk"
-copy() {  # copy a pulsar/ folder without tests, caches or bytecode
-    mkdir -p "$2"
-    tar -C "$1" --exclude='__pycache__' --exclude='*.pyc' --exclude='tests' --exclude='cmds_tests' -cf - . | tar -C "$2" -xf -
+copy() { # copy a pulsar/ folder without tests, caches or bytecode
+  mkdir -p "$2"
+  tar -C "$1" --exclude='__pycache__' --exclude='*.pyc' --exclude='tests' --exclude='cmds_tests' -cf - . | tar -C "$2" -xf -
 }
 copy "$SRC/core/pulsar" "$STAGE/framework"
 for repo in $REPOS; do
-    [ -d "$SRC/$repo" ] || { echo "skip $repo (no checkout)"; continue; }
-    for pkg in "$SRC/$repo"/*/pulsar; do
-        [ -d "$pkg" ] || continue
-        rel="${pkg#"$SRC/"}"
-        [ "$rel" = "core/pulsar" ] && continue
-        copy "$pkg" "$STAGE/sdk/$rel"
-    done
+  [ -d "$SRC/$repo" ] || {
+    echo "skip $repo (no checkout)"
+    continue
+  }
+  for pkg in "$SRC/$repo"/*/pulsar; do
+    [ -d "$pkg" ] || continue
+    rel="${pkg#"$SRC/"}"
+    [ "$rel" = "core/pulsar" ] && continue
+    copy "$pkg" "$STAGE/sdk/$rel"
+  done
 done
 cp "$HERE/pulsar/Dockerfile" "$HERE/pulsar/entrypoint.sh" "$STAGE/"
 mkdir -p "$STAGE/wheels"
 if [ -n "${PULSAR_WHEELS:-}" ]; then cp "$PULSAR_WHEELS"/*.whl "$STAGE/wheels/"; fi
 for target in pulsar-hub pulsar-tenant; do
-    docker build -f "$STAGE/Dockerfile" --target "$target" -t "$target:$TAG" "$STAGE"
+  docker build -f "$STAGE/Dockerfile" --target "$target" -t "$target:$TAG" "$STAGE"
 done
 echo "built pulsar-hub:$TAG pulsar-tenant:$TAG"
