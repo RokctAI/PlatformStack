@@ -19,6 +19,8 @@
 #                      tenant docker, where the server agent's create_site adds sites)
 #   PULSAR_SITE_EXTRA  JSON merged into that site's site_config.json when it is made (app_role, tenant_domain, ...)
 #   IGNITION_DB_HOST / IGNITION_DB_PORT / IGNITION_DB_ROOT_USER / IGNITION_DB_ROOT_PASSWORD   the Postgres superuser
+#   STICKS_TENANT      when set on a tenant docker, the Sticks engine (STICKS_ENGINE) starts beside serve; its
+#                      STICKS_* env and /run/secrets are listed in sticks-server docs/tasks/task-17-tenant-image.md
 #   IGNITION_ADMIN_PASSWORD   the Administrator password of a site made here and of the API login
 # serve: waits for Postgres, makes PULSAR_SITE if missing, then serves the site (IGNITION_SITE, else the only one;
 # a tenant docker with no site yet waits until create_site makes one). worker | scheduler run the job processes.
@@ -97,6 +99,10 @@ serve | worker | scheduler)
     # random token nobody knows (logins go through the site's stored users, set by new-site)
     IGNITION_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
     export IGNITION_API_TOKEN
+  fi
+  # Sticks engine (tenant dockers only): started next to serve when the image carries it and STICKS_TENANT is set.
+  if [ "$cmd" = serve ] && [ -n "${STICKS_TENANT:-}" ] && [ -f "${STICKS_ENGINE:-/nonexistent}" ]; then
+    node "$STICKS_ENGINE" >>"$ROOT/logs/sticks-engine.log" 2>&1 &
   fi
   case "$cmd" in
   serve) exec python -m pulsar.ignition --root "$ROOT" serve --engine pulsar --host 0.0.0.0 --port "${PULSAR_PORT:-8000}" "$@" ;;
