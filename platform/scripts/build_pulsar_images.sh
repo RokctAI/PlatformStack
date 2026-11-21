@@ -85,7 +85,7 @@ if [ -n "${PULSAR_STAGE_ONLY:-}" ]; then
   echo "staged $STAGE"
   exit 0
 fi
-for target in pulsar-hub pulsar-tenant pulsar-supacharge; do
+for target in pulsar-hub pulsar-tenant pulsar-supacharge pulsar-drone; do
   docker build -f "$STAGE/Dockerfile" --target "$target" -t "$target:$TAG" "$STAGE"
 done
-echo "built pulsar-hub:$TAG pulsar-tenant:$TAG pulsar-supacharge:$TAG"
+echo "built pulsar-hub:$TAG pulsar-tenant:$TAG pulsar-supacharge:$TAG pulsar-drone:$TAG"
