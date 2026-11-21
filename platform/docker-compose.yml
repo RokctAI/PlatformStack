@@ -34,7 +34,7 @@ services:
 
   app:
     # The Orchestrator (Full Stage: Nginx + Exim + Bench)
-    image: ghcr.io/rokctai/occultation/rpanel-control:latest
+    image: ghcr.io/rokctai/occultation/pulsar-hub:latest
     restart: unless-stopped
     environment:
       - MODE=full
