@@ -85,8 +85,12 @@ serve | worker | scheduler)
   [ -n "${PULSAR_SITE:-}" ] && make_site "$PULSAR_SITE"
   if [ -z "${IGNITION_SITE:-}" ]; then
     until site="$(first_site)"; do sleep 5; done
-    IGNITION_SITE="$site"
-    export IGNITION_SITE
+    # serve with no IGNITION_SITE serves every site by Host header (a shared tenant docker);
+    # worker and scheduler run one site
+    if [ "$cmd" != serve ]; then
+      IGNITION_SITE="$site"
+      export IGNITION_SITE
+    fi
   fi
   if [ -z "${IGNITION_ADMIN_PASSWORD:-}" ] && [ -z "${IGNITION_API_TOKEN:-}" ]; then
     # a tenant docker that the server agent fills has no env login; serve still needs one, so it gets a
