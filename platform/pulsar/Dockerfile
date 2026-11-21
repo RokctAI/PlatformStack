@@ -26,9 +26,7 @@
 # Targets: pulsar-hub (PULSAR_ROLE=hub: makes its control site on first start) and pulsar-tenant (PULSAR_ROLE=tenant:
 # a tenant docker; the server agent adds sites to it with create_site engine "pulsar").
 
-ARG PYTHON_IMAGE=python:3.13-slim
-
-FROM ${PYTHON_IMAGE} AS pulsar-base
+FROM python:3.13-slim AS pulsar-base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     PULSAR_HOME=/opt/pulsar IGNITION_ROOT=/srv/pulsar PULSAR_SDK_ROOT=/opt/pulsar/sdk \
     PYTHONPATH=/opt/pulsar/framework
@@ -43,12 +41,13 @@ COPY --chown=root:root sdk/ /opt/pulsar/sdk/
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/pulsar-entrypoint
 RUN mkdir -p /srv/pulsar && chown pulsar:pulsar /srv/pulsar \
     && python -c "import pulsar.ignition.cli, pulsar.http_api"
+# hadolint ignore=DL3066
 USER pulsar
 WORKDIR /srv/pulsar
 VOLUME ["/srv/pulsar"]
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/method/ping', timeout=4).status == 200 else 1)"
+    CMD ["python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/method/ping', timeout=4).status == 200 else 1)"]
 ENTRYPOINT ["pulsar-entrypoint"]
 CMD ["serve"]
 

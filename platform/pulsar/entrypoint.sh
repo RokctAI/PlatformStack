@@ -27,12 +27,12 @@ set -eu
 umask 027
 ROOT="${IGNITION_ROOT:-/srv/pulsar}"
 mkdir -p "$ROOT/sites" "$ROOT/logs" "$ROOT/run"
-[ -f "$ROOT/sites/common_site_config.json" ] || printf '{"db_type": "postgres"}\n' > "$ROOT/sites/common_site_config.json"
-[ -f "$ROOT/sites/apps.txt" ] || : > "$ROOT/sites/apps.txt"
+[ -f "$ROOT/sites/common_site_config.json" ] || printf '{"db_type": "postgres"}\n' >"$ROOT/sites/common_site_config.json"
+[ -f "$ROOT/sites/apps.txt" ] || : >"$ROOT/sites/apps.txt"
 ign() { python -m pulsar.ignition --root "$ROOT" "$@"; }
 
 wait_db() {
-    python - <<'PY'
+  python - <<'PY'
 import os, sys, time
 import psycopg
 for _ in range(120):
@@ -48,13 +48,13 @@ PY
 }
 
 make_site() {
-    site="$1"
-    [ -f "$ROOT/sites/$site/site_config.json" ] && return 0
-    persona=tenant
-    [ "${PULSAR_ROLE:-tenant}" = hub ] && persona=control
-    ign new-site "$site" --persona "$persona" --engine pulsar
-    if [ -n "${PULSAR_SITE_EXTRA:-}" ]; then
-        SITE_DIR="$ROOT/sites/$site" python - <<'PY'
+  site="$1"
+  [ -f "$ROOT/sites/$site/site_config.json" ] && return 0
+  persona=tenant
+  [ "${PULSAR_ROLE:-tenant}" = hub ] && persona=control
+  ign new-site "$site" --persona "$persona" --engine pulsar
+  if [ -n "${PULSAR_SITE_EXTRA:-}" ]; then
+    SITE_DIR="$ROOT/sites/$site" python - <<'PY'
 import json, os
 path = os.path.join(os.environ["SITE_DIR"], "site_config.json")
 conf = json.load(open(path))
@@ -64,39 +64,42 @@ with open(tmp, "w") as fh:
     json.dump(conf, fh, indent=1)
 os.replace(tmp, path)
 PY
-    fi
+  fi
 }
 
 first_site() {
-    for d in "$ROOT"/sites/*/; do
-        [ -f "${d}site_config.json" ] && grep -q '"pulsar_engine"' "${d}site_config.json" && { basename "$d"; return 0; }
-    done
-    return 1
+  for d in "$ROOT"/sites/*/; do
+    [ -f "${d}site_config.json" ] && grep -q '"pulsar_engine"' "${d}site_config.json" && {
+      basename "$d"
+      return 0
+    }
+  done
+  return 1
 }
 
 cmd="${1:-serve}"
 case "$cmd" in
-    serve|worker|scheduler)
-        shift || true
-        wait_db
-        [ -n "${PULSAR_SITE:-}" ] && make_site "$PULSAR_SITE"
-        if [ -z "${IGNITION_SITE:-}" ]; then
-            until site="$(first_site)"; do sleep 5; done
-            IGNITION_SITE="$site"
-            export IGNITION_SITE
-        fi
-        if [ -z "${IGNITION_ADMIN_PASSWORD:-}" ] && [ -z "${IGNITION_API_TOKEN:-}" ]; then
-            # a tenant docker that the server agent fills has no env login; serve still needs one, so it gets a
-            # random token nobody knows (logins go through the site's stored users, set by new-site)
-            IGNITION_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
-            export IGNITION_API_TOKEN
-        fi
-        case "$cmd" in
-            serve) exec python -m pulsar.ignition --root "$ROOT" serve --engine pulsar --host 0.0.0.0 --port "${PULSAR_PORT:-8000}" "$@" ;;
-            *) exec python -m pulsar.ignition --root "$ROOT" "$cmd" --engine pulsar "$@" ;;
-        esac
-        ;;
-    *)
-        exec python -m pulsar.ignition --root "$ROOT" "$@"
-        ;;
+serve | worker | scheduler)
+  shift || true
+  wait_db
+  [ -n "${PULSAR_SITE:-}" ] && make_site "$PULSAR_SITE"
+  if [ -z "${IGNITION_SITE:-}" ]; then
+    until site="$(first_site)"; do sleep 5; done
+    IGNITION_SITE="$site"
+    export IGNITION_SITE
+  fi
+  if [ -z "${IGNITION_ADMIN_PASSWORD:-}" ] && [ -z "${IGNITION_API_TOKEN:-}" ]; then
+    # a tenant docker that the server agent fills has no env login; serve still needs one, so it gets a
+    # random token nobody knows (logins go through the site's stored users, set by new-site)
+    IGNITION_API_TOKEN="$(python -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    export IGNITION_API_TOKEN
+  fi
+  case "$cmd" in
+  serve) exec python -m pulsar.ignition --root "$ROOT" serve --engine pulsar --host 0.0.0.0 --port "${PULSAR_PORT:-8000}" "$@" ;;
+  *) exec python -m pulsar.ignition --root "$ROOT" "$cmd" --engine pulsar "$@" ;;
+  esac
+  ;;
+*)
+  exec python -m pulsar.ignition --root "$ROOT" "$@"
+  ;;
 esac
