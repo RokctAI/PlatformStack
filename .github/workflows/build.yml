@@ -435,9 +435,8 @@ jobs:
 
   upgrade-test:
     needs: [pipeline, docker-release]
-    # Pulsar blue-green job (shared-workflows PR on claude/project-thread-tl61qg-upgrade-test).
-    # Repin to the merged shared-workflows SHA before this leaves draft.
-    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@claude/project-thread-tl61qg-upgrade-test
+    # Pulsar blue-green job (needs the shared-workflows PR with the engine input merged first).
+    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@main
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
       engine: pulsar
