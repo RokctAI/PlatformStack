@@ -36,7 +36,7 @@ services:
     volumes:
       - iot-pulsar-data:/srv/pulsar
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000" # localhost only, as before (the old compose published nothing)
     depends_on:
       postgres:
         condition: service_healthy
