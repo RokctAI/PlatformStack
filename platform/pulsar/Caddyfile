@@ -1,0 +1,6 @@
+# Public ingress of the Master VPS hub (platform/docker-compose.yml service ingress).
+# {$SITE_NAME} gets an automatic Let's Encrypt certificate; everything goes to the Pulsar hub on app:8000.
+{$SITE_NAME} {
+	encode zstd gzip
+	reverse_proxy app:8000
+}

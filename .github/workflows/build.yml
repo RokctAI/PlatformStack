@@ -293,62 +293,58 @@ jobs:
         run: |
           timeout 30s bash -c "until pg_isready -h 127.0.0.1 -p 5432 -U postgres; do echo 'Waiting for PostgreSQL...'; sleep 2; done"
 
-      - name: Build and Push Control Hub (Full)
+      # --- Pulsar engine images (no bench, no Frappe) ---
+      # pulsar-hub / pulsar-tenant / pulsar-supacharge are built from platform/pulsar/Dockerfile on a
+      # staged context: RokctAI/core pulsar/ plus every <repo>/<pkg>/pulsar SDK package. Nothing under
+      # any frappe/ folder is staged, and the stage script refuses a module that imports frappe.
+      - name: Checkout Pulsar sources
+        env:
+          GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
+        run: |
+          set -eu
+          mkdir -p pulsar-src
+          for r in core control pay corporate zones agent hardware productivity commerce designer Users; do
+            git -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
+              clone -q --depth 1 "https://github.com/RokctAI/$r" "pulsar-src/$r" || { [ "$r" = core ] && exit 1; echo "skip $r"; }
+          done
+
+      - name: Stage Pulsar build context
+        run: |
+          PULSAR_SRC="$PWD/pulsar-src" PULSAR_STAGE_ONLY="$PWD/pulsar-stage" \
+            bash docker-context/platform/scripts/build_pulsar_images.sh
+
+      - name: Build and Push Pulsar Hub
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
-          context: docker-context
-          file: docker-context/platform/Dockerfile
-          # Hub rcore is composed from The-Rokct-Protocol rokcthub.json: the
-          # rokctapp module set plus fleet, provisioning and the control
-          # personas of subscriptions/wallet (hub-only), with control cohosted.
-          # Tenant targets below keep their own PRODUCT.
-          target: full_composed
-          network: host
+          context: pulsar-stage
+          file: pulsar-stage/Dockerfile
+          target: pulsar-hub
           push: true
           tags: |
             ghcr.io/rokctai/occultation/pulsar-hub:latest
             ghcr.io/rokctai/occultation/pulsar-hub:${{ steps.meta.outputs.version }}
-          build-args: |
-            GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
-            MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
-            IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
-            DB_HOST=127.0.0.1
-            PRODUCT=rokcthub
-            PROTOCOL_REF=${{ inputs.protocol-ref || 'main' }}
 
-      - name: Build and Push Tenant Spoke (Tenant)
+      - name: Build and Push Pulsar Tenant
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
-          context: docker-context
-          file: docker-context/platform/Dockerfile
-          target: tenant
-          network: host
+          context: pulsar-stage
+          file: pulsar-stage/Dockerfile
+          target: pulsar-tenant
           push: true
           tags: |
             ghcr.io/rokctai/occultation/pulsar-tenant:latest
             ghcr.io/rokctai/occultation/pulsar-tenant:${{ steps.meta.outputs.version }}
-          build-args: |
-            GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
-            MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
-            IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
-            DB_HOST=127.0.0.1
 
-      - name: Build and Push Supacharge (Tenant, keeps lms)
+      - name: Build and Push Pulsar Supacharge
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
-          context: docker-context
-          file: docker-context/platform/Dockerfile
-          target: tenant_supacharge
-          network: host
+          context: pulsar-stage
+          file: pulsar-stage/Dockerfile
+          target: pulsar-supacharge
           push: true
           tags: |
             ghcr.io/rokctai/occultation/pulsar-supacharge:latest
             ghcr.io/rokctai/occultation/pulsar-supacharge:${{ steps.meta.outputs.version }}
-          build-args: |
-            GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
-            MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
-            IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
-            DB_HOST=127.0.0.1
 
       - name: Build and Push Drone Brain (Frappe)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -439,10 +435,14 @@ jobs:
 
   upgrade-test:
     needs: [pipeline, docker-release]
-    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@a343bc307ab7de001b3a6ef4220786528b33b2bc # shared-workflows main @ 2026-09-26 (#542)
+    # Pulsar blue-green job (needs the shared-workflows PR with the engine input merged first).
+    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@main
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
-      min_legacy_version: '2.4.8'
+      engine: pulsar
+      compose_file: docker-compose.pulsar.yml
+      hub_package: pulsar-hub
+      hub_site: hub.localhost
       pre_deploy_command: 'docker network create rokct_tenants 2>/dev/null || true'
     secrets: inherit
 
@@ -769,21 +769,31 @@ jobs:
         run: |
           timeout 30s bash -c "until pg_isready -h 127.0.0.1 -p 5432 -U postgres; do echo 'Waiting for PostgreSQL...'; sleep 2; done"
 
-      - name: Build and Push Composed Tenant
+      - name: Checkout Pulsar sources
+        env:
+          GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
+        run: |
+          set -eu
+          mkdir -p pulsar-src
+          for r in core control pay corporate zones agent hardware productivity commerce designer Users; do
+            git -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
+              clone -q --depth 1 "https://github.com/RokctAI/$r" "pulsar-src/$r" || { [ "$r" = core ] && exit 1; echo "skip $r"; }
+          done
+
+      - name: Stage Pulsar build context
+        run: |
+          PULSAR_SRC="$PWD/pulsar-src" PULSAR_STAGE_ONLY="$PWD/pulsar-stage" \
+            bash docker-context/platform/scripts/build_pulsar_images.sh
+
+      - name: Build and Push Composed Pulsar Tenant
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
-          context: docker-context
-          file: docker-context/platform/Dockerfile
-          target: tenant_composed
-          network: host
+          context: pulsar-stage
+          file: pulsar-stage/Dockerfile
+          target: pulsar-tenant-composed
           push: true
           tags: |
             ghcr.io/rokctai/occultation/pulsar-tenant-composed:${{ inputs.composed-product }}
             ghcr.io/rokctai/occultation/pulsar-tenant-composed:${{ inputs.composed-product }}-${{ steps.meta.outputs.version }}
           build-args: |
-            GITHUB_TOKEN=${{ secrets.MONOREPO_PAT || github.token }}
-            MONOREPO_PAT=${{ secrets.MONOREPO_PAT }}
-            IS_ROKCTAI_REPO=${{ github.repository_owner == 'RokctAI' && 'true' || 'false' }}
-            DB_HOST=127.0.0.1
-            PRODUCT=${{ inputs.composed-product }}
-            PROTOCOL_REF=${{ inputs.protocol-ref }}
+            PULSAR_PRODUCT=${{ inputs.composed-product }}

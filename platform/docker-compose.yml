@@ -1,6 +1,6 @@
 
 # RokctAI: Control Hub (Master VPS)
-# Manages SSL, Routing, and Shared Trial Pool
+# Manages SSL, Routing, and Shared Trial Pool. The hub runs on the Pulsar engine (no bench, no Frappe).
 
 services:
   db:
@@ -33,54 +33,84 @@ services:
       - control-redis-data:/data
 
   app:
-    # The Orchestrator (Full Stage: Nginx + Exim + Bench)
+    # The hub on the Pulsar engine (platform/pulsar/Dockerfile): no bench, no Frappe, no nginx inside.
+    # On first start it makes its control site (PULSAR_SITE) with Pulsar's own new-site, then serves it on 8000.
+    # Its Postgres database is p_<site>_<hash>, so it never touches a database an old Frappe hub left in db.
     image: ghcr.io/rokctai/occultation/pulsar-hub:latest
     restart: unless-stopped
-    environment:
-      - MODE=full
-      - SITE_NAME=${SITE_NAME:-platform.rokct.ai}
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_ROOT_PASSWORD=${DB_PASSWORD:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
-      - EMAIL_ENCRYPTION_KEY=${EMAIL_ENCRYPTION_KEY}
-      - REDIS_CACHE=redis://redis:6379/0
-      - REDIS_QUEUE=redis://redis:6379/1
-      - REDIS_SOCKETIO=redis://redis:6379/2
+    environment: &hub-env
+      IGNITION_DB_HOST: db
+      IGNITION_DB_PORT: "5432"
+      IGNITION_DB_ROOT_USER: postgres
+      IGNITION_DB_ROOT_PASSWORD: ${DB_PASSWORD:-admin}
+      IGNITION_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      PULSAR_SITE: ${SITE_NAME:-platform.rokct.ai}
+      PULSAR_SITE_EXTRA: '{"app_role": "control", "tenant_domain": "${TENANT_DOMAIN:-rokct.ai}", "tenant_engine": "pulsar", "host_name": "https://${SITE_NAME:-platform.rokct.ai}", "tenants_data_path": "/srv/pulsar/tenants-data"}'
+      EMAIL_ENCRYPTION_KEY: ${EMAIL_ENCRYPTION_KEY:-}
     deploy:
       resources:
         limits:
           memory: 2G
     volumes:
-      - control-sites:/home/frappe/frappe-bench/sites
-      - control-logs:/home/frappe/frappe-bench/logs
-      - control-exim4-config:/etc/exim4
-      - control-exim4-spool:/var/spool/exim4
-      - control-exim4-logs:/var/log/exim4
-      - control-opendkim:/etc/opendkim
-      - control-nginx-config:/etc/nginx
-      - control-nginx-logs:/var/log/nginx
-      - control-cron:/etc/cron.d
-      # Let's Encrypt state (certs, renewal configs, account keys) issued by
-      # rpanel's certbot for tenant backend domains. Must outlive the container.
-      - control-letsencrypt:/etc/letsencrypt
-      - ../..:/workspace
+      - pulsar-hub-data:/srv/pulsar
     networks:
       - default
-      # Shared bridge with every tenant compose project so the hub nginx can
-      # proxy_pass https://<custom domain> -> http://<site_name>-app:8000.
       - rokct_tenants
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
+    ports:
+      # Pulsar HTTP, localhost only; the public 80/443 go through ingress.
+      - "127.0.0.1:8000:8000"
+
+  app-worker:
+    image: ghcr.io/rokctai/occultation/pulsar-hub:latest
+    restart: unless-stopped
+    command: ["worker"]
+    healthcheck: {disable: true}
+    environment:
+      <<: *hub-env
+      IGNITION_SITE: ${SITE_NAME:-platform.rokct.ai}
+    volumes:
+      - pulsar-hub-data:/srv/pulsar
+    depends_on:
+      app:
+        condition: service_healthy
+
+  app-scheduler:
+    image: ghcr.io/rokctai/occultation/pulsar-hub:latest
+    restart: unless-stopped
+    command: ["scheduler"]
+    healthcheck: {disable: true}
+    environment:
+      <<: *hub-env
+      IGNITION_SITE: ${SITE_NAME:-platform.rokct.ai}
+    volumes:
+      - pulsar-hub-data:/srv/pulsar
+    depends_on:
+      app:
+        condition: service_healthy
+
+  ingress:
+    # Public 80/443 with automatic TLS for the hub domain (platform/pulsar/Caddyfile). Replaces the nginx and
+    # certbot that lived inside the old Frappe hub image.
+    image: caddy:2.8.4
+    restart: unless-stopped
+    environment:
+      SITE_NAME: ${SITE_NAME:-platform.rokct.ai}
+    volumes:
+      - ./pulsar/Caddyfile:/etc/caddy/Caddyfile:ro
+      - pulsar-caddy-data:/data
+      - pulsar-caddy-config:/config
+    networks:
+      - default
+      - rokct_tenants
     ports:
       - "80:80"
       - "443:443"
-      # Raw bench/gunicorn port: bound to localhost only (in-cluster peers reach
-      # it as http://app:8000 over the compose network, not via the host).
-      - "127.0.0.1:8000:8000"
+    depends_on:
+      app:
+        condition: service_healthy
 
   juvo-shell:
     # The juvo (delivery platform) Next.js shell, hosted on this VPS behind the
@@ -144,6 +174,10 @@ services:
     command: bash -c "gravity watch & gravity serve --host 0.0.0.0 --port 8000"
 
 volumes:
+  pulsar-hub-data:
+  pulsar-caddy-data:
+  pulsar-caddy-config:
+  # Volumes of the old Frappe hub: no service mounts them now; kept so their data is not lost.
   control-db-data:
   control-redis-data:
   control-sites:

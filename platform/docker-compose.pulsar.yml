@@ -1,0 +1,77 @@
+# Pulsar-engine stack: Postgres, the hub (control site) and one tenant docker. No bench, no Frappe.
+# Build the images first:  platform/scripts/build_pulsar_images.sh
+# Then:                     docker compose -f platform/docker-compose.pulsar.yml --env-file platform/pulsar/.env up -d
+# Secrets come from the env file (see platform/pulsar/env.example); nothing here holds a real password.
+name: pulsar
+
+x-db-env: &db-env
+  IGNITION_DB_HOST: postgres
+  IGNITION_DB_PORT: "5432"
+  IGNITION_DB_ROOT_USER: postgres
+  IGNITION_DB_ROOT_PASSWORD: ${PULSAR_DB_ROOT_PASSWORD:?set PULSAR_DB_ROOT_PASSWORD}
+
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${PULSAR_DB_ROOT_PASSWORD:?set PULSAR_DB_ROOT_PASSWORD}
+    volumes: [postgres-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 30
+
+  hub:
+    image: ${PULSAR_HUB_IMAGE:-pulsar-hub:local}
+    environment:
+      <<: *db-env
+      IGNITION_ADMIN_PASSWORD: ${PULSAR_HUB_ADMIN_PASSWORD:?set PULSAR_HUB_ADMIN_PASSWORD}
+      PULSAR_SITE: ${PULSAR_HUB_SITE:-hub.localhost}
+      PULSAR_SITE_EXTRA: '{"app_role": "control", "tenant_domain": "${PULSAR_TENANT_DOMAIN:-tenants.localhost}", "tenant_engine": "pulsar", "host_name": "${PULSAR_HUB_URL:-http://hub:8000}", "tenants_data_path": "/srv/pulsar/tenants-data"}'
+    volumes: [hub-data:/srv/pulsar]
+    ports: ["${PULSAR_HUB_PORT:-8100}:8000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  hub-worker:
+    image: ${PULSAR_HUB_IMAGE:-pulsar-hub:local}
+    healthcheck: {disable: true}
+    command: ["worker"]
+    environment:
+      <<: *db-env
+      IGNITION_ADMIN_PASSWORD: ${PULSAR_HUB_ADMIN_PASSWORD:?set PULSAR_HUB_ADMIN_PASSWORD}
+      IGNITION_SITE: ${PULSAR_HUB_SITE:-hub.localhost}
+    volumes: [hub-data:/srv/pulsar]
+    depends_on:
+      hub: {condition: service_healthy}
+
+  hub-scheduler:
+    image: ${PULSAR_HUB_IMAGE:-pulsar-hub:local}
+    healthcheck: {disable: true}
+    command: ["scheduler"]
+    environment:
+      <<: *db-env
+      IGNITION_ADMIN_PASSWORD: ${PULSAR_HUB_ADMIN_PASSWORD:?set PULSAR_HUB_ADMIN_PASSWORD}
+      IGNITION_SITE: ${PULSAR_HUB_SITE:-hub.localhost}
+    volumes: [hub-data:/srv/pulsar]
+    depends_on:
+      hub: {condition: service_healthy}
+
+  # A tenant docker. With PULSAR_TENANT_SITE set it makes that site itself (a single-tenant stack); without it, it
+  # waits until the server agent's create_site (engine "pulsar") adds one, then serves it.
+  tenant:
+    image: ${PULSAR_TENANT_IMAGE:-pulsar-tenant:local}
+    environment:
+      <<: *db-env
+      IGNITION_ADMIN_PASSWORD: ${PULSAR_TENANT_ADMIN_PASSWORD:?set PULSAR_TENANT_ADMIN_PASSWORD}
+      PULSAR_SITE: ${PULSAR_TENANT_SITE:-}
+      PULSAR_SITE_EXTRA: '{"app_role": "tenant"}'
+    volumes: [tenant-data:/srv/pulsar]
+    ports: ["${PULSAR_TENANT_PORT:-8101}:8000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+volumes:
+  postgres-data:
+  hub-data:
+  tenant-data:
