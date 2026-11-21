@@ -27,6 +27,8 @@
 # a tenant docker; the server agent adds sites to it with create_site engine "pulsar").
 
 FROM python:3.13-slim AS pulsar-base
+# The upgrade test refuses any hub/tenant image without this label (a bench image never has it).
+LABEL rokct.engine=pulsar
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     PULSAR_HOME=/opt/pulsar IGNITION_ROOT=/srv/pulsar PULSAR_SDK_ROOT=/opt/pulsar/sdk \
     PYTHONPATH=/opt/pulsar/framework
@@ -56,3 +58,12 @@ ENV PULSAR_ROLE=hub
 
 FROM pulsar-base AS pulsar-tenant
 ENV PULSAR_ROLE=tenant
+
+# Supacharge tenant docker: same engine, product recorded for the hub. (lms has no Pulsar port yet.)
+FROM pulsar-base AS pulsar-supacharge
+ENV PULSAR_ROLE=tenant PULSAR_PRODUCT=supacharge
+
+# Per-product tenant (build.yml docker-composed, workflow_dispatch composed-product=<name>).
+FROM pulsar-base AS pulsar-tenant-composed
+ARG PULSAR_PRODUCT=rokctapp
+ENV PULSAR_ROLE=tenant PULSAR_PRODUCT=${PULSAR_PRODUCT}
