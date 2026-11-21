@@ -313,6 +313,19 @@ jobs:
           PULSAR_SRC="$PWD/pulsar-src" PULSAR_STAGE_ONLY="$PWD/pulsar-stage" \
             bash docker-context/platform/scripts/build_pulsar_images.sh
 
+      - name: Build Sticks engine (pinned)
+        env:
+          GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
+          STICKS_SERVER_REF: da72af18c5ad74ffbe32bbd5b9c4b3fb007ebbb4
+        run: |
+          set -eu
+          git init -q sticks-server
+          git -C sticks-server -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
+            fetch -q --depth 1 https://github.com/RokctAI/sticks-server "$STICKS_SERVER_REF"
+          git -C sticks-server checkout -q FETCH_HEAD
+          docker build -f sticks-server/docker/Dockerfile --target engine --output type=local,dest=sticks-engine-out sticks-server
+          test -f sticks-engine-out/opt/sticks/build/up/apps/sticks-engine/dist/sticks-engine.mjs
+
       - name: Build and Push Pulsar Hub
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
@@ -330,6 +343,7 @@ jobs:
           context: pulsar-stage
           file: pulsar-stage/Dockerfile
           target: pulsar-tenant
+          build-contexts: sticks-engine=sticks-engine-out
           push: true
           tags: |
             ghcr.io/rokctai/occultation/pulsar-tenant:latest
@@ -341,6 +355,7 @@ jobs:
           context: pulsar-stage
           file: pulsar-stage/Dockerfile
           target: pulsar-supacharge
+          build-contexts: sticks-engine=sticks-engine-out
           push: true
           tags: |
             ghcr.io/rokctai/occultation/pulsar-supacharge:latest

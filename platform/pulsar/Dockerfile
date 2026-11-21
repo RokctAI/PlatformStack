@@ -26,6 +26,14 @@
 # Targets (also pulsar-supacharge, pulsar-tenant-composed, pulsar-drone below): pulsar-hub (PULSAR_ROLE=hub: makes its control site on first start) and pulsar-tenant (PULSAR_ROLE=tenant:
 # a tenant docker; the server agent adds sites to it with create_site engine "pulsar").
 
+# Sticks engine (Rakazo), one per tenant docker (Ray 2026-11-21). CI passes the built `engine` target of
+# RokctAI/sticks-server (pinned) as the named context `sticks-engine`; without it this empty stage stands in and the
+# tenant images start Pulsar only.
+FROM busybox:1.37 AS sticks-engine
+RUN mkdir -p /opt/sticks
+
+FROM node:24-bookworm-slim AS node-runtime
+
 FROM python:3.13-slim AS pulsar-base
 # The upgrade test refuses any hub/tenant image without this label (a bench image never has it).
 LABEL rokct.engine=pulsar
@@ -56,15 +64,24 @@ CMD ["serve"]
 FROM pulsar-base AS pulsar-hub
 ENV PULSAR_ROLE=hub
 
-FROM pulsar-base AS pulsar-tenant
+# Tenant dockers carry Pulsar plus the Sticks engine; tenants sharing a docker share its engine. Postgres stays outside.
+FROM pulsar-base AS pulsar-tenant-base
+USER root
+COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
+COPY --from=sticks-engine --chown=root:root /opt/sticks /opt/sticks
+USER pulsar
+ENV STICKS_ENGINE=/opt/sticks/build/up/apps/sticks-engine/dist/sticks-engine.mjs API_PORT=3100
+EXPOSE 3100
+
+FROM pulsar-tenant-base AS pulsar-tenant
 ENV PULSAR_ROLE=tenant
 
 # Supacharge tenant docker: same engine, product recorded for the hub. (lms has no Pulsar port yet.)
-FROM pulsar-base AS pulsar-supacharge
+FROM pulsar-tenant-base AS pulsar-supacharge
 ENV PULSAR_ROLE=tenant PULSAR_PRODUCT=supacharge
 
 # Per-product tenant (build.yml docker-composed, workflow_dispatch composed-product=<name>).
-FROM pulsar-base AS pulsar-tenant-composed
+FROM pulsar-tenant-base AS pulsar-tenant-composed
 ARG PULSAR_PRODUCT=rokctapp
 ENV PULSAR_ROLE=tenant PULSAR_PRODUCT=${PULSAR_PRODUCT}
 
