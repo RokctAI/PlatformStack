@@ -76,10 +76,13 @@ RUN GIT_TOKEN="${MONOREPO_PAT:-${GITHUB_TOKEN}}"; \
     /usr/local/bin/build_ecosystem.sh || (cat /tmp/build_ecosystem.log && exit 1)
 
 # Clone and build rok-paperclip-adapter
-RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter && \
-    cd /home/frappe/rok-paperclip-adapter && \
-    npm install && \
-    npm run build
+# ROK is replaced by Rakazo (separate service): if the adapter repo cannot be
+# cloned, warn and build without it instead of failing the image.
+RUN if git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter; then \
+        cd /home/frappe/rok-paperclip-adapter && npm install && npm run build; \
+    else \
+        echo "WARNING: rok-paperclip-adapter not reachable; building without it"; \
+    fi
 
 # Clone Paperclip Host and link rok-paperclip-adapter.
 # Pinned to an upstream release tag (v2026.831.1 = 65ec059b) so main stops
@@ -93,7 +96,7 @@ RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-
 RUN git clone --depth 1 --branch v2026.831.1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip && \
     cd /home/frappe/paperclip && \
     npm install --legacy-peer-deps && \
-    npm install --legacy-peer-deps /home/frappe/rok-paperclip-adapter
+    if [ -d /home/frappe/rok-paperclip-adapter ]; then npm install --legacy-peer-deps /home/frappe/rok-paperclip-adapter; fi
 
 # Preserve the baked site so the entrypoint can seed an empty volume on first boot
 # (Named volume mounts shadow the image layers, so we keep a backup outside /sites)
@@ -341,14 +344,17 @@ CMD ["bench", "start"]
 # --- Stage 7A: Composed Hub Builder ---
 # composed_builder plus the paperclip pieces the hub carries (same as builder).
 FROM composed_builder AS hub_composed_builder
-RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter && \
-    cd /home/frappe/rok-paperclip-adapter && \
-    npm install && \
-    npm run build
+# ROK is replaced by Rakazo (separate service): if the adapter repo cannot be
+# cloned, warn and build without it instead of failing the image.
+RUN if git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-adapter.git /home/frappe/rok-paperclip-adapter; then \
+        cd /home/frappe/rok-paperclip-adapter && npm install && npm run build; \
+    else \
+        echo "WARNING: rok-paperclip-adapter not reachable; building without it"; \
+    fi
 RUN git clone --depth 1 --branch v2026.831.1 https://github.com/paperclipai/paperclip.git /home/frappe/paperclip && \
     cd /home/frappe/paperclip && \
     npm install --legacy-peer-deps && \
-    npm install --legacy-peer-deps /home/frappe/rok-paperclip-adapter
+    if [ -d /home/frappe/rok-paperclip-adapter ]; then npm install --legacy-peer-deps /home/frappe/rok-paperclip-adapter; fi
 
 # --- Stage 7: Composed Control Hub (Full Image) ---
 # Identical runtime layer to Stage 3 (full); only the bench underneath differs.
