@@ -47,6 +47,13 @@ services:
       PULSAR_SITE: ${SITE_NAME:-platform.rokct.ai}
       PULSAR_SITE_EXTRA: '{"app_role": "control", "tenant_domain": "${TENANT_DOMAIN:-rokct.ai}", "tenant_engine": "pulsar", "host_name": "https://${SITE_NAME:-platform.rokct.ai}", "tenants_data_path": "/srv/pulsar/tenants-data"}'
       EMAIL_ENCRYPTION_KEY: ${EMAIL_ENCRYPTION_KEY:-}
+      # The hub's outgoing mail (verification PINs, staff alerts, the tenant relay) through our mail server
+      # (production.env SMTP_*). With no host set Pulsar sends no mail at all.
+      IGNITION_SMTP_HOST: ${SMTP_SERVER:-}
+      IGNITION_SMTP_PORT: ${SMTP_PORT:-587}
+      IGNITION_SMTP_USER: ${SMTP_USERNAME:-}
+      IGNITION_SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      IGNITION_SMTP_SENDER: ${SMTP_USERNAME:-}
     deploy:
       resources:
         limits:
