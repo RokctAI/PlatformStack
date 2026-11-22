@@ -246,12 +246,21 @@ done_ok
 step "Configuring rate limiting for auth"
 
 cat >/etc/exim4/conf.d/acl/50_exim4-config_rate_limit <<'EOF'
-# Rate limit authentication attempts
+# Rate limit authentication attempts from outside addresses only. The hub (and
+# anything on a private Docker network) opens a new session per mail, so counting
+# it would refuse its AUTH after 10 mails an hour. Tenant containers cannot reach
+# this server at all (server agent's block_tenant_mail.sh).
 acl_check_auth:
+  accept
+    hosts = 127.0.0.0/8 : 10.0.0.0/8 : 172.16.0.0/12 : 192.168.0.0/16
   deny
     ratelimit = 10 / 1h / strict / $sender_host_address
     log_message = AUTH rate limit exceeded
+  accept
 EOF
+
+grep -q "hosts = 127.0.0.0/8 : 10.0.0.0/8 : 172.16.0.0/12 : 192.168.0.0/16" /etc/exim4/conf.d/acl/50_exim4-config_rate_limit ||
+  fail "AUTH ratelimit must exempt private addresses (hub mail)"
 
 done_ok
 
