@@ -37,6 +37,10 @@ FROM node:24-bookworm-slim AS node-runtime
 FROM python:3.13-slim AS pulsar-base
 # The upgrade test refuses any hub/tenant image without this label (a bench image never has it).
 LABEL rokct.engine=pulsar
+# Every recorded error names the version and core commit it ran (pulsar.error_capture); CI passes both.
+ARG PULSAR_VERSION=""
+ARG PULSAR_COMMIT=""
+ENV PULSAR_VERSION=${PULSAR_VERSION} PULSAR_COMMIT=${PULSAR_COMMIT}
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     PULSAR_HOME=/opt/pulsar IGNITION_ROOT=/srv/pulsar PULSAR_SDK_ROOT=/opt/pulsar/sdk \
     PYTHONPATH=/opt/pulsar/framework
