@@ -621,6 +621,22 @@ jobs:
           echo "🚀 Deploying latest Control Plane container to Master VPS..."
           # rokct_tenants is declared external in docker-compose.yml and every
           # tenant compose project, so it must exist before any `up` (idempotent).
+          # Hub mail (hub-mail's login and the hub's IGNITION_SMTP_*, PlatformStack#389): copy the SMTP_*
+          # lines from Occultation production.env into platform/.env on the server, over
+          # stdin so no value appears in a command line or this log. Other keys stay.
+          if [ -f "$ENV_FILE" ] && grep -qE '^SMTP_(SERVER|PORT|USERNAME|PASSWORD)=' "$ENV_FILE"; then
+            grep -E '^SMTP_(SERVER|PORT|USERNAME|PASSWORD)=' "$ENV_FILE" | ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" \
+              "python3 -c 'import sys,os
+          p=\"/home/frappe/PlatformStack/platform/.env\"
+          new=dict(l.rstrip(\"\\n\").split(\"=\",1) for l in sys.stdin if \"=\" in l)
+          old=open(p).read().splitlines() if os.path.exists(p) else []
+          keep=[l for l in old if l.split(\"=\",1)[0] not in new]
+          os.umask(0o077); open(p,\"w\").write(\"\\n\".join(keep+[k+\"=\"+v for k,v in new.items()])+\"\\n\")
+          os.chmod(p,0o600)'"
+            echo "✅ Hub SMTP settings copied (values not shown)"
+          else
+            echo "::warning title=Hub mail::No SMTP_* in Occultation production.env; the hub will not send mail."
+          fi
           ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
             mkdir -p /etc/nginx/conf.d /etc/letsencrypt /var/www/acme /etc/rokct &&
