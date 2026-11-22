@@ -469,6 +469,11 @@ done_ok
 # 20. FAIL2BAN SETUP
 # =============================================================================
 
+# hub-mail (a container, no init) sets SKIP_FAIL2BAN=1: there Exim's own AUTH ratelimit
+# (acl_check_auth: 10 attempts an hour per address) limits password guessing.
+if [ "${SKIP_FAIL2BAN:-0}" = "1" ]; then
+  echo -e "${BLUE}  - SKIP_FAIL2BAN=1, Exim AUTH ratelimit only${NC}"
+else
 step "Installing Fail2ban for Exim"
 
 if command -v apt-get >/dev/null 2>&1; then
@@ -505,6 +510,7 @@ if command -v systemctl >/dev/null 2>&1; then
 fi
 
 done_ok
+fi
 
 # =============================================================================
 # 21. START EXIM

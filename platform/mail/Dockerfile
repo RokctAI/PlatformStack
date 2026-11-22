@@ -7,7 +7,7 @@
 # mail accounts in the volumes are kept).
 FROM debian:bookworm-slim
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      exim4-daemon-heavy opendkim opendkim-tools openssl ca-certificates curl dnsutils netcat-openbsd fail2ban \
+      exim4-daemon-heavy opendkim opendkim-tools openssl ca-certificates curl dnsutils netcat-openbsd \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 COPY scripts/exim4_bootstrap.sh /usr/local/bin/exim4_bootstrap.sh
 COPY mail/entrypoint.sh /usr/local/bin/hub-mail-entrypoint.sh
