@@ -69,5 +69,5 @@ jobs:
             a=$(echo "$(date +%s.%N) - $s" | bc)
             echo "- run $i (clock includes new-site): ping ${t}s, note created ${a}s" | tee -a "$GITHUB_STEP_SUMMARY"
           done
-          kill $(jobs -p) 2>/dev/null || true
+          jobs -p | xargs -r kill 2>/dev/null || true
           docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' | tee -a "$GITHUB_STEP_SUMMARY"
