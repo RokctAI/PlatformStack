@@ -12,6 +12,9 @@ until [ -f "$CERT" ]; do
   echo "hub-mail: waiting for the certificate of ${PRIMARY_HOSTNAME} (hub-cert issues it once DNS points here)"
   sleep 60
 done
-SKIP_EXIM=1 SKIP_FAIL2BAN=1 /usr/local/bin/exim4_bootstrap.sh || { echo "hub-mail: bootstrap failed"; exit 1; }
+SKIP_EXIM=1 SKIP_FAIL2BAN=1 /usr/local/bin/exim4_bootstrap.sh || {
+  echo "hub-mail: bootstrap failed"
+  exit 1
+}
 chown -R Debian-exim:Debian-exim /var/spool/exim4 /var/log/exim4 2>/dev/null || true
 exec exim -bdf -q30m
