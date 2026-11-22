@@ -132,6 +132,7 @@ services:
     entrypoint: ["/bin/sh", "/rokct/hub-cert.sh"]
     environment:
       SITE_NAME: ${SITE_NAME:-platform.rokct.ai}
+      MAIL_HOSTNAME: ${SMTP_SERVER:-mail.rokct.ai}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-}
     volumes:
       - ./pulsar/ingress/hub-cert.sh:/rokct/hub-cert.sh:ro
@@ -139,6 +140,35 @@ services:
       - /var/www/acme:/var/www/acme
     depends_on:
       - ingress
+
+  hub-mail:
+    # Our own mail server (Exim4 + DKIM, platform/mail/), run by the hub so any new VPS has mail with no
+    # hands-on step. Hub only (tenant composes never have it). The hub sends through it as ${SMTP_SERVER}
+    # (alias below), with SMTP AUTH over TLS only. Keeps the old hub's Exim volumes, so the DKIM keys
+    # already published in DNS stay the same. Tenant containers cannot reach it (server agent's
+    # block_tenant_mail.sh); they send only through the hub's capped relay.
+    build:
+      context: .
+      dockerfile: mail/Dockerfile
+    image: rokct/hub-mail:local
+    pull_policy: build
+    restart: unless-stopped
+    environment:
+      PRIMARY_HOSTNAME: ${SMTP_SERVER:-mail.rokct.ai}
+      SMTP_AUTH_USER: ${SMTP_USERNAME:-}
+      SMTP_AUTH_PASS: ${SMTP_PASSWORD:-}
+    volumes:
+      - control-exim4-config:/etc/exim4
+      - control-exim4-spool:/var/spool/exim4
+      - control-exim4-logs:/var/log/exim4
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      default:
+        aliases:
+          - ${SMTP_SERVER:-mail.rokct.ai}
+    ports:
+      - "25:25"
+      - "587:587"
 
   juvo-shell:
     # The juvo (delivery platform) Next.js shell, hosted on this VPS behind the
@@ -203,7 +233,7 @@ services:
 
 volumes:
   pulsar-hub-data:
-  # Volumes of the old Frappe hub: no service mounts them now; kept so their data is not lost.
+  # Volumes of the old Frappe hub, kept so their data is not lost (hub-mail mounts the exim4 ones).
   control-db-data:
   control-redis-data:
   control-sites:

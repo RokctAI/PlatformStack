@@ -621,6 +621,22 @@ jobs:
           echo "🚀 Deploying latest Control Plane container to Master VPS..."
           # rokct_tenants is declared external in docker-compose.yml and every
           # tenant compose project, so it must exist before any `up` (idempotent).
+          # Hub mail (hub-mail's login and the hub's IGNITION_SMTP_*, PlatformStack#389): copy the SMTP_*
+          # lines from Occultation production.env into platform/.env on the server, over
+          # stdin so no value appears in a command line or this log. Other keys stay.
+          if [ -f "$ENV_FILE" ] && grep -qE '^SMTP_(SERVER|PORT|USERNAME|PASSWORD)=' "$ENV_FILE"; then
+            grep -E '^SMTP_(SERVER|PORT|USERNAME|PASSWORD)=' "$ENV_FILE" | ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" \
+              "python3 -c 'import sys,os
+          p=\"/home/frappe/PlatformStack/platform/.env\"
+          new=dict(l.rstrip(\"\\n\").split(\"=\",1) for l in sys.stdin if \"=\" in l)
+          old=open(p).read().splitlines() if os.path.exists(p) else []
+          keep=[l for l in old if l.split(\"=\",1)[0] not in new]
+          os.umask(0o077); open(p,\"w\").write(\"\\n\".join(keep+[k+\"=\"+v for k,v in new.items()])+\"\\n\")
+          os.chmod(p,0o600)'"
+            echo "✅ Hub SMTP settings copied (values not shown)"
+          else
+            echo "::warning title=Hub mail::No SMTP_* in Occultation production.env; the hub will not send mail."
+          fi
           ssh -o StrictHostKeyChecking=no root@"$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
             mkdir -p /etc/nginx/conf.d /etc/letsencrypt /var/www/acme /etc/rokct &&
@@ -632,6 +648,16 @@ jobs:
             (systemctl try-restart rokct-server-agent 2>/dev/null || true) &&
             (docker network create rokct_tenants 2>/dev/null || true) &&
             docker compose pull &&
+            if systemctl list-unit-files exim4.service postfix.service 2>/dev/null | grep -qE '^(exim4|postfix)'; then
+              echo 'Host mail server found: stopping it, hub-mail owns ports 25 and 587' &&
+              (systemctl disable --now exim4 postfix 2>/dev/null || true)
+            fi &&
+            docker compose rm -sf hub-mail >/dev/null 2>&1; true &&
+            held=\$(ss -Hltnp 'sport = :25 or sport = :587' 2>/dev/null) &&
+            if [ -n \"\$held\" ]; then
+              echo '::error title=Mail ports busy::Host ports 25/587 are held by another process; hub-mail cannot start:' &&
+              echo \"\$held\" && exit 1
+            fi &&
             docker compose up -d
           "
           echo "✅ Control plane successfully deployed and restarted on Master VPS!"
