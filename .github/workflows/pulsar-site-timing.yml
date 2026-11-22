@@ -37,13 +37,13 @@ jobs:
           wait_site() { s=$(date +%s.%N); for _ in $(seq 1 600); do ping_site "$1" "$2" && { echo "$(date +%s.%N) - $s" | bc; return 0; }; sleep 0.5; done; echo FAIL; return 1; }
           # Real work check: log in, create a Customer, read it back.
           act_site() { docker exec "$1" python -c "
-          import json,sys,urllib.request,http.cookiejar
+          import json,sys,urllib.request,urllib.parse,http.cookiejar
           h={'Host':'$2','Content-Type':'application/json'}
           o=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
           def call(m,u,d=None): return json.load(o.open(urllib.request.Request('http://127.0.0.1:8000'+u,data=json.dumps(d).encode() if d else None,headers=h,method=m),timeout=5))
           r=call('POST','/api/method/login',{'usr':'Administrator','pwd':'admin-timing'}); h['Authorization']='token '+(r.get('data') or r.get('message') or r)['token']
           n=call('POST','/api/resource/Customer',{'customer_name':'Timing Check','customer_type':'Company'})['data']['name']
-          sys.exit(0 if call('GET','/api/resource/Customer/'+n)['data']['customer_name']=='Timing Check' else 1)
+          sys.exit(0 if call('GET','/api/resource/Customer/'+urllib.parse.quote(n))['data']['customer_name']=='Timing Check' else 1)
           " >/dev/null 2>/tmp/act_err; }
           wait_act() { for _ in $(seq 1 60); do act_site "$1" "$2" && return 0; sleep 0.5; done; echo "- customer FAIL: $(tail -2 /tmp/act_err)" | tee -a "$GITHUB_STEP_SUMMARY"; return 1; }
           echo "## Cold: new tenant docker + first site" | tee -a "$GITHUB_STEP_SUMMARY"
