@@ -17,6 +17,7 @@ permissions:
 jobs:
   timing:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     env:
       IMG: ghcr.io/rokctai/occultation/pulsar-tenant:latest
       PGPW: timing-only-pw
@@ -44,7 +45,7 @@ jobs:
           n=call('POST','/api/resource/Note',{'title':'timing check','content':'hello'})['data']['name']
           sys.exit(0 if call('GET','/api/resource/Note/'+n)['data']['title']=='timing check' else 1)
           " >/dev/null 2>/tmp/act_err; }
-          wait_act() { for _ in $(seq 1 600); do act_site "$1" "$2" && return 0; sleep 0.5; done; echo "- note FAIL: $(tail -2 /tmp/act_err)" | tee -a "$GITHUB_STEP_SUMMARY"; return 1; }
+          wait_act() { for _ in $(seq 1 60); do act_site "$1" "$2" && return 0; sleep 0.5; done; echo "- note FAIL: $(tail -2 /tmp/act_err)" | tee -a "$GITHUB_STEP_SUMMARY"; return 1; }
           echo "## Cold: new tenant docker + first site" | tee -a "$GITHUB_STEP_SUMMARY"
           for i in 1 2 3; do
             s=$(date +%s.%N)
