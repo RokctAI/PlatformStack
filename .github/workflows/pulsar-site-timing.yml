@@ -1,0 +1,58 @@
+name: Pulsar site start timing
+
+# Measures how long a tenant site takes to answer /api/method/ping, 3 runs each:
+#  (a) cold: a new tenant docker starts and makes its first site
+#  (b) warm: a new site is added to a running tenant docker whose other sites are busy
+# Read-only: pulls pulsar-tenant:latest, pushes nothing.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/pulsar-site-timing.yml'
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  timing:
+    runs-on: ubuntu-latest
+    env:
+      IMG: ghcr.io/rokctai/occultation/pulsar-tenant:latest
+      PGPW: timing-only-pw
+    steps:
+      - name: Login to GHCR
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - name: Pull images
+        run: docker pull -q "$IMG" && docker pull -q postgres:16
+      - name: Timings
+        run: |
+          set -eu
+          docker network create tnet >/dev/null
+          docker run -d --name pg --network tnet -e POSTGRES_PASSWORD="$PGPW" postgres:16 >/dev/null
+          until docker exec pg pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
+          envs="-e IGNITION_DB_HOST=pg -e IGNITION_DB_ROOT_USER=postgres -e IGNITION_DB_ROOT_PASSWORD=$PGPW -e IGNITION_ADMIN_PASSWORD=admin-timing"
+          ping_site() { docker exec "$1" python -c "import urllib.request,sys; r=urllib.request.Request('http://127.0.0.1:8000/api/method/ping', headers={'Host': '$2'}); sys.exit(0 if urllib.request.urlopen(r, timeout=3).status==200 else 1)" >/dev/null 2>&1; }
+          wait_site() { s=$(date +%s.%N); for _ in $(seq 1 600); do ping_site "$1" "$2" && { echo "$(date +%s.%N) - $s" | bc; return 0; }; sleep 0.5; done; echo FAIL; return 1; }
+          echo "## Cold: new tenant docker + first site" | tee -a "$GITHUB_STEP_SUMMARY"
+          for i in 1 2 3; do
+            s=$(date +%s.%N)
+            # shellcheck disable=SC2086
+            docker run -d --name cold$i --network tnet $envs -e PULSAR_SITE=cold$i.localhost "$IMG" >/dev/null
+            wait_site cold$i cold$i.localhost >/dev/null
+            t=$(echo "$(date +%s.%N) - $s" | bc)
+            echo "- run $i: ${t}s" | tee -a "$GITHUB_STEP_SUMMARY"
+            [ "$i" = 1 ] || docker rm -f cold$i >/dev/null
+          done
+          echo "## Warm: new site in running docker (cold1, 3 busy sites)" | tee -a "$GITHUB_STEP_SUMMARY"
+          for b in 1 2 3; do docker exec cold1 python -m pulsar.ignition --root /srv/pulsar new-site busy$b.localhost --persona tenant --engine pulsar >/dev/null; done
+          for b in 1 2 3; do (end=$((SECONDS+600)); while [ $SECONDS -lt $end ]; do ping_site cold1 busy$b.localhost; done) & done
+          for i in 1 2 3; do
+            s=$(date +%s.%N)
+            docker exec cold1 python -m pulsar.ignition --root /srv/pulsar new-site warm$i.localhost --persona tenant --engine pulsar >/dev/null
+            wait_site cold1 warm$i.localhost >/dev/null || true
+            t=$(echo "$(date +%s.%N) - $s" | bc)
+            echo "- run $i: ${t}s" | tee -a "$GITHUB_STEP_SUMMARY"
+          done
+          kill $(jobs -p) 2>/dev/null || true
+          docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' | tee -a "$GITHUB_STEP_SUMMARY"
