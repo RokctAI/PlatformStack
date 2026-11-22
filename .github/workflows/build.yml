@@ -298,6 +298,7 @@ jobs:
       # staged context: RokctAI/core pulsar/ plus every <repo>/<pkg>/pulsar SDK package. Nothing under
       # any frappe/ folder is staged, and the stage script refuses a module that imports frappe.
       - name: Checkout Pulsar sources
+        id: pulsar_src
         env:
           GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
         run: |
@@ -307,6 +308,8 @@ jobs:
             git -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
               clone -q --depth 1 "https://github.com/RokctAI/$r" "pulsar-src/$r" || { [ "$r" = core ] && exit 1; echo "skip $r"; }
           done
+          # the core commit goes into the image (PULSAR_COMMIT) so every error names the code it ran
+          echo "core_sha=$(git -C pulsar-src/core rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Stage Pulsar build context
         run: |
@@ -336,6 +339,9 @@ jobs:
           tags: |
             ghcr.io/rokctai/occultation/pulsar-hub:latest
             ghcr.io/rokctai/occultation/pulsar-hub:${{ steps.meta.outputs.version }}
+          build-args: |
+            PULSAR_VERSION=${{ steps.meta.outputs.version }}
+            PULSAR_COMMIT=${{ steps.pulsar_src.outputs.core_sha }}
 
       - name: Build and Push Pulsar Tenant
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -348,6 +354,9 @@ jobs:
           tags: |
             ghcr.io/rokctai/occultation/pulsar-tenant:latest
             ghcr.io/rokctai/occultation/pulsar-tenant:${{ steps.meta.outputs.version }}
+          build-args: |
+            PULSAR_VERSION=${{ steps.meta.outputs.version }}
+            PULSAR_COMMIT=${{ steps.pulsar_src.outputs.core_sha }}
 
       - name: Build and Push Pulsar Supacharge
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -360,6 +369,9 @@ jobs:
           tags: |
             ghcr.io/rokctai/occultation/pulsar-supacharge:latest
             ghcr.io/rokctai/occultation/pulsar-supacharge:${{ steps.meta.outputs.version }}
+          build-args: |
+            PULSAR_VERSION=${{ steps.meta.outputs.version }}
+            PULSAR_COMMIT=${{ steps.pulsar_src.outputs.core_sha }}
 
       - name: Build and Push Drone Brain (Pulsar)
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -371,6 +383,9 @@ jobs:
           tags: |
             ghcr.io/rokctai/occultation/drone-brain:latest
             ghcr.io/rokctai/occultation/drone-brain:${{ steps.meta.outputs.version }}
+          build-args: |
+            PULSAR_VERSION=${{ steps.meta.outputs.version }}
+            PULSAR_COMMIT=${{ steps.pulsar_src.outputs.core_sha }}
 
       # NOTE: continue-on-error keeps a broken vector/drone-edge build (an external
       # repo) from aborting the release of the hub/tenant/supacharge images above,
@@ -786,6 +801,7 @@ jobs:
           timeout 30s bash -c "until pg_isready -h 127.0.0.1 -p 5432 -U postgres; do echo 'Waiting for PostgreSQL...'; sleep 2; done"
 
       - name: Checkout Pulsar sources
+        id: pulsar_src
         env:
           GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
         run: |
@@ -795,6 +811,8 @@ jobs:
             git -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
               clone -q --depth 1 "https://github.com/RokctAI/$r" "pulsar-src/$r" || { [ "$r" = core ] && exit 1; echo "skip $r"; }
           done
+          # the core commit goes into the image (PULSAR_COMMIT) so every error names the code it ran
+          echo "core_sha=$(git -C pulsar-src/core rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Stage Pulsar build context
         run: |
@@ -813,3 +831,5 @@ jobs:
             ghcr.io/rokctai/occultation/pulsar-tenant-composed:${{ inputs.composed-product }}-${{ steps.meta.outputs.version }}
           build-args: |
             PULSAR_PRODUCT=${{ inputs.composed-product }}
+            PULSAR_VERSION=${{ steps.meta.outputs.version }}
+            PULSAR_COMMIT=${{ steps.pulsar_src.outputs.core_sha }}
