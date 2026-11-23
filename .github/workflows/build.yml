@@ -570,6 +570,15 @@ jobs:
           path: overrides/occultation
           token: ${{ secrets.MONOREPO_PAT || github.token }}
 
+      # The VPS host key is learned on the first deploy (ssh-keyscan) and kept in this cache; every later
+      # deploy checks it and fails if it changed. Not a secret (a server's public key).
+      - name: Restore Master VPS host key
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .vps-known-hosts
+          key: master-vps-known-hosts-${{ github.run_id }}
+          restore-keys: master-vps-known-hosts-
+
       - name: Configure SSH and Deploy to Master VPS
         env:
           SECRET_SSH_KEY: ${{ secrets.MASTER_VPS_SSH_KEY }}
@@ -651,6 +660,19 @@ jobs:
             SSH="sshpass -e ssh -o StrictHostKeyChecking=no -o PubkeyAuthentication=no"
             echo "🔑 Using password login for the Master VPS"
           fi
+          # Host key: trusted on first use, then checked on every deploy.
+          KH="$GITHUB_WORKSPACE/.vps-known-hosts/master"
+          mkdir -p "$(dirname "$KH")"
+          touch "$KH"
+          if ! ssh-keygen -F "$SSH_HOST" -f "$KH" >/dev/null 2>&1; then
+            ssh-keyscan -T 15 -t ed25519,ecdsa,rsa "$SSH_HOST" 2>/dev/null >> "$KH"
+            if ! ssh-keygen -F "$SSH_HOST" -f "$KH" >/dev/null 2>&1; then
+              echo "::error title=Master VPS host key::Could not read the VPS host key (ssh-keyscan). Is the host reachable on port 22?"
+              exit 1
+            fi
+            echo "🆕 Master VPS host key saved (first deploy to this host); later deploys check it."
+          fi
+          SSH="${SSH/StrictHostKeyChecking=no/StrictHostKeyChecking=yes -o UserKnownHostsFile=$KH}"
 
           echo "🚀 Deploying latest Control Plane container to Master VPS..."
           # rokct_tenants is declared external in docker-compose.yml and every
@@ -695,6 +717,13 @@ jobs:
             docker compose up -d
           "
           echo "✅ Control plane successfully deployed and restarted on Master VPS!"
+
+      - name: Save Master VPS host key
+        if: always() && hashFiles('.vps-known-hosts/master') != ''
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .vps-known-hosts
+          key: master-vps-known-hosts-${{ github.run_id }}
 
   bump-version:
     needs: [docker-release, upgrade-test]
