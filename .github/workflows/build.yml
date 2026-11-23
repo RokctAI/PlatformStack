@@ -590,9 +590,13 @@ jobs:
             fi
             
             FILE_KEY=$(grep -E "^(MASTER_VPS_SSH_KEY|CONTROL_VPS_SSH_KEY|VPS_SSH_KEY|SSH_KEY)=" "$ENV_FILE" | cut -d'=' -f2- | tr -d "'\"")
-            if [ -n "$FILE_KEY" ]; then
+            # Only a real private key in the file wins; a placeholder or fingerprint there must
+            # not hide a valid MASTER_VPS_SSH_KEY Actions secret.
+            if printf '%s' "$FILE_KEY" | grep -q "PRIVATE KEY"; then
               SSH_KEY="$FILE_KEY"
               echo "✅ Found SSH Key in production.env"
+            elif [ -n "$FILE_KEY" ]; then
+              echo "::warning title=Master VPS SSH key::The SSH key in production.env is not a private key; using the MASTER_VPS_SSH_KEY Actions secret instead."
             fi
           fi
           
