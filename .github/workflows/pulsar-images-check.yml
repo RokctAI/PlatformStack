@@ -49,7 +49,13 @@ jobs:
           git -C sticks-server -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
             fetch -q --depth 1 https://github.com/RokctAI/sticks-server "$STICKS_SERVER_REF"
           git -C sticks-server checkout -q FETCH_HEAD
-          docker build -f sticks-server/docker/Dockerfile --target engine --output type=local,dest=sticks-engine-out sticks-server
+          # Only /opt/sticks is needed: a local export of the whole stage (node base image, 1.3 GB+) stalled the
+          # runner for hours on 2026-11-22. Build to an image and copy that one folder out.
+          docker build -f sticks-server/docker/Dockerfile --target engine -t sticks-engine:ci sticks-server
+          cid=$(docker create sticks-engine:ci)
+          mkdir -p sticks-engine-out/opt
+          docker cp "$cid:/opt/sticks" sticks-engine-out/opt/sticks
+          docker rm "$cid" >/dev/null
           test -f sticks-engine-out/opt/sticks/build/up/apps/sticks-engine/dist/sticks-engine.mjs
 
       - name: Build Pulsar Tenant (no push)
