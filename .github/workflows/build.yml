@@ -612,6 +612,7 @@ jobs:
             [ -n "$FILE_USER" ] && SSH_USER="$FILE_USER"
             SSHPASS=$(grep -E "^MASTER_VPS_PASSWORD=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | sed "s/\r$//; s/^'\(.*\)'$/\1/; s/^\"\(.*\)\"$/\1/")
             export SSHPASS
+            [ -n "$SSHPASS" ] && echo "::add-mask::$SSHPASS"
           fi
           
           # --- Honest gate: missing/invalid credentials FAIL the job loudly. ---
