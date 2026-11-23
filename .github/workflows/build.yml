@@ -583,13 +583,20 @@ jobs:
           if [ -f "$ENV_FILE" ]; then
             echo "🔍 Scanning $ENV_FILE for Host and SSH Key credentials..."
             
-            FILE_HOST=$(grep -E "^(MASTER_VPS_HOST|CONTROL_VPS_IP|VPS_HOST|VPS_IP)=" "$ENV_FILE" | cut -d'=' -f2- | tr -d "'\"")
+            FILE_HOST=$(grep -E "^(MASTER_VPS_HOST|CONTROL_VPS_IP|VPS_HOST|VPS_IP)=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d "'\"\r")
+            case "$FILE_HOST" in your_*) FILE_HOST="" ;; esac  # template placeholder, not a host
             if [ -n "$FILE_HOST" ]; then
               SSH_HOST="$FILE_HOST"
               echo "✅ Found Host IP in production.env"
             fi
             
-            FILE_KEY=$(grep -E "^(MASTER_VPS_SSH_KEY|CONTROL_VPS_SSH_KEY|VPS_SSH_KEY|SSH_KEY)=" "$ENV_FILE" | cut -d'=' -f2- | tr -d "'\"")
+            FILE_KEY=$(grep -E "^(MASTER_VPS_SSH_KEY|CONTROL_VPS_SSH_KEY|VPS_SSH_KEY|SSH_KEY)=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d "'\"\r")
+            # MASTER_VPS_SSH_KEY_B64: the whole key file as one line of base64 (base64 -w0 <keyfile>); wins when set.
+            FILE_KEY_B64=$(grep -E "^MASTER_VPS_SSH_KEY_B64=" "$ENV_FILE" | head -1 | cut -d'=' -f2- | tr -d "'\"\r ")
+            if [ -n "$FILE_KEY_B64" ]; then
+              FILE_KEY=$(printf '%s' "$FILE_KEY_B64" | base64 -d 2>/dev/null || true)
+              [ -n "$FILE_KEY" ] || echo "::warning title=Master VPS SSH key::MASTER_VPS_SSH_KEY_B64 is not valid base64."
+            fi
             # Only a real private key in the file wins; a placeholder or fingerprint there must
             # not hide a valid MASTER_VPS_SSH_KEY Actions secret.
             if printf '%s' "$FILE_KEY" | grep -q "PRIVATE KEY"; then
