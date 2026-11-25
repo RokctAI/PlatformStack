@@ -102,57 +102,7 @@ Now, Paperclip serves its beautiful multi-agent collaboration interface, with **
 
 ---
 
-## 5. Jules Ecosystem Verification Prompt
-
-Copy and paste the entire prompt below and hand it to the **Jules** agent to verify your distributed environment:
-
-```markdown
-You are Jules, a high-fidelity systems validation and QA agent. Your mission is to clone, audit, and verify the distributed ROKCT Platform repositories to guarantee perfect ecosystem alignment and compilation readiness.
-
-Execute the following checks in your workspace:
-
-### 1. Clone & Branch Alignment Check
-Clone the following core platform repositories, checking out their correct target branches:
-- PlatformStack: https://github.com/RokctAI/PlatformStack.git (branch: main)
-- Control App: https://github.com/RokctAI/control.git (branch: main)
-- Tenant App: https://github.com/RokctAI/rcore.git (branch: main)
-- Next.js Frontend: https://github.com/RokctAI/RokctAI_frontend.git (branch: main)
-- Occultation: https://github.com/RokctAI/Occultation.git (branch: main)
-- The-Rokct-Protocol: https://github.com/RokctAI/The-Rokct-Protocol.git (branch: main)
-- ROK Core: https://github.com/RokctAI/ROK.git (branch: rokct)
-- ROK Paperclip Adapter: https://github.com/RokctAI/rok-paperclip-adapter.git (branch: rokct)
-- Paperclip Host: https://github.com/paperclipai/paperclip.git (tag: v2026.831.1, pinned in platform/Dockerfile)
-
-Verify that the following Frappe apps from major_versions.json can also be cleanly resolved:
-- frappe (branch: rokct), rcore (branch: main).
-
-### 2. Cross-VPS Decoupling Audit
-Audit rcore and control codebases to ensure absolute cross-VPS safety:
-- Confirm that no loopback addresses (127.0.0.1, 172.17.0.1, localhost) are hardcoded for cross-container calls.
-- Verify that ROK_COMPLETIONS_URL resolves dynamically from the environment in rcore/rcore/api/plan_builder.py and control/control/api.py.
-- Confirm ROKCT_CONTROL_URL fallback is defaulted to the public production endpoint: https://platform.rokct.ai.
-
-### 3. Dockerfile Build Integrations
-Verify PlatformStack/platform/Dockerfile:
-- Confirm that the builder stage clones the correct 'rokct' branch of the paperclip adapter:
-  `RUN git clone --depth 1 --branch rokct https://github.com/RokctAI/rok-paperclip-adapter.git`
-- Confirm that the Tenant Stripper and IoT Stripper stages completely clean out the adapter directories:
-  `rm -rf /home/frappe/rok-paperclip-adapter`
-
-### 4. Adapter Compilation Integrity
-Inside the 'rok-paperclip-adapter' directory:
-- Run `npm install` and `npm run build` to verify that there are zero TypeScript compilation or linting errors.
-
-Provide a comprehensive, professional audit report summarizing:
-1. Cloning status and branch verifications.
-2. Cross-VPS network routing validation.
-3. Dockerfile build and stripping gate status.
-4. TypeScript compilation success details.
-```
-
----
-
-## 6. Network Routing & Communication Matrix (Local vs. Remote VPS)
+## 5. Network Routing & Communication Matrix (Local vs. Remote VPS)
 
 This matrix defines exactly how components communicate under both a **Single VPS (Local Loopback)** setup and a **Distributed multi-VPS (Remote HTTPS)** cluster topology:
 
