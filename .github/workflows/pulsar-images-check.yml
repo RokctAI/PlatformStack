@@ -1,0 +1,83 @@
+name: Pulsar images check
+
+# Build-only proof of the Pulsar tenant images on a pull request: same staging and
+# Sticks engine step as build.yml docker-release, but nothing is pushed.
+on:
+  pull_request:
+    paths:
+      - 'platform/pulsar/**'
+      - 'platform/scripts/build_pulsar_images.sh'
+      - '.github/workflows/build.yml'
+      - '.github/workflows/pulsar-images-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-only:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: docker-context
+          persist-credentials: false
+
+      - name: Checkout Pulsar sources
+        env:
+          GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
+        run: |
+          set -eu
+          mkdir -p pulsar-src
+          for r in core control pay corporate zones agent hardware productivity commerce designer Users; do
+            git -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
+              clone -q --depth 1 "https://github.com/RokctAI/$r" "pulsar-src/$r" || { [ "$r" = core ] && exit 1; echo "skip $r"; }
+          done
+
+      - name: Stage Pulsar build context
+        run: |
+          PULSAR_SRC="$PWD/pulsar-src" PULSAR_STAGE_ONLY="$PWD/pulsar-stage" \
+            bash docker-context/platform/scripts/build_pulsar_images.sh
+
+      - name: Build Sticks engine (pinned)
+        env:
+          GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
+          STICKS_SERVER_REF: da72af18c5ad74ffbe32bbd5b9c4b3fb007ebbb4
+        run: |
+          set -eu
+          git init -q sticks-server
+          git -C sticks-server -c "http.extraHeader=Authorization: Basic $(printf 'x-access-token:%s' "$GIT_TOKEN" | base64 -w0)" \
+            fetch -q --depth 1 https://github.com/RokctAI/sticks-server "$STICKS_SERVER_REF"
+          git -C sticks-server checkout -q FETCH_HEAD
+          # Only /opt/sticks is needed: a local export of the whole stage (node base image, 1.3 GB+) stalled the
+          # runner for hours on 2026-11-22. Build to an image and copy that one folder out.
+          docker build -f sticks-server/docker/Dockerfile --target engine -t sticks-engine:ci sticks-server
+          cid=$(docker create sticks-engine:ci)
+          mkdir -p sticks-engine-out/opt
+          docker cp "$cid:/opt/sticks" sticks-engine-out/opt/sticks
+          docker rm "$cid" >/dev/null
+          test -f sticks-engine-out/opt/sticks/build/up/apps/sticks-engine/dist/sticks-engine.mjs
+
+      - name: Build Pulsar Tenant (no push)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: pulsar-stage
+          file: pulsar-stage/Dockerfile
+          target: pulsar-tenant
+          build-contexts: sticks-engine=sticks-engine-out
+          push: false
+          load: true
+          tags: pulsar-tenant:check
+
+      - name: Engine runs in the tenant image
+        run: |
+          docker run --rm --entrypoint node pulsar-tenant:check --version
+          docker run --rm --entrypoint sh pulsar-tenant:check -c 'test -f "$STICKS_ENGINE" && echo "engine present: $STICKS_ENGINE"'
+
+      - name: Build Pulsar Hub (no push)
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: pulsar-stage
+          file: pulsar-stage/Dockerfile
+          target: pulsar-hub
+          push: false

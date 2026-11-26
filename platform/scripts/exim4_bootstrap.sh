@@ -246,12 +246,21 @@ done_ok
 step "Configuring rate limiting for auth"
 
 cat >/etc/exim4/conf.d/acl/50_exim4-config_rate_limit <<'EOF'
-# Rate limit authentication attempts
+# Rate limit authentication attempts from outside addresses only. The hub (and
+# anything on a private Docker network) opens a new session per mail, so counting
+# it would refuse its AUTH after 10 mails an hour. Tenant containers cannot reach
+# this server at all (server agent's block_tenant_mail.sh).
 acl_check_auth:
+  accept
+    hosts = 127.0.0.0/8 : 10.0.0.0/8 : 172.16.0.0/12 : 192.168.0.0/16
   deny
     ratelimit = 10 / 1h / strict / $sender_host_address
     log_message = AUTH rate limit exceeded
+  accept
 EOF
+
+grep -q "hosts = 127.0.0.0/8 : 10.0.0.0/8 : 172.16.0.0/12 : 192.168.0.0/16" /etc/exim4/conf.d/acl/50_exim4-config_rate_limit ||
+  fail "AUTH ratelimit must exempt private addresses (hub mail)"
 
 done_ok
 
@@ -469,14 +478,19 @@ done_ok
 # 20. FAIL2BAN SETUP
 # =============================================================================
 
-step "Installing Fail2ban for Exim"
+# hub-mail (a container, no init) sets SKIP_FAIL2BAN=1: there Exim's own AUTH ratelimit
+# (acl_check_auth: 10 attempts an hour per address) limits password guessing.
+if [ "${SKIP_FAIL2BAN:-0}" = "1" ]; then
+  echo -e "${BLUE}  - SKIP_FAIL2BAN=1, Exim AUTH ratelimit only${NC}"
+else
+  step "Installing Fail2ban for Exim"
 
-if command -v apt-get >/dev/null 2>&1; then
-  command -v fail2ban-server >/dev/null 2>&1 || { apt-get update && apt-get install -y fail2ban; }
-  apt-get clean
-fi
+  if command -v apt-get >/dev/null 2>&1; then
+    command -v fail2ban-server >/dev/null 2>&1 || { apt-get update && apt-get install -y fail2ban; }
+    apt-get clean
+  fi
 
-cat >/etc/fail2ban/jail.d/exim4.conf <<'EOF'
+  cat >/etc/fail2ban/jail.d/exim4.conf <<'EOF'
 [exim4-auth]
 enabled = true
 port = smtp,587
@@ -488,9 +502,9 @@ findtime = 3600
 ignoreip = 127.0.0.1/8 ::1
 EOF
 
-# Ship as a distinct filter that EXTENDS the distro's exim filter rather than
-# overwriting the package-managed /etc/fail2ban/filter.d/exim.conf.
-cat >/etc/fail2ban/filter.d/exim4-rokct.conf <<'EOF'
+  # Ship as a distinct filter that EXTENDS the distro's exim filter rather than
+  # overwriting the package-managed /etc/fail2ban/filter.d/exim.conf.
+  cat >/etc/fail2ban/filter.d/exim4-rokct.conf <<'EOF'
 [INCLUDES]
 before = exim.conf
 
@@ -500,11 +514,12 @@ failregex = %(known/failregex)s
 ignoreregex =
 EOF
 
-if command -v systemctl >/dev/null 2>&1; then
-  systemctl restart fail2ban || true
-fi
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl restart fail2ban || true
+  fi
 
-done_ok
+  done_ok
+fi
 
 # =============================================================================
 # 21. START EXIM
