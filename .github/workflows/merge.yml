@@ -17,7 +17,7 @@ on:
 
 jobs:
   merge:
-    uses: RokctAI/shared-workflows/.github/workflows/universal-merge.yml@5ef50a799c84db37905c3a2f02c4fb3f06ebf071 # shared-workflows main @ 2026-09-03
+    uses: RokctAI/shared-workflows/.github/workflows/universal-merge.yml@a1ed8107168041aa252213ddcfa5279b00697195 # shared-workflows main @ 2026-09-03
     permissions: write-all
     with:
       allowed_users: 'RendaniSinyage, RendaniSinyage, rokctbot, rokctbot[bot]'
