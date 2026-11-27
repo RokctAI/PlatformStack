@@ -24,6 +24,9 @@ placeholders:
   ${APP_SITE_URL} -> https://<first domain of the site>
   ${OTHER}      -> OTHER from the env file (shared value).
 
+Placeholders read only the Flutter section (above ##########END_FLUTTER##########),
+which is public anyway; nothing below it can reach a site.
+
 A line whose value ends up empty is left out, so the site's own default applies.
 Values are never printed.
 
@@ -38,14 +41,18 @@ import sites as sites_mod  # noqa: E402
 
 START = "# WebApp Native Public Endpoints"
 END = "##########END_NEXTJS##########"
+FLUTTER_END = "##########END_FLUTTER##########"
 REF = re.compile(r"\$\{([A-Z][A-Z0-9_]*)\}")
 LINE = re.compile(r"^([A-Z][A-Z0-9_]*)=(.*)$")
 
 
 def parse(text):
     lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
-    values, block, inside = {}, [], False
+    values, block, inside, public = {}, [], False, True
     for l in lines:
+        if l.strip() == FLUTTER_END:
+            public = False
+            continue
         if l.strip() == START:
             inside = True
             continue
@@ -57,7 +64,9 @@ def parse(text):
             continue
         if inside:
             block.append((m.group(1), m.group(2)))
-        else:
+        elif public:
+            # Only the Flutter section (public, shipped in every app) feeds placeholders,
+            # so a site can never pull a server secret from below it (Ray, 2026-11-27).
             values.setdefault(m.group(1), m.group(2))
     return values, block
 

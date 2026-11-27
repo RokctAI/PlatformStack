@@ -28,6 +28,7 @@ ENV = (
     "NEXT_PUBLIC_MAP_API_KEY=${GOOGLE_MAPS_API_KEY}\r\n"
     "NEXT_PUBLIC_WEBSITE_URL=${APP_SITE_URL}\r\n"
     "NEXT_PUBLIC_EMPTY=\r\n"
+    "NEXT_PUBLIC_LEAK=${DB_ROOT_PASSWORD}\r\n"
     "##########END_NEXTJS##########\r\n"
     "DB_ROOT_PASSWORD=secret\r\n"
 )
@@ -53,6 +54,7 @@ class SiteEnvTest(unittest.TestCase):
         self.assertNotIn("DYNAMIC_LINK", out)
         self.assertNotIn("NEXT_PUBLIC_EMPTY", out)
         self.assertNotIn("DB_ROOT_PASSWORD", out)
+        self.assertNotIn("NEXT_PUBLIC_LEAK", out)
         self.assertIn("NEXT_PUBLIC_WEBSITE_URL=https://cortexagency.co\n", out)
 
 
