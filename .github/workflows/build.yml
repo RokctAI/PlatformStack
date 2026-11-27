@@ -680,8 +680,12 @@ jobs:
           # Hub mail (hub-mail's login and the hub's IGNITION_SMTP_*, PlatformStack#389): copy the SMTP_*
           # lines from Occultation production.env into platform/.env on the server, over
           # stdin so no value appears in a command line or this log. Other keys stay.
-          if [ -f "$ENV_FILE" ] && grep -qE '^SMTP_(SERVER|PORT|USERNAME|PASSWORD)=' "$ENV_FILE"; then
-            grep -E '^SMTP_(SERVER|PORT|USERNAME|PASSWORD)=' "$ENV_FILE" | $SSH "$SSH_USER@$SSH_HOST" \
+          # Also the hub's own passwords, as the old bench build took them from production.env
+          # (build_ecosystem.sh): DB_ROOT_PASSWORD -> DB_PASSWORD (Postgres + hub root), ADMIN_PASSWORD,
+          # EMAIL_ENCRYPTION_KEY. Without them the compose falls back to "admin".
+          HUB_ENV_KEYS='^(SMTP_(SERVER|PORT|USERNAME|PASSWORD)|DB_ROOT_PASSWORD|ADMIN_PASSWORD|EMAIL_ENCRYPTION_KEY)='
+          if [ -f "$ENV_FILE" ] && grep -qE "$HUB_ENV_KEYS" "$ENV_FILE"; then
+            grep -E "$HUB_ENV_KEYS" "$ENV_FILE" | sed 's/\r$//; s/^DB_ROOT_PASSWORD=/DB_PASSWORD=/' | $SSH "$SSH_USER@$SSH_HOST" \
               "python3 -c 'import sys,os
           p=\"/home/frappe/PlatformStack/platform/.env\"
           new=dict(l.rstrip(\"\\n\").split(\"=\",1) for l in sys.stdin if \"=\" in l)
@@ -689,7 +693,7 @@ jobs:
           keep=[l for l in old if l.split(\"=\",1)[0] not in new]
           os.umask(0o077); open(p,\"w\").write(\"\\n\".join(keep+[k+\"=\"+v for k,v in new.items()])+\"\\n\")
           os.chmod(p,0o600)'"
-            echo "✅ Hub SMTP settings copied (values not shown)"
+            echo "✅ Hub SMTP settings and passwords copied (values not shown)"
           else
             echo "::warning title=Hub mail::No SMTP_* in Occultation production.env; the hub will not send mail."
           fi
