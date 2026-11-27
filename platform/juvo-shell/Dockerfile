@@ -46,7 +46,7 @@ RUN --mount=type=secret,id=git_token,required=false \
 # build only so NEXT_PUBLIC_* get inlined; never copied into a layer.
 RUN --mount=type=secret,id=site_env,required=false \
     if [ -s /run/secrets/site_env ]; then \
-      while IFS= read -r l || [ -n "$l" ]; do case "$l" in [A-Z_]*=*) export "$l";; esac; done < /run/secrets/site_env; \
+      while IFS= read -r l || [ -n "$l" ]; do case "$l" in [A-Z_]*=*) export "${l?}";; esac; done < /run/secrets/site_env; \
     fi \
     && npm ci --no-audit --no-fund \
     && bash scripts/compose.sh \
