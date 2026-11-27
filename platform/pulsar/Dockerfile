@@ -54,7 +54,9 @@ COPY --chown=root:root framework/ /opt/pulsar/framework/
 COPY --chown=root:root sdk/ /opt/pulsar/sdk/
 COPY --chmod=0755 entrypoint.sh /usr/local/bin/pulsar-entrypoint
 RUN mkdir -p /srv/pulsar && chown pulsar:pulsar /srv/pulsar \
-    && python -c "import pulsar.ignition.cli, pulsar.http_api"
+    && python -c "import pulsar.ignition.cli, pulsar.http_api" \
+    && if [ -d /home/frappe/frappe-bench ] || command -v bench >/dev/null 2>&1 || python -c "import frappe" 2>/dev/null; then \
+         echo "image carries Frappe/bench: refusing" >&2; exit 1; fi
 # hadolint ignore=DL3066
 USER pulsar
 WORKDIR /srv/pulsar
@@ -73,6 +75,9 @@ FROM pulsar-base AS pulsar-tenant-base
 USER root
 COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
 COPY --from=sticks-engine --chown=root:root /opt/sticks /opt/sticks
+# no Frappe in any tenant image either (the hub image is checked in pulsar-base; the upgrade test checks again)
+RUN if [ -d /home/frappe/frappe-bench ] || command -v bench >/dev/null 2>&1 || python -c "import frappe" 2>/dev/null; then \
+      echo "tenant image carries Frappe/bench: refusing" >&2; exit 1; fi
 USER pulsar
 ENV STICKS_ENGINE=/opt/sticks/build/up/apps/sticks-engine/dist/sticks-engine.mjs API_PORT=3100
 EXPOSE 3100
