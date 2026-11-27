@@ -718,6 +718,11 @@ jobs:
               echo '::error title=Mail ports busy::Host ports 25/587 are held by another process; hub-mail cannot start:' &&
               echo \"\$held\" && exit 1
             fi &&
+            docker compose up -d db &&
+            for i in \$(seq 60); do docker compose exec -T db pg_isready -U postgres >/dev/null 2>&1 && break; sleep 2; done &&
+            DBPW=\$(docker compose config --format json | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"services\"][\"db\"][\"environment\"][\"POSTGRES_PASSWORD\"])') &&
+            printf '%s\\n' \"ALTER USER postgres PASSWORD :'pw';\" | docker compose exec -T db psql -q -U postgres -v pw=\"\$DBPW\" >/dev/null &&
+            echo 'Postgres password matches DB_PASSWORD (an existing volume keeps its old one otherwise)' &&
             docker compose up -d
           "
           echo "✅ Control plane successfully deployed and restarted on Master VPS!"
