@@ -24,6 +24,8 @@ set -eu
 UPSTREAM="${HUB_UPSTREAM:-http://app:8000}"
 WEBROOT="${ACME_WEBROOT:-/var/www/acme}"
 CONF=/etc/nginx/conf.d/00-hub.conf
+SITES_CONF=/etc/nginx/conf.d/10-sites.conf
+ROUTES="${SITES_ROUTES:-/rokct/routes.list}"
 mkdir -p "$WEBROOT" /etc/nginx/conf.d
 
 render() {
@@ -58,13 +60,59 @@ $proxy
   fi
 }
 
-write() {
-  render >"$CONF.new"
-  if cmp -s "$CONF.new" "$CONF"; then
-    rm -f "$CONF.new"
+# Next.js sites (platform/sites/routes.list, "<domain> <upstream>" per line): same HTTP-then-HTTPS shape as the
+# hub, certificates issued by hub-cert under /etc/letsencrypt/live/<domain>.
+render_sites() {
+  echo "# managed by rokct-ingress from sites/routes.list; do not edit"
+  [ -f "$ROUTES" ] || return 0
+  grep -v '^#' "$ROUTES" | while read -r dom up; do
+    [ -n "$dom" ] && [ -n "$up" ] || continue
+    live="/etc/letsencrypt/live/$dom"
+    # Docker DNS at request time, so a stopped or missing site never stops nginx from starting.
+    proxy="    resolver 127.0.0.11 valid=30s;
+    set \$site_up $up;
+    location / {
+        proxy_pass \$site_up;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_buffering off;
+    }"
+    acme="    location ^~ /.well-known/acme-challenge/ { root $WEBROOT; }"
+    if [ -f "$live/fullchain.pem" ] && [ -f "$live/privkey.pem" ]; then
+      echo "server { listen 80; server_name $dom;
+$acme
+    location / { return 301 https://\$host\$request_uri; } }"
+      echo "server { listen 443 ssl; server_name $dom;
+    ssl_certificate $live/fullchain.pem;
+    ssl_certificate_key $live/privkey.pem;
+$proxy
+}"
+    else
+      echo "server { listen 80; server_name $dom;
+$acme
+$proxy
+}"
+    fi
+  done
+}
+
+swap() {
+  if cmp -s "$1.new" "$1"; then
+    rm -f "$1.new"
     return 1
   fi
-  mv "$CONF.new" "$CONF"
+  mv "$1.new" "$1"
+}
+
+write() {
+  changed=1
+  render >"$CONF.new"
+  swap "$CONF" && changed=0
+  render_sites >"$SITES_CONF.new"
+  swap "$SITES_CONF" && changed=0
+  return $changed
 }
 
 rm -f /etc/nginx/conf.d/default.conf

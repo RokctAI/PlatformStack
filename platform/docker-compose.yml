@@ -2,6 +2,10 @@
 # RokctAI: Control Hub (Master VPS)
 # Manages SSL, Routing, and Shared Trial Pool. The hub runs on the Pulsar engine (no bench, no Frappe).
 
+# Next.js sites (generated from sites/sites.json by scripts/sites.py).
+include:
+  - docker-compose.sites.yml
+
 services:
   db:
     # Shared Database for Trial Tenants & Control Logic
@@ -118,6 +122,7 @@ services:
       HUB_UPSTREAM: http://app:8000
     volumes:
       - ./pulsar/ingress/entrypoint.sh:/rokct/entrypoint.sh:ro
+      - ./sites/routes.list:/rokct/routes.list:ro
       - /etc/nginx/conf.d:/etc/nginx/conf.d
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/acme:/var/www/acme:ro
@@ -143,6 +148,7 @@ services:
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-}
     volumes:
       - ./pulsar/ingress/hub-cert.sh:/rokct/hub-cert.sh:ro
+      - ./sites/routes.list:/rokct/routes.list:ro
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/www/acme:/var/www/acme
     depends_on:

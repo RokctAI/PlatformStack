@@ -1,0 +1,13 @@
+name: Sites runner check
+on:
+  pull_request:
+    paths: ["platform/sites/**", "platform/scripts/sites.py", "platform/scripts/tests/test_sites.py", "platform/docker-compose.sites.yml"]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 platform/scripts/tests/test_sites.py
+      - run: python3 platform/scripts/sites.py --check
