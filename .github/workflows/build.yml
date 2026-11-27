@@ -715,7 +715,7 @@ jobs:
           fi
           # Next.js sites (platform/sites, PlatformStack sites runner): ship the generated compose, the route list
           # and the ingress scripts that read it, so a site added in sites.json goes live on this deploy.
-          tar -C platform -cz docker-compose.yml docker-compose.sites.yml sites/sites.json sites/routes.list \
+          tar -C platform -cz docker-compose.yml docker-compose.sites.yml sites/sites.json sites/routes \
             pulsar/ingress juvo-shell | $SSH "$SSH_USER@$SSH_HOST" \
             "mkdir -p /home/frappe/PlatformStack/platform && tar -xz -C /home/frappe/PlatformStack/platform"
           # Token for private site repos (optional): Occultation SITES_GIT_TOKEN, over stdin, never printed.
@@ -723,7 +723,7 @@ jobs:
           printf '%s' "$SITES_TOKEN" | $SSH "$SSH_USER@$SSH_HOST" \
             "umask 077 && cat > /home/frappe/PlatformStack/platform/sites/.git_token"
           unset SITES_TOKEN
-          echo "✅ Sites runner files copied ($(grep -vc '^#' platform/sites/routes.list || true) domain(s))"
+          echo "✅ Sites runner files copied ($(grep -vc '^#' platform/sites/routes/routes.list || true) domain(s))"
           $SSH "$SSH_USER@$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
             mkdir -p /etc/nginx/conf.d /etc/letsencrypt /var/www/acme /etc/rokct &&
@@ -752,6 +752,11 @@ jobs:
             echo 'Postgres password matches DB_PASSWORD (an existing volume keeps its old one otherwise)' &&
             docker compose up -d
           "
+          # Next.js sites (compose profile "sites"): after the hub is up, one build at a time; a failure is a warning.
+          $SSH "$SSH_USER@$SSH_HOST" "
+            cd /home/frappe/PlatformStack/platform &&
+            COMPOSE_PARALLEL_LIMIT=1 docker compose --profile sites up -d --build
+          " || echo "::warning title=Sites runner::A Next.js site failed to build or start; the hub deploy is unaffected. See the deploy log."
           echo "✅ Control plane successfully deployed and restarted on Master VPS!"
 
       - name: Save Master VPS host key

@@ -36,10 +36,10 @@ mail_cert() {
   certbot certonly --webroot -w /var/www/acme --non-interactive --agree-tos --keep-until-expiring \
     --cert-name "$MAIL_HOSTNAME" -d "$MAIL_HOSTNAME" $who || true
 }
-# Next.js site certificates (platform/sites/routes.list), same webroot; each tried until its DNS points here.
+# Next.js site certificates (platform/sites/routes/routes.list), same webroot; each tried until its DNS points here.
 site_certs() {
-  [ -f /rokct/routes.list ] || return 0
-  grep -v '^#' /rokct/routes.list | while read -r dom _; do
+  [ -f /rokct/routes/routes.list ] || return 0
+  grep -v '^#' /rokct/routes/routes.list | while read -r dom _; do
     [ -n "$dom" ] && [ ! -f "/etc/letsencrypt/live/$dom/fullchain.pem" ] || continue
     # shellcheck disable=SC2086
     certbot certonly --webroot -w /var/www/acme --non-interactive --agree-tos --keep-until-expiring \

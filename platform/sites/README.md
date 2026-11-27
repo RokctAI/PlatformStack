@@ -8,7 +8,7 @@ Hosts our Next.js sites on the VPS with no hand-written reverse proxy and no pm2
    {"name": "polaris", "repo": "https://github.com/RokctAI/polaris-web", "ref": "main",
     "domains": ["polaris.example.co.za"], "memory": "512m"}
    ```
-2. Run `python3 platform/scripts/sites.py` and commit `sites.json`, `routes.list` and
+2. Run `python3 platform/scripts/sites.py` and commit `sites.json`, `routes/routes.list` and
    `docker-compose.sites.yml` (CI fails if they are out of step).
 3. Merge. deploy-master copies the files, builds the site image and starts it.
 4. Point the domain's DNS (A record) at the VPS. The certificate is issued on its own
@@ -18,7 +18,7 @@ Hosts our Next.js sites on the VPS with no hand-written reverse proxy and no pm2
 - Image: `platform/juvo-shell/Dockerfile`, the same build Vercel ran
   (`npm ci && bash scripts/compose.sh && npm run build`, then `next start`).
 - Container `site-<name>` on `rokct_tenants`, memory capped, `restart: unless-stopped`.
-- `rokct-ingress` writes `/etc/nginx/conf.d/10-sites.conf` from `routes.list`
+- `rokct-ingress` writes `/etc/nginx/conf.d/10-sites.conf` from `routes/routes.list`
   (HTTP + ACME until the cert exists, then HTTPS redirect) and reloads itself.
 - `hub-cert` issues and renews each domain's Let's Encrypt certificate.
 

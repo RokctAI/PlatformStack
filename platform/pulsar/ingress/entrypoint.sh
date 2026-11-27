@@ -25,7 +25,7 @@ UPSTREAM="${HUB_UPSTREAM:-http://app:8000}"
 WEBROOT="${ACME_WEBROOT:-/var/www/acme}"
 CONF=/etc/nginx/conf.d/00-hub.conf
 SITES_CONF=/etc/nginx/conf.d/10-sites.conf
-ROUTES="${SITES_ROUTES:-/rokct/routes.list}"
+ROUTES="${SITES_ROUTES:-/rokct/routes/routes.list}"
 mkdir -p "$WEBROOT" /etc/nginx/conf.d
 
 render() {
@@ -60,7 +60,7 @@ $proxy
   fi
 }
 
-# Next.js sites (platform/sites/routes.list, "<domain> <upstream>" per line): same HTTP-then-HTTPS shape as the
+# Next.js sites (platform/sites/routes/routes.list, "<domain> <upstream>" per line): same HTTP-then-HTTPS shape as the
 # hub, certificates issued by hub-cert under /etc/letsencrypt/live/<domain>.
 render_sites() {
   echo "# managed by rokct-ingress from sites/routes.list; do not edit"
