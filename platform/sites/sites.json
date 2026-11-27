@@ -1,0 +1,7 @@
+{
+  "_doc": "Next.js sites hosted on this VPS. Add a site here, run python3 scripts/sites.py, commit. See sites/README.md.",
+  "sites": [
+    {"name": "supacharge", "repo": "https://github.com/RokctAI/supacharge-web", "ref": "main", "domains": ["supacharge.school"], "memory": "512m"},
+    {"name": "juvo-platforms", "repo": "https://github.com/RokctAI/Juvo-platforms", "ref": "main", "domains": ["platform.juvo.app"], "memory": "512m"}
+  ]
+}

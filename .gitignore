@@ -108,3 +108,6 @@ migrate_working_dir/
 
 # Filled runtime env for the VPS-hosted shell (names only live in juvo-shell.env.example)
 platform/juvo-shell.env
+# Sites runner (platform/sites): per-site runtime env and the private-repo token, both filled on the VPS only
+platform/sites/*.env
+platform/sites/.git_token
