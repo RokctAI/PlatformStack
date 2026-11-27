@@ -700,9 +700,11 @@ jobs:
           # Also the hub's own passwords, as the old bench build took them from production.env
           # (the old bench build did the same): DB_ROOT_PASSWORD -> DB_PASSWORD (Postgres + hub root), ADMIN_PASSWORD,
           # EMAIL_ENCRYPTION_KEY. Without them the compose falls back to "admin".
-          HUB_ENV_KEYS='^(SMTP_(SERVER|PORT|USERNAME|PASSWORD)|DB_ROOT_PASSWORD|ADMIN_PASSWORD|EMAIL_ENCRYPTION_KEY)='
+          # PLATFORM_DOMAIN (the shared platform every product uses, e.g. platform.rokct.ai) -> SITE_NAME, and
+          # TENANT_DOMAIN: moving the platform to another domain is one change in production.env.
+          HUB_ENV_KEYS='^(SMTP_(SERVER|PORT|USERNAME|PASSWORD)|DB_ROOT_PASSWORD|ADMIN_PASSWORD|EMAIL_ENCRYPTION_KEY|PLATFORM_DOMAIN|TENANT_DOMAIN)='
           if [ -f "$ENV_FILE" ] && grep -qE "$HUB_ENV_KEYS" "$ENV_FILE"; then
-            grep -E "$HUB_ENV_KEYS" "$ENV_FILE" | sed 's/\r$//; s/^DB_ROOT_PASSWORD=/DB_PASSWORD=/' | $SSH "$SSH_USER@$SSH_HOST" \
+            grep -E "$HUB_ENV_KEYS" "$ENV_FILE" | sed 's/\r$//; s/^DB_ROOT_PASSWORD=/DB_PASSWORD=/; s/^PLATFORM_DOMAIN=/SITE_NAME=/' | $SSH "$SSH_USER@$SSH_HOST" \
               "python3 -c 'import sys,os
           p=\"/home/frappe/PlatformStack/platform/.env\"
           new=dict(l.rstrip(\"\\n\").split(\"=\",1) for l in sys.stdin if \"=\" in l)
