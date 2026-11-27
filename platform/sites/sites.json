@@ -15,7 +15,7 @@
       "repo": "https://github.com/RokctAI/Juvo-platforms",
       "ref": "main",
       "domains": [
-        "platform.juvo.app"
+        "juvo.cortexagency.co"
       ],
       "memory": "512m"
     },
@@ -24,7 +24,8 @@
       "repo": "https://github.com/RokctAI/hosting",
       "ref": "main",
       "domains": [
-        "hosting.rokct.ai"
+        "cortexagency.co",
+        "www.cortexagency.co"
       ],
       "memory": "512m"
     },
@@ -33,7 +34,7 @@
       "repo": "https://github.com/RokctAI/telephony-frontend",
       "ref": "main",
       "domains": [
-        "telephony.rokct.ai"
+        "telephony.cortexagency.co"
       ],
       "memory": "512m"
     },
@@ -42,7 +43,7 @@
       "repo": "https://github.com/RokctAI/sticks-web",
       "ref": "main",
       "domains": [
-        "sticks.rokct.ai"
+        "sticks.cortexagency.co"
       ],
       "memory": "512m"
     },
@@ -51,7 +52,7 @@
       "repo": "https://github.com/RokctAI/polaris-web",
       "ref": "main",
       "domains": [
-        "polaris.rokct.ai"
+        "polaris.cortexagency.co"
       ],
       "memory": "512m"
     },
@@ -60,7 +61,7 @@
       "repo": "https://github.com/RokctAI/southriver-web",
       "ref": "main",
       "domains": [
-        "southriver.rokct.ai"
+        "southriver.cortexagency.co"
       ],
       "memory": "512m"
     }

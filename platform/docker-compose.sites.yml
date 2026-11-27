@@ -37,7 +37,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/Juvo-platforms"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://platform.juvo.app"
+        NEXT_PUBLIC_SITE_URL: "https://juvo.cortexagency.co"
       secrets:
         - git_token
     image: "rokct/site-juvo-platforms:main"
@@ -66,7 +66,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/hosting"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://hosting.rokct.ai"
+        NEXT_PUBLIC_SITE_URL: "https://cortexagency.co"
       secrets:
         - git_token
     image: "rokct/site-hosting:main"
@@ -95,7 +95,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/telephony-frontend"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://telephony.rokct.ai"
+        NEXT_PUBLIC_SITE_URL: "https://telephony.cortexagency.co"
       secrets:
         - git_token
     image: "rokct/site-telephony:main"
@@ -124,7 +124,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/sticks-web"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://sticks.rokct.ai"
+        NEXT_PUBLIC_SITE_URL: "https://sticks.cortexagency.co"
       secrets:
         - git_token
     image: "rokct/site-sticks:main"
@@ -153,7 +153,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/polaris-web"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://polaris.rokct.ai"
+        NEXT_PUBLIC_SITE_URL: "https://polaris.cortexagency.co"
       secrets:
         - git_token
     image: "rokct/site-polaris:main"
@@ -182,7 +182,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/southriver-web"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://southriver.rokct.ai"
+        NEXT_PUBLIC_SITE_URL: "https://southriver.cortexagency.co"
       secrets:
         - git_token
     image: "rokct/site-southriver:main"
