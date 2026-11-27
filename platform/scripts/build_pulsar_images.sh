@@ -19,7 +19,7 @@
 #   PULSAR_SRC=/path/to/checkouts TAG=local platform/scripts/build_pulsar_images.sh
 # PULSAR_STAGE_ONLY=<dir> stages the context into <dir> and stops (CI builds it with docker/build-push-action).
 # PULSAR_WHEELS=<dir of .whl files> installs the Python dependencies from there instead of PyPI (offline builds).
-# Separate from build_ecosystem.sh / the bench images, which it does not touch.
+# The only image build for the hub and tenant dockers (the old bench build is removed).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="${PULSAR_SRC:-$(cd "$HERE/../.." && pwd)}"

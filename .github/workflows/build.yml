@@ -681,7 +681,7 @@ jobs:
           # lines from Occultation production.env into platform/.env on the server, over
           # stdin so no value appears in a command line or this log. Other keys stay.
           # Also the hub's own passwords, as the old bench build took them from production.env
-          # (build_ecosystem.sh): DB_ROOT_PASSWORD -> DB_PASSWORD (Postgres + hub root), ADMIN_PASSWORD,
+          # (the old bench build did the same): DB_ROOT_PASSWORD -> DB_PASSWORD (Postgres + hub root), ADMIN_PASSWORD,
           # EMAIL_ENCRYPTION_KEY. Without them the compose falls back to "admin".
           HUB_ENV_KEYS='^(SMTP_(SERVER|PORT|USERNAME|PASSWORD)|DB_ROOT_PASSWORD|ADMIN_PASSWORD|EMAIL_ENCRYPTION_KEY)='
           if [ -f "$ENV_FILE" ] && grep -qE "$HUB_ENV_KEYS" "$ENV_FILE"; then
