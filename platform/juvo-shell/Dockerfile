@@ -42,7 +42,13 @@ RUN --mount=type=secret,id=git_token,required=false \
     && rm -rf .git
 
 # Same three commands as the shell's own CI "Compose Offline + Build" job.
-RUN npm ci --no-audit --no-fund \
+# site_env (optional BuildKit secret): the site's KEY=VALUE lines from deploy-master, exported for the
+# build only so NEXT_PUBLIC_* get inlined; never copied into a layer.
+RUN --mount=type=secret,id=site_env,required=false \
+    if [ -s /run/secrets/site_env ]; then \
+      while IFS= read -r l || [ -n "$l" ]; do case "$l" in [A-Z_]*=*) export "${l?}";; esac; done < /run/secrets/site_env; \
+    fi \
+    && npm ci --no-audit --no-fund \
     && bash scripts/compose.sh \
     && npm run build \
     && npm prune --omit=dev --no-audit --no-fund

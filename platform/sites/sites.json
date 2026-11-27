@@ -8,7 +8,8 @@
       "domains": [
         "supacharge.school"
       ],
-      "memory": "512m"
+      "memory": "512m",
+      "app": "SUPACHARGE"
     },
     {
       "name": "juvo-platforms",
@@ -17,7 +18,8 @@
       "domains": [
         "juvo.cortexagency.co"
       ],
-      "memory": "512m"
+      "memory": "512m",
+      "app": "CUSTOMER"
     },
     {
       "name": "hosting",
@@ -47,7 +49,8 @@
         "www.usesticks.com",
         "sticks.cortexagency.co"
       ],
-      "memory": "512m"
+      "memory": "512m",
+      "app": "STICKS"
     },
     {
       "name": "polaris",
@@ -56,7 +59,8 @@
       "domains": [
         "polaris.cortexagency.co"
       ],
-      "memory": "512m"
+      "memory": "512m",
+      "app": "POLARIS"
     },
     {
       "name": "southriver",
@@ -67,5 +71,6 @@
       ],
       "memory": "512m"
     }
-  ]
+  ],
+  "_doc_app": "app: the app block in Occultation production.env this site takes its ${APP_*} values from (e.g. STICKS -> STICKS_IOS_PACKAGE_NAME). Sites without one get only the shared values."
 }

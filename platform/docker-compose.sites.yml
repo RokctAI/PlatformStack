@@ -11,6 +11,10 @@ services:
         NEXT_PUBLIC_SITE_URL: "https://supacharge.school"
       secrets:
         - git_token
+        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master
+        # from Occultation's website block (platform/scripts/site_env.py).
+        - source: site_env_supacharge
+          target: site_env
     image: "rokct/site-supacharge:main"
     pull_policy: build
     # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
@@ -40,6 +44,10 @@ services:
         NEXT_PUBLIC_SITE_URL: "https://juvo.cortexagency.co"
       secrets:
         - git_token
+        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master
+        # from Occultation's website block (platform/scripts/site_env.py).
+        - source: site_env_juvo-platforms
+          target: site_env
     image: "rokct/site-juvo-platforms:main"
     pull_policy: build
     # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
@@ -69,6 +77,10 @@ services:
         NEXT_PUBLIC_SITE_URL: "https://cortexagency.co"
       secrets:
         - git_token
+        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master
+        # from Occultation's website block (platform/scripts/site_env.py).
+        - source: site_env_hosting
+          target: site_env
     image: "rokct/site-hosting:main"
     pull_policy: build
     # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
@@ -98,6 +110,10 @@ services:
         NEXT_PUBLIC_SITE_URL: "https://telephony.cortexagency.co"
       secrets:
         - git_token
+        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master
+        # from Occultation's website block (platform/scripts/site_env.py).
+        - source: site_env_telephony
+          target: site_env
     image: "rokct/site-telephony:main"
     pull_policy: build
     # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
@@ -127,6 +143,10 @@ services:
         NEXT_PUBLIC_SITE_URL: "https://usesticks.com"
       secrets:
         - git_token
+        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master
+        # from Occultation's website block (platform/scripts/site_env.py).
+        - source: site_env_sticks
+          target: site_env
     image: "rokct/site-sticks:main"
     pull_policy: build
     # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
@@ -156,6 +176,10 @@ services:
         NEXT_PUBLIC_SITE_URL: "https://polaris.cortexagency.co"
       secrets:
         - git_token
+        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master
+        # from Occultation's website block (platform/scripts/site_env.py).
+        - source: site_env_polaris
+          target: site_env
     image: "rokct/site-polaris:main"
     pull_policy: build
     # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
@@ -185,6 +209,10 @@ services:
         NEXT_PUBLIC_SITE_URL: "https://southriver.cortexagency.co"
       secrets:
         - git_token
+        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master
+        # from Occultation's website block (platform/scripts/site_env.py).
+        - source: site_env_southriver
+          target: site_env
     image: "rokct/site-southriver:main"
     pull_policy: build
     # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
@@ -209,3 +237,17 @@ secrets:
   git_token:
     # Optional: a token that can read private site repos, put on the VPS by deploy-master.
     file: ./sites/.git_token
+  site_env_supacharge:
+    file: ./sites/supacharge.env
+  site_env_juvo-platforms:
+    file: ./sites/juvo-platforms.env
+  site_env_hosting:
+    file: ./sites/hosting.env
+  site_env_telephony:
+    file: ./sites/telephony.env
+  site_env_sticks:
+    file: ./sites/sticks.env
+  site_env_polaris:
+    file: ./sites/polaris.env
+  site_env_southriver:
+    file: ./sites/southriver.env
