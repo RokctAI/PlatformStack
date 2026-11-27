@@ -1,7 +1,69 @@
 {
   "_doc": "Next.js sites hosted on this VPS. Add a site here, run python3 scripts/sites.py, commit. See sites/README.md.",
   "sites": [
-    {"name": "supacharge", "repo": "https://github.com/RokctAI/supacharge-web", "ref": "main", "domains": ["supacharge.school"], "memory": "512m"},
-    {"name": "juvo-platforms", "repo": "https://github.com/RokctAI/Juvo-platforms", "ref": "main", "domains": ["platform.juvo.app"], "memory": "512m"}
+    {
+      "name": "supacharge",
+      "repo": "https://github.com/RokctAI/supacharge-web",
+      "ref": "main",
+      "domains": [
+        "supacharge.school"
+      ],
+      "memory": "512m"
+    },
+    {
+      "name": "juvo-platforms",
+      "repo": "https://github.com/RokctAI/Juvo-platforms",
+      "ref": "main",
+      "domains": [
+        "juvo.cortexagency.co"
+      ],
+      "memory": "512m"
+    },
+    {
+      "name": "hosting",
+      "repo": "https://github.com/RokctAI/hosting",
+      "ref": "main",
+      "domains": [
+        "cortexagency.co",
+        "www.cortexagency.co"
+      ],
+      "memory": "512m"
+    },
+    {
+      "name": "telephony",
+      "repo": "https://github.com/RokctAI/telephony-frontend",
+      "ref": "main",
+      "domains": [
+        "telephony.cortexagency.co"
+      ],
+      "memory": "512m"
+    },
+    {
+      "name": "sticks",
+      "repo": "https://github.com/RokctAI/sticks-web",
+      "ref": "main",
+      "domains": [
+        "sticks.cortexagency.co"
+      ],
+      "memory": "512m"
+    },
+    {
+      "name": "polaris",
+      "repo": "https://github.com/RokctAI/polaris-web",
+      "ref": "main",
+      "domains": [
+        "polaris.cortexagency.co"
+      ],
+      "memory": "512m"
+    },
+    {
+      "name": "southriver",
+      "repo": "https://github.com/RokctAI/southriver-web",
+      "ref": "main",
+      "domains": [
+        "southriver.cortexagency.co"
+      ],
+      "memory": "512m"
+    }
   ]
 }

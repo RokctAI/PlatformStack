@@ -37,7 +37,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/Juvo-platforms"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://platform.juvo.app"
+        NEXT_PUBLIC_SITE_URL: "https://juvo.cortexagency.co"
       secrets:
         - git_token
     image: "rokct/site-juvo-platforms:main"
@@ -56,6 +56,151 @@ services:
       rokct_tenants:
         aliases:
           - site-juvo-platforms
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+  site-hosting:
+    build:
+      context: ./juvo-shell
+      args:
+        SHELL_REPO: "https://github.com/RokctAI/hosting"
+        SHELL_REF: "main"
+        NEXT_PUBLIC_SITE_URL: "https://cortexagency.co"
+      secrets:
+        - git_token
+    image: "rokct/site-hosting:main"
+    pull_policy: build
+    # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
+    profiles: ["sites"]
+    restart: unless-stopped
+    env_file:
+      - path: ./sites/hosting.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      rokct_tenants:
+        aliases:
+          - site-hosting
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+  site-telephony:
+    build:
+      context: ./juvo-shell
+      args:
+        SHELL_REPO: "https://github.com/RokctAI/telephony-frontend"
+        SHELL_REF: "main"
+        NEXT_PUBLIC_SITE_URL: "https://telephony.cortexagency.co"
+      secrets:
+        - git_token
+    image: "rokct/site-telephony:main"
+    pull_policy: build
+    # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
+    profiles: ["sites"]
+    restart: unless-stopped
+    env_file:
+      - path: ./sites/telephony.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      rokct_tenants:
+        aliases:
+          - site-telephony
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+  site-sticks:
+    build:
+      context: ./juvo-shell
+      args:
+        SHELL_REPO: "https://github.com/RokctAI/sticks-web"
+        SHELL_REF: "main"
+        NEXT_PUBLIC_SITE_URL: "https://sticks.cortexagency.co"
+      secrets:
+        - git_token
+    image: "rokct/site-sticks:main"
+    pull_policy: build
+    # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
+    profiles: ["sites"]
+    restart: unless-stopped
+    env_file:
+      - path: ./sites/sticks.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      rokct_tenants:
+        aliases:
+          - site-sticks
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+  site-polaris:
+    build:
+      context: ./juvo-shell
+      args:
+        SHELL_REPO: "https://github.com/RokctAI/polaris-web"
+        SHELL_REF: "main"
+        NEXT_PUBLIC_SITE_URL: "https://polaris.cortexagency.co"
+      secrets:
+        - git_token
+    image: "rokct/site-polaris:main"
+    pull_policy: build
+    # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
+    profiles: ["sites"]
+    restart: unless-stopped
+    env_file:
+      - path: ./sites/polaris.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      rokct_tenants:
+        aliases:
+          - site-polaris
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+  site-southriver:
+    build:
+      context: ./juvo-shell
+      args:
+        SHELL_REPO: "https://github.com/RokctAI/southriver-web"
+        SHELL_REF: "main"
+        NEXT_PUBLIC_SITE_URL: "https://southriver.cortexagency.co"
+      secrets:
+        - git_token
+    image: "rokct/site-southriver:main"
+    pull_policy: build
+    # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.
+    profiles: ["sites"]
+    restart: unless-stopped
+    env_file:
+      - path: ./sites/southriver.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      rokct_tenants:
+        aliases:
+          - site-southriver
     deploy:
       resources:
         limits:
