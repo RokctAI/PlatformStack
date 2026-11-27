@@ -43,6 +43,8 @@
       "repo": "https://github.com/RokctAI/sticks-web",
       "ref": "main",
       "domains": [
+        "usesticks.com",
+        "www.usesticks.com",
         "sticks.cortexagency.co"
       ],
       "memory": "512m"
