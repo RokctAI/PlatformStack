@@ -1,5 +1,7 @@
 # Ignition + Frappe v16 + composed rokctapp image
 
+> **Not used for go-live (flagged 2026-11-27).** The live hub and tenant images are built from `platform/pulsar/Dockerfile` (`build_pulsar_images.sh`, no Frappe, no bench). This Frappe + Pulsar image is an earlier step, kept until Ray decides to remove it.
+
 `platform/ignition.Dockerfile`, target `ignition_rokctapp`, builds one image
 that runs a composed product app on Ignition (`python -m pulsar.ignition`)
 instead of bench. The default product is `rokctapp`: one Frappe app, `rcore`,
