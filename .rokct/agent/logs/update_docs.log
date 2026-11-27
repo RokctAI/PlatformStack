@@ -15011,3 +15011,325 @@
 2026-11-27 16:19:08,340 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_log_evidence.md <- platform/scripts/log_evidence.py
 2026-11-27 16:19:08,341 - INFO - Auto-creating missing documentation for: platform/scripts/tests/test_sites.py
 2026-11-27 16:19:08,342 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_tests_test_sites.md <- platform/scripts/tests/test_sites.py
+2026-11-27 19:10:23,647 - INFO - Detected stacks: dart, frappe for /home/runner/work/PlatformStack/PlatformStack
+2026-11-27 19:10:23,651 - INFO - Auto-creating missing documentation for: .shared-workflows/templates/render-harness/vector_svg.dart
+2026-11-27 19:10:24,264 - DEBUG - Sending Groq groq/compound request for register (Payload: 321 bytes)
+2026-11-27 19:10:24,439 - ERROR - ❌ HTTP Error generating AI doc for register using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:24,439 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for register...
+2026-11-27 19:10:24,439 - DEBUG - Sending Groq llama-3.3-70b-versatile request for register (Payload: 321 bytes)
+2026-11-27 19:10:24,524 - ERROR - ❌ HTTP Error generating AI doc for register using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:24,524 - DEBUG - Sending Groq groq/compound request for read (Payload: 275 bytes)
+2026-11-27 19:10:24,608 - ERROR - ❌ HTTP Error generating AI doc for read using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:24,608 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for read...
+2026-11-27 19:10:24,608 - DEBUG - Sending Groq llama-3.3-70b-versatile request for read (Payload: 275 bytes)
+2026-11-27 19:10:24,719 - ERROR - ❌ HTTP Error generating AI doc for read using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:24,719 - DEBUG - Sending Groq groq/compound request for VectorSvgRecorder (Payload: 323 bytes)
+2026-11-27 19:10:24,807 - ERROR - ❌ HTTP Error generating AI doc for VectorSvgRecorder using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:24,807 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for VectorSvgRecorder...
+2026-11-27 19:10:24,807 - DEBUG - Sending Groq llama-3.3-70b-versatile request for VectorSvgRecorder (Payload: 323 bytes)
+2026-11-27 19:10:24,919 - ERROR - ❌ HTTP Error generating AI doc for VectorSvgRecorder using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:24,919 - DEBUG - Sending Groq groq/compound request for collect (Payload: 268 bytes)
+2026-11-27 19:10:25,007 - ERROR - ❌ HTTP Error generating AI doc for collect using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,007 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for collect...
+2026-11-27 19:10:25,007 - DEBUG - Sending Groq llama-3.3-70b-versatile request for collect (Payload: 268 bytes)
+2026-11-27 19:10:25,094 - ERROR - ❌ HTTP Error generating AI doc for collect using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,094 - DEBUG - Sending Groq groq/compound request for write (Payload: 264 bytes)
+2026-11-27 19:10:25,177 - ERROR - ❌ HTTP Error generating AI doc for write using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,177 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for write...
+2026-11-27 19:10:25,177 - DEBUG - Sending Groq llama-3.3-70b-versatile request for write (Payload: 264 bytes)
+2026-11-27 19:10:25,276 - ERROR - ❌ HTTP Error generating AI doc for write using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,276 - DEBUG - Sending Groq groq/compound request for f (Payload: 258 bytes)
+2026-11-27 19:10:25,376 - ERROR - ❌ HTTP Error generating AI doc for f using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,376 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for f...
+2026-11-27 19:10:25,376 - DEBUG - Sending Groq llama-3.3-70b-versatile request for f (Payload: 258 bytes)
+2026-11-27 19:10:25,472 - ERROR - ❌ HTTP Error generating AI doc for f using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,472 - DEBUG - Sending Groq groq/compound request for walk (Payload: 308 bytes)
+2026-11-27 19:10:25,591 - ERROR - ❌ HTTP Error generating AI doc for walk using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,591 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for walk...
+2026-11-27 19:10:25,591 - DEBUG - Sending Groq llama-3.3-70b-versatile request for walk (Payload: 308 bytes)
+2026-11-27 19:10:25,677 - ERROR - ❌ HTTP Error generating AI doc for walk using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,677 - DEBUG - Sending Groq groq/compound request for save (Payload: 244 bytes)
+2026-11-27 19:10:25,773 - ERROR - ❌ HTTP Error generating AI doc for save using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,773 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for save...
+2026-11-27 19:10:25,773 - DEBUG - Sending Groq llama-3.3-70b-versatile request for save (Payload: 244 bytes)
+2026-11-27 19:10:25,859 - ERROR - ❌ HTTP Error generating AI doc for save using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,859 - DEBUG - Sending Groq groq/compound request for restore (Payload: 250 bytes)
+2026-11-27 19:10:25,955 - ERROR - ❌ HTTP Error generating AI doc for restore using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:25,955 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for restore...
+2026-11-27 19:10:25,955 - DEBUG - Sending Groq llama-3.3-70b-versatile request for restore (Payload: 250 bytes)
+2026-11-27 19:10:26,044 - ERROR - ❌ HTTP Error generating AI doc for restore using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,044 - DEBUG - Sending Groq groq/compound request for translate (Payload: 294 bytes)
+2026-11-27 19:10:26,155 - ERROR - ❌ HTTP Error generating AI doc for translate using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,155 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for translate...
+2026-11-27 19:10:26,155 - DEBUG - Sending Groq llama-3.3-70b-versatile request for translate (Payload: 294 bytes)
+2026-11-27 19:10:26,256 - ERROR - ❌ HTTP Error generating AI doc for translate using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,256 - DEBUG - Sending Groq groq/compound request for scale (Payload: 292 bytes)
+2026-11-27 19:10:26,370 - ERROR - ❌ HTTP Error generating AI doc for scale using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,370 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for scale...
+2026-11-27 19:10:26,370 - DEBUG - Sending Groq llama-3.3-70b-versatile request for scale (Payload: 292 bytes)
+2026-11-27 19:10:26,466 - ERROR - ❌ HTTP Error generating AI doc for scale using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,466 - DEBUG - Sending Groq groq/compound request for rotate (Payload: 276 bytes)
+2026-11-27 19:10:26,565 - ERROR - ❌ HTTP Error generating AI doc for rotate using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,565 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for rotate...
+2026-11-27 19:10:26,565 - DEBUG - Sending Groq llama-3.3-70b-versatile request for rotate (Payload: 276 bytes)
+2026-11-27 19:10:26,682 - ERROR - ❌ HTTP Error generating AI doc for rotate using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,682 - DEBUG - Sending Groq groq/compound request for transform (Payload: 292 bytes)
+2026-11-27 19:10:26,788 - ERROR - ❌ HTTP Error generating AI doc for transform using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,788 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for transform...
+2026-11-27 19:10:26,788 - DEBUG - Sending Groq llama-3.3-70b-versatile request for transform (Payload: 292 bytes)
+2026-11-27 19:10:26,883 - ERROR - ❌ HTTP Error generating AI doc for transform using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,883 - DEBUG - Sending Groq groq/compound request for clipPath (Payload: 324 bytes)
+2026-11-27 19:10:26,992 - ERROR - ❌ HTTP Error generating AI doc for clipPath using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:26,992 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for clipPath...
+2026-11-27 19:10:26,992 - DEBUG - Sending Groq llama-3.3-70b-versatile request for clipPath (Payload: 324 bytes)
+2026-11-27 19:10:27,091 - ERROR - ❌ HTTP Error generating AI doc for clipPath using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,092 - DEBUG - Sending Groq groq/compound request for at (Payload: 260 bytes)
+2026-11-27 19:10:27,201 - ERROR - ❌ HTTP Error generating AI doc for at using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,201 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for at...
+2026-11-27 19:10:27,202 - DEBUG - Sending Groq llama-3.3-70b-versatile request for at (Payload: 260 bytes)
+2026-11-27 19:10:27,297 - ERROR - ❌ HTTP Error generating AI doc for at using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,298 - INFO - Auto-created missing doc: dart/docs/api/.shared-workflows_templates_render-harness_vector_svg.md <- .shared-workflows/templates/render-harness/vector_svg.dart
+2026-11-27 19:10:27,299 - INFO - Auto-creating missing documentation for: .shared-workflows/templates/render-harness/render_screen_test.dart
+2026-11-27 19:10:27,442 - DEBUG - Sending Groq groq/compound request for load (Payload: 318 bytes)
+2026-11-27 19:10:27,535 - ERROR - ❌ HTTP Error generating AI doc for load using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,535 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for load...
+2026-11-27 19:10:27,535 - DEBUG - Sending Groq llama-3.3-70b-versatile request for load (Payload: 318 bytes)
+2026-11-27 19:10:27,640 - ERROR - ❌ HTTP Error generating AI doc for load using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,641 - DEBUG - Sending Groq groq/compound request for visit (Payload: 274 bytes)
+2026-11-27 19:10:27,735 - ERROR - ❌ HTTP Error generating AI doc for visit using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,735 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for visit...
+2026-11-27 19:10:27,735 - DEBUG - Sending Groq llama-3.3-70b-versatile request for visit (Payload: 274 bytes)
+2026-11-27 19:10:27,832 - ERROR - ❌ HTTP Error generating AI doc for visit using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,832 - DEBUG - Sending Groq groq/compound request for main (Payload: 242 bytes)
+2026-11-27 19:10:27,919 - ERROR - ❌ HTTP Error generating AI doc for main using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:27,919 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for main...
+2026-11-27 19:10:27,919 - DEBUG - Sending Groq llama-3.3-70b-versatile request for main (Payload: 242 bytes)
+2026-11-27 19:10:28,012 - ERROR - ❌ HTTP Error generating AI doc for main using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:28,012 - INFO - Auto-created missing doc: dart/docs/api/.shared-workflows_templates_render-harness_render_screen_test.md <- .shared-workflows/templates/render-harness/render_screen_test.dart
+2026-11-27 19:10:28,013 - INFO - Auto-creating missing documentation for: .shared-workflows/templates/tour-app/guided_tour_test.dart
+2026-11-27 19:10:28,013 - DEBUG - Sending Groq groq/compound request for main (Payload: 242 bytes)
+2026-11-27 19:10:28,114 - ERROR - ❌ HTTP Error generating AI doc for main using groq/compound: 404 - {"error":{"message":"The model `groq/compound` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:28,114 - INFO - 🔄 Falling back to llama-3.3-70b-versatile for main...
+2026-11-27 19:10:28,114 - DEBUG - Sending Groq llama-3.3-70b-versatile request for main (Payload: 242 bytes)
+2026-11-27 19:10:28,197 - ERROR - ❌ HTTP Error generating AI doc for main using llama-3.3-70b-versatile: 404 - {"error":{"message":"The model `llama-3.3-70b-versatile` does not exist or you do not have access to it.","type":"invalid_request_error","code":"model_not_found"}}
+
+2026-11-27 19:10:28,197 - INFO - Auto-created missing doc: dart/docs/api/.shared-workflows_templates_tour-app_guided_tour_test.md <- .shared-workflows/templates/tour-app/guided_tour_test.dart
+2026-11-27 19:10:28,199 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_usage_badge.py
+2026-11-27 19:10:28,199 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_usage_badge.md <- .shared-workflows/scripts/update_usage_badge.py
+2026-11-27 19:10:28,213 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/standardize_fleet.py
+2026-11-27 19:10:28,291 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_standardize_fleet.md <- .shared-workflows/scripts/standardize_fleet.py
+2026-11-27 19:10:28,293 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/audit_inputs_and_drift.py
+2026-11-27 19:10:28,333 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_audit_inputs_and_drift.md <- .shared-workflows/scripts/audit_inputs_and_drift.py
+2026-11-27 19:10:28,335 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/pr_auto_labeler.py
+2026-11-27 19:10:28,402 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_pr_auto_labeler.md <- .shared-workflows/scripts/pr_auto_labeler.py
+2026-11-27 19:10:28,410 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/failure_record.py
+2026-11-27 19:10:28,437 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_failure_record.md <- .shared-workflows/scripts/failure_record.py
+2026-11-27 19:10:28,467 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_docs.py
+2026-11-27 19:10:28,896 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_docs.md <- .shared-workflows/scripts/update_docs.py
+2026-11-27 19:10:28,897 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/pr_footer_cleanup.py
+2026-11-27 19:10:28,931 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_pr_footer_cleanup.md <- .shared-workflows/scripts/pr_footer_cleanup.py
+2026-11-27 19:10:28,933 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/sdk_cmd_issue_sync.py
+2026-11-27 19:10:28,955 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_sdk_cmd_issue_sync.md <- .shared-workflows/scripts/sdk_cmd_issue_sync.py
+2026-11-27 19:10:28,956 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/fleet_compliance.py
+2026-11-27 19:10:28,957 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_fleet_compliance.md <- .shared-workflows/scripts/fleet_compliance.py
+2026-11-27 19:10:28,963 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance_scanner.py
+2026-11-27 19:10:28,990 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_scanner.md <- .shared-workflows/scripts/compliance_scanner.py
+2026-11-27 19:10:29,023 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/sdk_validator.py
+2026-11-27 19:10:29,210 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_sdk_validator.md <- .shared-workflows/scripts/sdk_validator.py
+2026-11-27 19:10:29,211 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/build_failure_context.py
+2026-11-27 19:10:29,212 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_build_failure_context.md <- .shared-workflows/scripts/build_failure_context.py
+2026-11-27 19:10:29,214 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/update_readme_badges.py
+2026-11-27 19:10:29,214 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_update_readme_badges.md <- .shared-workflows/scripts/update_readme_badges.py
+2026-11-27 19:10:29,214 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/__init__.py
+2026-11-27 19:10:29,214 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot___init__.md <- .shared-workflows/scripts/depot/__init__.py
+2026-11-27 19:10:29,216 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/index.py
+2026-11-27 19:10:29,220 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_index.md <- .shared-workflows/scripts/depot/index.py
+2026-11-27 19:10:29,221 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/size_report.py
+2026-11-27 19:10:29,234 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_size_report.md <- .shared-workflows/scripts/depot/size_report.py
+2026-11-27 19:10:29,235 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/jobs.py
+2026-11-27 19:10:29,235 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_jobs.md <- .shared-workflows/scripts/depot/jobs.py
+2026-11-27 19:10:29,236 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/media.py
+2026-11-27 19:10:29,267 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_media.md <- .shared-workflows/scripts/depot/media.py
+2026-11-27 19:10:29,271 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/picker_import.py
+2026-11-27 19:10:29,284 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_picker_import.md <- .shared-workflows/scripts/depot/picker_import.py
+2026-11-27 19:10:29,288 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/people_job.py
+2026-11-27 19:10:29,289 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_people_job.md <- .shared-workflows/scripts/depot/people_job.py
+2026-11-27 19:10:29,290 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/enrich.py
+2026-11-27 19:10:29,290 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_enrich.md <- .shared-workflows/scripts/depot/enrich.py
+2026-11-27 19:10:29,292 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/layout.py
+2026-11-27 19:10:29,305 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_layout.md <- .shared-workflows/scripts/depot/layout.py
+2026-11-27 19:10:29,305 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/net.py
+2026-11-27 19:10:29,311 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_net.md <- .shared-workflows/scripts/depot/net.py
+2026-11-27 19:10:29,312 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/depot_job.py
+2026-11-27 19:10:29,312 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_depot_job.md <- .shared-workflows/scripts/depot/depot_job.py
+2026-11-27 19:10:29,313 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/gitops.py
+2026-11-27 19:10:29,317 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_gitops.md <- .shared-workflows/scripts/depot/gitops.py
+2026-11-27 19:10:29,318 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/depot/exif_job.py
+2026-11-27 19:10:29,318 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_depot_exif_job.md <- .shared-workflows/scripts/depot/exif_job.py
+2026-11-27 19:10:29,321 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/portfolio/snapshot.py
+2026-11-27 19:10:29,336 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_portfolio_snapshot.md <- .shared-workflows/scripts/portfolio/snapshot.py
+2026-11-27 19:10:29,339 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/play/sync_listing_text.py
+2026-11-27 19:10:29,420 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_play_sync_listing_text.md <- .shared-workflows/scripts/play/sync_listing_text.py
+2026-11-27 19:10:29,437 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/play/upload_listing_assets.py
+2026-11-27 19:10:29,616 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_play_upload_listing_assets.md <- .shared-workflows/scripts/play/upload_listing_assets.py
+2026-11-27 19:10:29,617 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/render/tour_strip.py
+2026-11-27 19:10:29,645 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_render_tour_strip.md <- .shared-workflows/scripts/render/tour_strip.py
+2026-11-27 19:10:29,647 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/render/svg_fonts.py
+2026-11-27 19:10:29,660 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_render_svg_fonts.md <- .shared-workflows/scripts/render/svg_fonts.py
+2026-11-27 19:10:29,678 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/render/compose_strip.py
+2026-11-27 19:10:29,904 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_render_compose_strip.md <- .shared-workflows/scripts/render/compose_strip.py
+2026-11-27 19:10:29,909 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/render/merge_render_fragments.py
+2026-11-27 19:10:29,976 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_render_merge_render_fragments.md <- .shared-workflows/scripts/render/merge_render_fragments.py
+2026-11-27 19:10:29,979 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/render/frame_quality.py
+2026-11-27 19:10:30,033 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_render_frame_quality.md <- .shared-workflows/scripts/render/frame_quality.py
+2026-11-27 19:10:30,043 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/deadline-radar/check_deadlines.py
+2026-11-27 19:10:30,140 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_deadline-radar_check_deadlines.md <- .shared-workflows/scripts/deadline-radar/check_deadlines.py
+2026-11-27 19:10:30,143 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_sdk_validator_discovery.py
+2026-11-27 19:10:30,169 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_sdk_validator_discovery.md <- .shared-workflows/scripts/tests/test_sdk_validator_discovery.py
+2026-11-27 19:10:30,171 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_sdk_validator_cmd_issue_sync.py
+2026-11-27 19:10:30,172 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_sdk_validator_cmd_issue_sync.md <- .shared-workflows/scripts/tests/test_sdk_validator_cmd_issue_sync.py
+2026-11-27 19:10:30,174 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_failure_record.py
+2026-11-27 19:10:30,174 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_failure_record.md <- .shared-workflows/scripts/tests/test_failure_record.py
+2026-11-27 19:10:30,176 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_strip.py
+2026-11-27 19:10:30,176 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_strip.md <- .shared-workflows/scripts/tests/test_tour_strip.py
+2026-11-27 19:10:30,181 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_template_placeholders_and_prune.py
+2026-11-27 19:10:30,261 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_template_placeholders_and_prune.md <- .shared-workflows/scripts/tests/test_template_placeholders_and_prune.py
+2026-11-27 19:10:30,264 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_duplicate_shots.py
+2026-11-27 19:10:30,308 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_duplicate_shots.md <- .shared-workflows/scripts/tests/test_tour_duplicate_shots.py
+2026-11-27 19:10:30,310 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_pr_footer_cleanup.py
+2026-11-27 19:10:30,311 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_pr_footer_cleanup.md <- .shared-workflows/scripts/tests/test_pr_footer_cleanup.py
+2026-11-27 19:10:30,317 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_play_deploy_guards.py
+2026-11-27 19:10:30,352 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_play_deploy_guards.md <- .shared-workflows/scripts/tests/test_play_deploy_guards.py
+2026-11-27 19:10:30,366 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_depot_jobs.py
+2026-11-27 19:10:30,366 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_depot_jobs.md <- .shared-workflows/scripts/tests/test_depot_jobs.py
+2026-11-27 19:10:30,367 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_caption_fit.py
+2026-11-27 19:10:30,368 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_caption_fit.md <- .shared-workflows/scripts/tests/test_tour_caption_fit.py
+2026-11-27 19:10:30,373 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_tablet_landscape.py
+2026-11-27 19:10:30,400 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_tablet_landscape.md <- .shared-workflows/scripts/tests/test_tour_tablet_landscape.py
+2026-11-27 19:10:30,402 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_immersive_dialog.py
+2026-11-27 19:10:30,466 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_immersive_dialog.md <- .shared-workflows/scripts/tests/test_tour_immersive_dialog.py
+2026-11-27 19:10:30,467 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_sdk_validator_icons.py
+2026-11-27 19:10:30,467 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_sdk_validator_icons.md <- .shared-workflows/scripts/tests/test_sdk_validator_icons.py
+2026-11-27 19:10:30,470 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_play_tablet_curation.py
+2026-11-27 19:10:30,484 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_play_tablet_curation.md <- .shared-workflows/scripts/tests/test_play_tablet_curation.py
+2026-11-27 19:10:30,486 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_readme_render_strip.py
+2026-11-27 19:10:30,500 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_readme_render_strip.md <- .shared-workflows/scripts/tests/test_tour_readme_render_strip.py
+2026-11-27 19:10:30,504 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_render_fragments.py
+2026-11-27 19:10:30,504 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_render_fragments.md <- .shared-workflows/scripts/tests/test_render_fragments.py
+2026-11-27 19:10:30,505 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_sdk_validator_tablet_planes.py
+2026-11-27 19:10:30,505 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_sdk_validator_tablet_planes.md <- .shared-workflows/scripts/tests/test_sdk_validator_tablet_planes.py
+2026-11-27 19:10:30,554 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_compliance_layers.py
+2026-11-27 19:10:30,749 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_compliance_layers.md <- .shared-workflows/scripts/tests/test_compliance_layers.py
+2026-11-27 19:10:30,751 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_demo_email.py
+2026-11-27 19:10:30,751 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_demo_email.md <- .shared-workflows/scripts/tests/test_tour_demo_email.py
+2026-11-27 19:10:30,754 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_tour_tablet_gesture_nav.py
+2026-11-27 19:10:30,769 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_tour_tablet_gesture_nav.md <- .shared-workflows/scripts/tests/test_tour_tablet_gesture_nav.py
+2026-11-27 19:10:30,775 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_render_frame_quality.py
+2026-11-27 19:10:30,834 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_render_frame_quality.md <- .shared-workflows/scripts/tests/test_render_frame_quality.py
+2026-11-27 19:10:30,836 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_sdk_validator_cmds.py
+2026-11-27 19:10:30,836 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_sdk_validator_cmds.md <- .shared-workflows/scripts/tests/test_sdk_validator_cmds.py
+2026-11-27 19:10:30,838 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_deadline_radar_boundary.py
+2026-11-27 19:10:30,838 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_deadline_radar_boundary.md <- .shared-workflows/scripts/tests/test_deadline_radar_boundary.py
+2026-11-27 19:10:30,876 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_render_strip_compose.py
+2026-11-27 19:10:31,180 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_render_strip_compose.md <- .shared-workflows/scripts/tests/test_render_strip_compose.py
+2026-11-27 19:10:31,181 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tests/test_sdk_validator_raw_paths_ui_strings.py
+2026-11-27 19:10:31,182 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tests_test_sdk_validator_raw_paths_ui_strings.md <- .shared-workflows/scripts/tests/test_sdk_validator_raw_paths_ui_strings.py
+2026-11-27 19:10:31,182 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/__init__.py
+2026-11-27 19:10:31,190 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance___init__.md <- .shared-workflows/scripts/compliance/__init__.py
+2026-11-27 19:10:31,190 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_7.py
+2026-11-27 19:10:31,190 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_7.md <- .shared-workflows/scripts/compliance/layer_7.py
+2026-11-27 19:10:31,191 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_2.py
+2026-11-27 19:10:31,192 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_2.md <- .shared-workflows/scripts/compliance/layer_2.py
+2026-11-27 19:10:31,193 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_10.py
+2026-11-27 19:10:31,194 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_10.md <- .shared-workflows/scripts/compliance/layer_10.py
+2026-11-27 19:10:31,197 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_18.py
+2026-11-27 19:10:31,276 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_18.md <- .shared-workflows/scripts/compliance/layer_18.py
+2026-11-27 19:10:31,277 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_19.py
+2026-11-27 19:10:31,277 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_19.md <- .shared-workflows/scripts/compliance/layer_19.py
+2026-11-27 19:10:31,278 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_6.py
+2026-11-27 19:10:31,278 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_6.md <- .shared-workflows/scripts/compliance/layer_6.py
+2026-11-27 19:10:31,279 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_11.py
+2026-11-27 19:10:31,280 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_11.md <- .shared-workflows/scripts/compliance/layer_11.py
+2026-11-27 19:10:31,282 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/controls.py
+2026-11-27 19:10:31,286 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_controls.md <- .shared-workflows/scripts/compliance/controls.py
+2026-11-27 19:10:31,294 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_12.py
+2026-11-27 19:10:31,399 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_12.md <- .shared-workflows/scripts/compliance/layer_12.py
+2026-11-27 19:10:31,399 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_17.py
+2026-11-27 19:10:31,399 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_17.md <- .shared-workflows/scripts/compliance/layer_17.py
+2026-11-27 19:10:31,400 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_8.py
+2026-11-27 19:10:31,400 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_8.md <- .shared-workflows/scripts/compliance/layer_8.py
+2026-11-27 19:10:31,401 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_16.py
+2026-11-27 19:10:31,401 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_16.md <- .shared-workflows/scripts/compliance/layer_16.py
+2026-11-27 19:10:31,402 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_15.py
+2026-11-27 19:10:31,413 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_15.md <- .shared-workflows/scripts/compliance/layer_15.py
+2026-11-27 19:10:31,413 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_3.py
+2026-11-27 19:10:31,416 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_3.md <- .shared-workflows/scripts/compliance/layer_3.py
+2026-11-27 19:10:31,417 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_14.py
+2026-11-27 19:10:31,417 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_14.md <- .shared-workflows/scripts/compliance/layer_14.py
+2026-11-27 19:10:31,420 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/base.py
+2026-11-27 19:10:31,454 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_base.md <- .shared-workflows/scripts/compliance/base.py
+2026-11-27 19:10:31,456 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_4_5.py
+2026-11-27 19:10:31,456 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_4_5.md <- .shared-workflows/scripts/compliance/layer_4_5.py
+2026-11-27 19:10:31,457 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_9.py
+2026-11-27 19:10:31,457 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_9.md <- .shared-workflows/scripts/compliance/layer_9.py
+2026-11-27 19:10:31,457 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_21.py
+2026-11-27 19:10:31,458 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_21.md <- .shared-workflows/scripts/compliance/layer_21.py
+2026-11-27 19:10:31,459 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/config.py
+2026-11-27 19:10:31,482 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_config.md <- .shared-workflows/scripts/compliance/config.py
+2026-11-27 19:10:31,483 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/compliance/layer_13.py
+2026-11-27 19:10:31,483 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_compliance_layer_13.md <- .shared-workflows/scripts/compliance/layer_13.py
+2026-11-27 19:10:31,492 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/merge_fragments.py
+2026-11-27 19:10:31,581 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_merge_fragments.md <- .shared-workflows/scripts/tour/merge_fragments.py
+2026-11-27 19:10:31,586 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/readme_sections.py
+2026-11-27 19:10:31,693 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_readme_sections.md <- .shared-workflows/scripts/tour/readme_sections.py
+2026-11-27 19:10:31,700 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/capture_screenshots.py
+2026-11-27 19:10:31,807 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_capture_screenshots.md <- .shared-workflows/scripts/tour/capture_screenshots.py
+2026-11-27 19:10:31,863 - INFO - Auto-creating missing documentation for: .shared-workflows/scripts/tour/assemble.py
+2026-11-27 19:10:32,321 - INFO - Auto-created missing doc: frappe/docs/api/.shared-workflows_scripts_tour_assemble.md <- .shared-workflows/scripts/tour/assemble.py
+2026-11-27 19:10:32,322 - INFO - Auto-creating missing documentation for: platform/scripts/site_env.py
+2026-11-27 19:10:32,323 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_site_env.md <- platform/scripts/site_env.py
+2026-11-27 19:10:32,324 - INFO - Auto-creating missing documentation for: platform/scripts/sites.py
+2026-11-27 19:10:32,324 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_sites.md <- platform/scripts/sites.py
+2026-11-27 19:10:32,325 - INFO - Auto-creating missing documentation for: platform/scripts/log_evidence.py
+2026-11-27 19:10:32,328 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_log_evidence.md <- platform/scripts/log_evidence.py
+2026-11-27 19:10:32,329 - INFO - Auto-creating missing documentation for: platform/scripts/tests/test_sites.py
+2026-11-27 19:10:32,329 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_tests_test_sites.md <- platform/scripts/tests/test_sites.py
+2026-11-27 19:10:32,330 - INFO - Auto-creating missing documentation for: platform/scripts/tests/test_site_env.py
+2026-11-27 19:10:32,330 - INFO - Auto-created missing doc: frappe/docs/api/platform_scripts_tests_test_site_env.md <- platform/scripts/tests/test_site_env.py
