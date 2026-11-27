@@ -21,13 +21,13 @@
 - **`ROK_COMPLETIONS_URL` Resolution**: Verified. The URL resolves dynamically from the environment using `os.environ.get("ROK_COMPLETIONS_URL")`.
 - **Loopback Addresses**:
   - **Audit Flag**: A loopback address *is* hardcoded as a fallback. For example: `url = os.environ.get("ROK_COMPLETIONS_URL") or "http://127.0.0.1:8642/v1/chat/completions"`. This is present in three separate functions inside `plan_builder.py`.
-- **`ROKCT_CONTROL_URL` Resolution**: Verified. It correctly resolves dynamically and defaults to the public production endpoint: `control_url = os.environ.get("ROKCT_CONTROL_URL") or "https://platform.rokct.ai"`.
+- **`ROKCT_CONTROL_URL` Resolution**: Verified. It correctly resolves dynamically and defaults to the public production endpoint: `control_url = os.environ.get("ROKCT_CONTROL_URL") or "https://platform.usesticks.com"`.
 
 ### `control/control/api.py` Audit:
 - **`ROK_COMPLETIONS_URL` Resolution**: Verified. The URL resolves dynamically from the environment using `os.environ.get("ROK_COMPLETIONS_URL")`.
 - **Loopback Addresses**:
   - **Audit Flag**: A loopback address *is* hardcoded as a fallback. For example: `url = os.environ.get("ROK_COMPLETIONS_URL") or "http://127.0.0.1:8642/v1/chat/completions"`. This is present in `control/control/api.py`.
-- **`ROKCT_CONTROL_URL` Resolution**: **Audit Flag**: `ROKCT_CONTROL_URL` fallback defaulting to `https://platform.rokct.ai` was not found in `control/control/api.py`.
+- **`ROKCT_CONTROL_URL` Resolution**: **Audit Flag**: `ROKCT_CONTROL_URL` fallback defaulting to `https://platform.usesticks.com` was not found in `control/control/api.py`.
 
 ## 3. Dockerfile Build & Stripping Gate Status
 

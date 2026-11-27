@@ -53,8 +53,8 @@ services:
       IGNITION_DB_ROOT_USER: postgres
       IGNITION_DB_ROOT_PASSWORD: ${DB_PASSWORD:-admin}
       IGNITION_ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
-      PULSAR_SITE: ${SITE_NAME:-platform.rokct.ai}
-      PULSAR_SITE_EXTRA: '{"app_role": "control", "tenant_domain": "${TENANT_DOMAIN:-rokct.ai}", "tenant_engine": "pulsar", "host_name": "https://${SITE_NAME:-platform.rokct.ai}", "tenants_data_path": "/srv/pulsar/tenants-data"}'
+      PULSAR_SITE: ${SITE_NAME:-platform.usesticks.com}
+      PULSAR_SITE_EXTRA: '{"app_role": "control", "tenant_domain": "${TENANT_DOMAIN:-rokct.ai}", "tenant_engine": "pulsar", "host_name": "https://${SITE_NAME:-platform.usesticks.com}", "tenants_data_path": "/srv/pulsar/tenants-data"}'
       EMAIL_ENCRYPTION_KEY: ${EMAIL_ENCRYPTION_KEY:-}
       # The hub's outgoing mail (verification PINs, staff alerts, the tenant relay) through our mail server
       # (production.env SMTP_*). With no host set Pulsar sends no mail at all.
@@ -87,7 +87,7 @@ services:
     healthcheck: {disable: true}
     environment:
       <<: *hub-env
-      IGNITION_SITE: ${SITE_NAME:-platform.rokct.ai}
+      IGNITION_SITE: ${SITE_NAME:-platform.usesticks.com}
     volumes:
       - pulsar-hub-data:/srv/pulsar
     depends_on:
@@ -102,7 +102,7 @@ services:
     healthcheck: {disable: true}
     environment:
       <<: *hub-env
-      IGNITION_SITE: ${SITE_NAME:-platform.rokct.ai}
+      IGNITION_SITE: ${SITE_NAME:-platform.usesticks.com}
     volumes:
       - pulsar-hub-data:/srv/pulsar
     depends_on:
@@ -118,7 +118,7 @@ services:
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/rokct/entrypoint.sh"]
     environment:
-      SITE_NAME: ${SITE_NAME:-platform.rokct.ai}
+      SITE_NAME: ${SITE_NAME:-platform.usesticks.com}
       HUB_UPSTREAM: http://app:8000
     volumes:
       - ./pulsar/ingress/entrypoint.sh:/rokct/entrypoint.sh:ro
@@ -143,7 +143,7 @@ services:
     restart: unless-stopped
     entrypoint: ["/bin/sh", "/rokct/hub-cert.sh"]
     environment:
-      SITE_NAME: ${SITE_NAME:-platform.rokct.ai}
+      SITE_NAME: ${SITE_NAME:-platform.usesticks.com}
       MAIL_HOSTNAME: ${SMTP_SERVER:-mail.rokct.ai}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL:-}
     volumes:
