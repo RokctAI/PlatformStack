@@ -43,6 +43,7 @@ DOMAIN = re.compile(r"^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]
 REF = re.compile(r"^[A-Za-z0-9._/-]{1,100}$")
 REPO = re.compile(r"^https://github\.com/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+(\.git)?$")
 MEM = re.compile(r"^[0-9]{2,5}[mM]$|^[0-9]{1,2}[gG]$")
+APP = re.compile(r"^[A-Z][A-Z0-9]{0,30}$")
 
 
 def load(path=SITES):
@@ -60,6 +61,8 @@ def load(path=SITES):
             raise SystemExit(f"{n}: bad ref")
         if not MEM.match(s.get("memory", "512m")):
             raise SystemExit(f"{n}: memory like 512m or 1g")
+        if "app" in s and not APP.match(s["app"]):
+            raise SystemExit(f"{n}: app must be an env prefix like STICKS")
         ds = s.get("domains") or []
         if not ds:
             raise SystemExit(f"{n}: needs at least one domain")
@@ -93,6 +96,10 @@ def render_compose(sites):
             f"        NEXT_PUBLIC_SITE_URL: {json.dumps(url)}",
             "      secrets:",
             "        - git_token",
+            "        # Build-time env (NEXT_PUBLIC_* are inlined by Next.js), written by deploy-master",
+            "        # from Occultation's website block (platform/scripts/site_env.py).",
+            f"        - source: site_env_{n}",
+            "          target: site_env",
             f"    image: {json.dumps(f'rokct/site-{n}:' + ref.replace('/', '-'))}",
             "    pull_policy: build",
             "    # Started by deploy-master after the hub, one build at a time; a failed site never fails the hub.",
@@ -120,6 +127,8 @@ def render_compose(sites):
         "    # Optional: a token that can read private site repos, put on the VPS by deploy-master.",
         "    file: ./sites/.git_token",
     ]
+    for s in sites:
+        out += [f"  site_env_{s['name']}:", f"    file: ./sites/{s['name']}.env"]
     return "\n".join(out) + "\n"
 
 

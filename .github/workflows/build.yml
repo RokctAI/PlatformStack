@@ -744,6 +744,14 @@ jobs:
           printf '%s' "$SITES_TOKEN" | $SSH "$SSH_USER@$SSH_HOST" \
             "umask 077 && cat > /home/frappe/PlatformStack/platform/sites/.git_token"
           unset SITES_TOKEN
+          # Per-site env (Ray, 2026-11-27): Occultation keeps one website block with ${APP_*} placeholders;
+          # site_env.py fills them from each site's app block (sites.json "app") and writes
+          # sites/<name>.env, used at build time (NEXT_PUBLIC_*) and at run time. Values never printed.
+          SITE_ENV_DIR=$(mktemp -d)
+          if [ -f "$ENV_FILE" ]; then python3 platform/scripts/site_env.py "$ENV_FILE" "$SITE_ENV_DIR"; else python3 platform/scripts/site_env.py /dev/null "$SITE_ENV_DIR"; fi
+          tar -C "$SITE_ENV_DIR" -cz . | $SSH "$SSH_USER@$SSH_HOST" \
+            "umask 077 && mkdir -p /home/frappe/PlatformStack/platform/sites && tar -xz -C /home/frappe/PlatformStack/platform/sites"
+          rm -rf "$SITE_ENV_DIR"
           echo "✅ Sites runner files copied ($(grep -vc '^#' platform/sites/routes/routes.list || true) domain(s))"
           $SSH "$SSH_USER@$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
