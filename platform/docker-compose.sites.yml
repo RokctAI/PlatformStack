@@ -124,7 +124,7 @@ services:
       args:
         SHELL_REPO: "https://github.com/RokctAI/sticks-web"
         SHELL_REF: "main"
-        NEXT_PUBLIC_SITE_URL: "https://sticks.cortexagency.co"
+        NEXT_PUBLIC_SITE_URL: "https://usesticks.com"
       secrets:
         - git_token
     image: "rokct/site-sticks:main"

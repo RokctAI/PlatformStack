@@ -4,6 +4,8 @@ juvo.cortexagency.co http://site-juvo-platforms:3000
 cortexagency.co http://site-hosting:3000
 www.cortexagency.co http://site-hosting:3000
 telephony.cortexagency.co http://site-telephony:3000
+usesticks.com http://site-sticks:3000
+www.usesticks.com http://site-sticks:3000
 sticks.cortexagency.co http://site-sticks:3000
 polaris.cortexagency.co http://site-polaris:3000
 southriver.cortexagency.co http://site-southriver:3000
