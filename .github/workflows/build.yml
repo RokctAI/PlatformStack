@@ -316,7 +316,17 @@ jobs:
           PULSAR_SRC="$PWD/pulsar-src" PULSAR_STAGE_ONLY="$PWD/pulsar-stage" \
             bash docker-context/platform/scripts/build_pulsar_images.sh
 
+      # The engine is pinned to one sticks-server commit, so its build is cached by that commit and skipped
+      # when the pin has not changed. Bump the ref in both places.
+      - name: Restore Sticks engine cache
+        id: sticks_cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: sticks-engine-out
+          key: sticks-engine-da72af18c5ad74ffbe32bbd5b9c4b3fb007ebbb4
+
       - name: Build Sticks engine (pinned)
+        if: steps.sticks_cache.outputs.cache-hit != 'true'
         timeout-minutes: 20
         env:
           GIT_TOKEN: ${{ secrets.MONOREPO_PAT || github.token }}
@@ -335,6 +345,13 @@ jobs:
           docker cp "$cid:/opt/sticks" sticks-engine-out/opt/sticks
           docker rm "$cid" >/dev/null
           test -f sticks-engine-out/opt/sticks/build/up/apps/sticks-engine/dist/sticks-engine.mjs
+
+      - name: Save Sticks engine cache
+        if: steps.sticks_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: sticks-engine-out
+          key: sticks-engine-da72af18c5ad74ffbe32bbd5b9c4b3fb007ebbb4
 
       - name: Build and Push Pulsar Hub
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -681,7 +698,7 @@ jobs:
           # lines from Occultation production.env into platform/.env on the server, over
           # stdin so no value appears in a command line or this log. Other keys stay.
           # Also the hub's own passwords, as the old bench build took them from production.env
-          # (build_ecosystem.sh): DB_ROOT_PASSWORD -> DB_PASSWORD (Postgres + hub root), ADMIN_PASSWORD,
+          # (the old bench build did the same): DB_ROOT_PASSWORD -> DB_PASSWORD (Postgres + hub root), ADMIN_PASSWORD,
           # EMAIL_ENCRYPTION_KEY. Without them the compose falls back to "admin".
           HUB_ENV_KEYS='^(SMTP_(SERVER|PORT|USERNAME|PASSWORD)|DB_ROOT_PASSWORD|ADMIN_PASSWORD|EMAIL_ENCRYPTION_KEY)='
           if [ -f "$ENV_FILE" ] && grep -qE "$HUB_ENV_KEYS" "$ENV_FILE"; then
