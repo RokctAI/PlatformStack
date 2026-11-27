@@ -38,6 +38,11 @@ services:
     # Its Postgres database is p_<site>_<hash>, so it never touches a database an old Frappe hub left in db.
     image: ghcr.io/rokctai/occultation/pulsar-hub:latest
     restart: unless-stopped
+    # PULSAR_CONF_* (payment gateways, OVH) written by deploy-master from Occultation production.env;
+    # the entrypoint puts them into the site config. Optional so a local `up` works without it.
+    env_file: &hub-conf
+      - path: site-conf.env
+        required: false
     environment: &hub-env
       IGNITION_DB_HOST: db
       IGNITION_DB_PORT: "5432"
@@ -73,6 +78,7 @@ services:
   app-worker:
     image: ghcr.io/rokctai/occultation/pulsar-hub:latest
     restart: unless-stopped
+    env_file: *hub-conf
     command: ["worker"]
     healthcheck: {disable: true}
     environment:
@@ -87,6 +93,7 @@ services:
   app-scheduler:
     image: ghcr.io/rokctai/occultation/pulsar-hub:latest
     restart: unless-stopped
+    env_file: *hub-conf
     command: ["scheduler"]
     healthcheck: {disable: true}
     environment:

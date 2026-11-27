@@ -18,6 +18,8 @@
 #   PULSAR_SITE        a site to make on first start when it does not exist (the hub's control site; optional on a
 #                      tenant docker, where the server agent's create_site adds sites)
 #   PULSAR_SITE_EXTRA  JSON merged into that site's site_config.json when it is made (app_role, tenant_domain, ...)
+#   PULSAR_CONF_<KEY>  written into PULSAR_SITE's site_config.json as <key> (lowercased) on every start; an empty
+#                      value removes the key (payment gateway and OVH keys from production.env, set by deploy-master)
 #   IGNITION_DB_HOST / IGNITION_DB_PORT / IGNITION_DB_ROOT_USER / IGNITION_DB_ROOT_PASSWORD   the Postgres superuser
 #   STICKS_TENANT      when set on a tenant docker, the Sticks engine (STICKS_ENGINE) starts beside serve; its
 #                      STICKS_* env and /run/secrets are listed in sticks-server docs/tasks/task-17-tenant-image.md
@@ -69,6 +71,28 @@ PY
   fi
 }
 
+apply_conf_env() {
+  site="$1"
+  [ -f "$ROOT/sites/$site/site_config.json" ] || return 0
+  env | grep -q '^PULSAR_CONF_' || return 0
+  SITE_DIR="$ROOT/sites/$site" python - <<'PY'
+import json, os
+path = os.path.join(os.environ["SITE_DIR"], "site_config.json")
+conf = json.load(open(path))
+for k, v in os.environ.items():
+    if k.startswith("PULSAR_CONF_") and len(k) > 12:
+        key = k[12:].lower()
+        if v.strip():
+            conf[key] = v.strip()
+        else:
+            conf.pop(key, None)
+tmp = path + ".tmp"
+with open(tmp, "w") as fh:
+    json.dump(conf, fh, indent=1)
+os.replace(tmp, path)
+PY
+}
+
 first_site() {
   for d in "$ROOT"/sites/*/; do
     [ -f "${d}site_config.json" ] && grep -q '"pulsar_engine"' "${d}site_config.json" && {
@@ -84,7 +108,7 @@ case "$cmd" in
 serve | worker | scheduler)
   shift || true
   wait_db
-  [ -n "${PULSAR_SITE:-}" ] && make_site "$PULSAR_SITE"
+  [ -n "${PULSAR_SITE:-}" ] && make_site "$PULSAR_SITE" && apply_conf_env "$PULSAR_SITE"
   if [ -z "${IGNITION_SITE:-}" ]; then
     until site="$(first_site)"; do sleep 5; done
     # serve with no IGNITION_SITE serves every site by Host header (a shared tenant docker);
