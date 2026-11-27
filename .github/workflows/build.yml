@@ -697,6 +697,22 @@ jobs:
           else
             echo "::warning title=Hub mail::No SMTP_* in Occultation production.env; the hub will not send mail."
           fi
+          # Site-config keys the old bench build put into the hub's site config (build_ecosystem.sh: ovh_*,
+          # stripe_*, paystack_*, default_vps_provider) plus the other gateways pay reads (payfast_*, flutterwave_*,
+          # paymob_*, paypal_*). They go to platform/site-conf.env as PULSAR_CONF_<KEY>; the hub's entrypoint
+          # writes them, lowercased, into its site_config.json on every start, where fx.conf reads them
+          # (pay wallet/pulsar/lib/chargers.py, reconcile.py). *_SANDBOX_* keys are CI-only and stay out.
+          # Rewritten whole each deploy, over stdin, values never shown.
+          SITE_CONF_KEYS='^(OVH_[A-Z_]+|DEFAULT_VPS_PROVIDER|(STRIPE|PAYSTACK|PAYFAST|FLUTTERWAVE|PAYMOB|PAYPAL)_[A-Z_]+)='
+          if [ -f "$ENV_FILE" ]; then
+            # Values are single-quoted so compose does not interpolate a $ in them; a value that itself holds a
+            # single quote is skipped with a warning (name only).
+            grep -E "$SITE_CONF_KEYS" "$ENV_FILE" | grep -v '_SANDBOX_' | sed 's/\r$//; s/^PAYFAST_PASSPHRASE=/PAYFAST_PASS_PHRASE=/' \
+              | sed -E "s/^([A-Z_]+)=\"(.*)\"$/\\1=\\2/; s/^([A-Z_]+)='(.*)'$/\\1=\\2/" \
+              | awk -F= '{ k=$1; v=substr($0, length(k)+2); if (index(v, "\047")) { print "::warning title=Hub site-config::" k " contains a single quote and was skipped" > "/dev/stderr"; next } print "PULSAR_CONF_" k "=\047" v "\047" }' \
+              | $SSH "$SSH_USER@$SSH_HOST" "umask 077; cat > /home/frappe/PlatformStack/platform/site-conf.env.tmp && mv /home/frappe/PlatformStack/platform/site-conf.env.tmp /home/frappe/PlatformStack/platform/site-conf.env"
+            echo "✅ Hub site-config keys (gateways, OVH) copied (values not shown)"
+          fi
           $SSH "$SSH_USER@$SSH_HOST" "
             cd /home/frappe/PlatformStack/platform &&
             mkdir -p /etc/nginx/conf.d /etc/letsencrypt /var/www/acme /etc/rokct &&
