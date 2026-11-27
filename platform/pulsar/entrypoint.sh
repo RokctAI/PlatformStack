@@ -63,7 +63,7 @@ import json, os
 path = os.path.join(os.environ["SITE_DIR"], "site_config.json")
 conf = json.load(open(path))
 conf.update(json.loads(os.environ["PULSAR_SITE_EXTRA"]))
-tmp = path + ".tmp"
+tmp = "%s.%d.tmp" % (path, os.getpid())  # serve, worker and scheduler start together
 with open(tmp, "w") as fh:
     json.dump(conf, fh, indent=1)
 os.replace(tmp, path)
@@ -86,7 +86,7 @@ for k, v in os.environ.items():
             conf[key] = v.strip()
         else:
             conf.pop(key, None)
-tmp = path + ".tmp"
+tmp = "%s.%d.tmp" % (path, os.getpid())  # serve, worker and scheduler start together
 with open(tmp, "w") as fh:
     json.dump(conf, fh, indent=1)
 os.replace(tmp, path)
