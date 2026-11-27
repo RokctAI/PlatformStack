@@ -164,7 +164,7 @@ image is generic: any shell that follows that model can reuse it via the
 | Variable | Default | Description |
 | :--- | :--- | :--- |
 | `MODE` | `full` | `full` / `api` / `iot` — runtime profile |
-| `SITE_NAME` | `platform.rokct.ai` | Primary Frappe site name |
+| `SITE_NAME` | `platform.usesticks.com` | Primary Frappe site name |
 | `DB_HOST` | `127.0.0.1` | PostgreSQL host address |
 | `DB_PASSWORD` | `admin` | Database password |
 | `DB_ROOT_PASS` | `admin` | PostgreSQL root credentials |
