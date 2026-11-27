@@ -184,7 +184,7 @@ jobs:
   pipeline:
     needs: detect
     if: needs.detect.outputs.should_build == 'true'
-    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@a1ed8107168041aa252213ddcfa5279b00697195 # shared-workflows main @ 2026-08-26
+    uses: RokctAI/shared-workflows/.github/workflows/universal-pipeline.yml@017822602e17e124bc6e8dafdf38a7693c791da0 # shared-workflows main @ 2026-11-27
     with:
       backfill_ai_notes_cutoff_version: ${{ inputs.backfill_ai_notes_cutoff_version }}
       project_type: ${{ needs.detect.outputs.is_flutter == 'true' && 'flutter' || (needs.detect.outputs.is_node == 'true' && 'node' || 'frappe') }}
@@ -484,7 +484,7 @@ jobs:
   upgrade-test:
     needs: [pipeline, docker-release]
     # Pulsar blue-green job (needs the shared-workflows PR with the engine input merged first).
-    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@a1ed8107168041aa252213ddcfa5279b00697195 # shared-workflows main @ 2026-11-26
+    uses: RokctAI/shared-workflows/.github/workflows/universal-upgrade-test.yml@017822602e17e124bc6e8dafdf38a7693c791da0 # shared-workflows main @ 2026-11-27
     with:
       current_version: ${{ needs.docker-release.outputs.version }}
       engine: pulsar

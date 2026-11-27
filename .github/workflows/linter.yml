@@ -20,7 +20,7 @@ on:
 jobs:
   lint:
     permissions: write-all
-    uses: RokctAI/shared-workflows/.github/workflows/universal-linter.yml@a1ed8107168041aa252213ddcfa5279b00697195 # shared-workflows main @ 2026-08-26
+    uses: RokctAI/shared-workflows/.github/workflows/universal-linter.yml@017822602e17e124bc6e8dafdf38a7693c791da0 # shared-workflows main @ 2026-11-27
     with:
       copyright-text: "Rokct Intelligence (pty) Ltd."
     secrets: inherit
