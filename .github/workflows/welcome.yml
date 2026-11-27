@@ -9,6 +9,6 @@ on:
 
 jobs:
   welcome:
-    uses: RokctAI/shared-workflows/.github/workflows/universal-welcome.yml@a1ed8107168041aa252213ddcfa5279b00697195 # shared-workflows main @ 2026-08-26
+    uses: RokctAI/shared-workflows/.github/workflows/universal-welcome.yml@017822602e17e124bc6e8dafdf38a7693c791da0 # shared-workflows main @ 2026-11-27
     permissions: write-all
     secrets: inherit
